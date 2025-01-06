@@ -136,12 +136,6 @@ venv\Scripts\activate
 python main.py
 ```
 
-或者，如果通过 `setup.py` 安装，可以使用：
-
-```bash
-wenturc
-```
-
 ## 使用方法
 
 1. **图片处理**:
@@ -169,5 +163,6 @@ python -m unittest discover tests
 
 ## 许可证
 
+```
 MIT License
 ```
