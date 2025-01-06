@@ -164,5 +164,5 @@ python -m unittest discover tests
 ## 许可证
 
 ```
-MIT License
+GPL-3.0 license
 ```
