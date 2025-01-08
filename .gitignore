@@ -3,6 +3,7 @@
 /build
 /dist
 /output
+/WentUrc_ASCII_Art_Tool/logs
 
 *__pycache__
 ffmpeg/ffmpeg.exe
