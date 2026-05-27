@@ -118,8 +118,8 @@ export default async function ComponentIncidentPage({
 
   return (
     <div className="page-shell">
-      <main className="page-container flex flex-col gap-10 py-14 md:py-20">
-        <section className="space-y-5">
+      <main className="page-container flex flex-col gap-12 py-14 md:gap-16 md:py-20">
+        <section className="space-y-8">
           <Link
             href="/components"
             className="inline-flex items-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
@@ -133,7 +133,7 @@ export default async function ComponentIncidentPage({
             description={component.description}
           />
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-4">
             {metrics.map((metric) => (
               <div key={metric.label} className="border-y border-border/70 px-5 py-5">
                 <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
@@ -145,21 +145,19 @@ export default async function ComponentIncidentPage({
           </div>
         </section>
 
-        <section className="space-y-5">
+        <section className="space-y-8 pt-5 md:pt-6">
           <SectionHeading
             kicker={t("sections.active.kicker")}
             title={t("sections.active.title")}
             description={t("sections.active.description")}
           />
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {activeIncidents.length > 0 ? (
               activeIncidents.map((incident) => (
                 <IncidentListItem
                   key={incident.id}
                   incident={incident}
-                  componentNames={incident.componentIds.map(
-                    (componentId) => componentsById[componentId]?.name ?? componentId,
-                  )}
+                  componentNames={[componentsById[incident.componentId]?.name ?? incident.componentId]}
                   timeLabel={formatDurationMinutes(incident.window.expectedDurationMinutes, locale)}
                   severityLabel={severityCopy[incident.severity].label}
                   severityDescription={severityCopy[incident.severity].description}
@@ -180,21 +178,19 @@ export default async function ComponentIncidentPage({
           </div>
         </section>
 
-        <section className="space-y-5">
+        <section className="space-y-8 pt-5 md:pt-6">
           <SectionHeading
             kicker={t("sections.scheduled.kicker")}
             title={t("sections.scheduled.title")}
             description={t("sections.scheduled.description")}
           />
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {scheduledIncidents.length > 0 ? (
               scheduledIncidents.map((incident) => (
                 <IncidentListItem
                   key={incident.id}
                   incident={incident}
-                  componentNames={incident.componentIds.map(
-                    (componentId) => componentsById[componentId]?.name ?? componentId,
-                  )}
+                  componentNames={[componentsById[incident.componentId]?.name ?? incident.componentId]}
                   timeLabel={formatDateRange(
                     incident.window.startedAt,
                     incident.window.expectedEndAt,
@@ -219,21 +215,19 @@ export default async function ComponentIncidentPage({
           </div>
         </section>
 
-        <section className="space-y-5">
+        <section className="space-y-8 pt-5 md:pt-6">
           <SectionHeading
             kicker={t("sections.resolved.kicker")}
             title={t("sections.resolved.title")}
             description={t("sections.resolved.description")}
           />
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {resolvedIncidents.length > 0 ? (
               resolvedIncidents.map((incident) => (
                 <IncidentListItem
                   key={incident.id}
                   incident={incident}
-                  componentNames={incident.componentIds.map(
-                    (componentId) => componentsById[componentId]?.name ?? componentId,
-                  )}
+                  componentNames={[componentsById[incident.componentId]?.name ?? incident.componentId]}
                   timeLabel={formatDateTime(incident.updatedAt, locale, {year: "numeric"})}
                   severityLabel={severityCopy[incident.severity].label}
                   severityDescription={severityCopy[incident.severity].description}

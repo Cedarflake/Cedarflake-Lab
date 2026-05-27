@@ -50,7 +50,7 @@ export interface Incident {
   visibility: Visibility;
   isScheduled: boolean;
   affectsUptime?: boolean;
-  componentIds: SystemComponentId[];
+  componentId: SystemComponentId;
   createdAt: IsoDateTimeString;
   updatedAt: IsoDateTimeString;
   publishedAt: IsoDateTimeString;

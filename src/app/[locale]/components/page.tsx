@@ -81,8 +81,8 @@ export default async function ComponentsIndexPage({
       .filter((incident) => incident !== undefined);
     const componentNames = Array.from(
       new Set(
-        relatedIncidents.flatMap((incident) =>
-          incident.componentIds.map((componentId) => componentsById[componentId]?.name ?? componentId),
+        relatedIncidents.map(
+          (incident) => componentsById[incident.componentId]?.name ?? incident.componentId,
         ),
       ),
     );
@@ -114,8 +114,8 @@ export default async function ComponentsIndexPage({
 
   return (
     <div className="page-shell">
-      <main className="page-container flex flex-col gap-10 py-14 md:py-20">
-        <div className="flex items-center justify-between gap-4">
+      <main className="page-container flex flex-col gap-12 py-14 md:gap-16 md:py-20">
+        <div className="flex items-center justify-between gap-5">
           <Link
             href="/"
             className="inline-flex items-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
@@ -125,14 +125,14 @@ export default async function ComponentsIndexPage({
           <LocaleSwitcher />
         </div>
 
-        <section className="space-y-8">
+        <section className="space-y-9 pt-4 md:pt-5">
           <SectionHeading
             kicker={t("components.kicker")}
             title={t("components.title")}
             description={t("components.description")}
           />
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             {orderedComponents.map((component) => (
               <Link
                 key={component.id}

@@ -43,7 +43,7 @@ export function buildDailyStatusGranules({
 }: BuildDailyStatusGranulesOptions): DailyStatusGranule[] {
   const start = startOfDay(new Date(`${startDate}T00:00:00.000Z`));
   const scopedIncidents = componentId
-    ? incidents.filter((incident) => incident.componentIds.includes(componentId))
+    ? incidents.filter((incident) => incident.componentId === componentId)
     : incidents;
 
   return Array.from({length: days}, (_, index) => {

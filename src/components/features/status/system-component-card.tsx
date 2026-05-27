@@ -32,9 +32,9 @@ export function SystemComponentCard({
     Math.max(granules.length, 1);
 
   return (
-    <div className="grid gap-5 px-5 py-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,1fr)_auto] lg:items-center lg:px-6">
-      <div className="space-y-3">
-        <div className="space-y-1">
+    <div className="grid gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,1fr)_auto] lg:items-center lg:px-6 lg:py-7">
+      <div className="space-y-4">
+        <div className="space-y-2">
           <div className="text-lg font-semibold tracking-tight text-foreground">
             {component.name}
           </div>
@@ -48,7 +48,7 @@ export function SystemComponentCard({
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {historyLabel}
         </div>

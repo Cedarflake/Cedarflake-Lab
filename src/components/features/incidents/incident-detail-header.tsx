@@ -41,10 +41,10 @@ export function IncidentDetailHeader({
   const VisibilityIcon = visibilityIconMap[incident.visibility];
 
   return (
-    <section className="surface-card px-6 py-6 md:px-8 md:py-8">
-      <div className="space-y-4">
+    <section className="surface-card px-6 py-7 md:px-8 md:py-8">
+      <div className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
               <SeverityBadge severity={incident.severity} label={severityLabel} />
               <Badge variant="muted">{statusLabel ?? INCIDENT_STATUS_META[incident.status].label}</Badge>
@@ -53,7 +53,7 @@ export function IncidentDetailHeader({
                 {visibilityLabel ?? incident.visibility}
               </Badge>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
                 {incident.title}
               </h1>
@@ -64,14 +64,14 @@ export function IncidentDetailHeader({
           </div>
         </div>
       </div>
-      <div className="space-y-5 pt-6">
+      <div className="space-y-6 pt-8">
         <p className="text-sm leading-7 text-muted-foreground">{incident.body}</p>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3">
           <InfoTile icon={CalendarRange} label={publishedCaption} value={publishedLabel} />
           <InfoTile icon={Clock3} label={durationCaption} value={durationLabel} />
           <InfoTile icon={CalendarRange} label={windowCaption} value={windowLabel} />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {componentNames.map((name) => (
             <span
               key={name}
@@ -104,15 +104,15 @@ function InfoTile({
   value: string;
 }) {
   return (
-    <div className="surface-muted flex items-start gap-3 pl-4">
+    <div className="surface-muted flex items-start gap-3.5 pl-4">
       <span className="text-foreground">
         <Icon className="size-4" />
       </span>
-      <div>
+      <div className="space-y-1">
         <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
           {label}
         </div>
-        <div className="mt-1 text-sm font-medium leading-6 text-foreground">{value}</div>
+        <div className="text-sm font-medium leading-6 text-foreground">{value}</div>
       </div>
     </div>
   );

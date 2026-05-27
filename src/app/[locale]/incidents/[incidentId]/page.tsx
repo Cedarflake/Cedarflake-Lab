@@ -107,17 +107,15 @@ export default async function IncidentDetailPage({
   }
 
   const componentsById = getComponentsById(systemComponents);
-  const componentNames = incident.componentIds.map(
-    (componentId) => componentsById[componentId]?.name ?? componentId,
-  );
+  const componentNames = [componentsById[incident.componentId]?.name ?? incident.componentId];
   const primaryComponent = systemComponents.find(
-    (component) => component.id === incident.componentIds[0],
+    (component) => component.id === incident.componentId,
   );
   const timeline = sortTimelineUpdates(incident.timeline);
 
   return (
     <div className="page-shell">
-      <main className="page-container flex flex-col gap-8 py-14 md:py-20">
+      <main className="page-container flex flex-col gap-12 py-14 md:gap-16 md:py-20">
         <Link
           href={
             primaryComponent
@@ -135,7 +133,7 @@ export default async function IncidentDetailPage({
             : tCommon("actions.backToComponents")}
         </Link>
 
-        <section className="space-y-5">
+        <section className="space-y-8">
           <SectionHeading
             kicker={t("hero.kicker")}
             title={incident.title}
@@ -163,7 +161,7 @@ export default async function IncidentDetailPage({
           />
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
+        <section className="grid gap-8 pt-5 md:pt-6 lg:grid-cols-[1.35fr_0.65fr]">
           <IncidentTimeline
             title={t("timeline.title")}
             description={t("timeline.description")}
@@ -172,14 +170,14 @@ export default async function IncidentDetailPage({
             getStatusLabel={(status) => statusCopy[status].label}
           />
 
-          <section className="surface-card px-6 py-6 md:px-8">
-            <div className="space-y-2">
+          <section className="surface-card px-6 py-7 md:px-8 md:py-8">
+            <div className="space-y-3">
               <h3 className="text-lg font-semibold tracking-tight text-foreground">
                 {t("side.title")}
               </h3>
               <p className="text-sm leading-6 text-muted-foreground">{t("side.description")}</p>
             </div>
-            <div className="space-y-4 pt-6 text-sm text-muted-foreground">
+            <div className="space-y-5 pt-8 text-sm text-muted-foreground">
               <div className="surface-muted pl-4">
                 <div className="text-xs uppercase tracking-[0.16em]">
                   {t("side.kindLabel")}

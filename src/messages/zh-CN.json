@@ -28,7 +28,7 @@
       "title": "按部就班",
       "description": "身体、情绪、学习与绘画各自拥有独立的健康状态和事件归属，未来可继续扩展更多 personal services。",
       "historyLabel": "最近 {days} 天组件历史",
-      "uptimeLabel": "窗口可用性",
+      "uptimeLabel": "正常时间占比",
       "incidentsLabel": "累计事件",
       "activeLabel": "活动事件"
     },

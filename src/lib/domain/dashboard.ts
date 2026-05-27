@@ -11,7 +11,7 @@ export function getComponentIncidentCount(
   component: SystemComponent,
   incidents: Incident[],
 ) {
-  return incidents.filter((incident) => incident.componentIds.includes(component.id)).length;
+  return incidents.filter((incident) => incident.componentId === component.id).length;
 }
 
 export function getComponentBySlug(components: SystemComponent[], slug: string) {
@@ -20,7 +20,7 @@ export function getComponentBySlug(components: SystemComponent[], slug: string) 
 
 export function getIncidentsByComponent(componentId: string, incidents: Incident[]) {
   return sortIncidentsByPublishedAtDesc(
-    incidents.filter((incident) => incident.componentIds.includes(componentId)),
+    incidents.filter((incident) => incident.componentId === componentId),
   );
 }
 

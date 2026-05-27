@@ -31,22 +31,20 @@ export function RecentIncidentFeed({
   const groupedIncidents = groupIncidentsByPublishedDate(incidents);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       {groupedIncidents.map((group) => (
-        <section key={group.date} className="space-y-5">
+        <section key={group.date} className="space-y-6 pt-4 first:pt-0 md:space-y-7 md:pt-5">
           <h3 className="text-lg font-semibold tracking-tight text-foreground">
             {formatCalendarDate(group.date, locale)}
           </h3>
-          <div className="space-y-8">
+          <div className="space-y-9">
             {group.incidents.map((incident) => {
-              const componentNames = incident.componentIds.map(
-                (componentId) => componentsById[componentId]?.name ?? componentId,
-              );
+              const componentName = componentsById[incident.componentId]?.name ?? incident.componentId;
               const timeline = sortTimelineUpdatesDesc(incident.timeline);
 
               return (
-                <article key={incident.id} className="space-y-4 border-l border-border/70 pl-5">
-                  <div className="space-y-2">
+                <article key={incident.id} className="space-y-5 border-l border-border/70 pl-5">
+                  <div className="space-y-3">
                     <Link
                       href={{
                         pathname: "/incidents/[incidentId]",
@@ -58,13 +56,11 @@ export function RecentIncidentFeed({
                     </Link>
                     <p className="text-sm leading-6 text-muted-foreground">{incident.summary}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      {componentNames.map((name) => (
-                        <span key={name}>{name}</span>
-                      ))}
+                      <span>{componentName}</span>
                     </div>
                   </div>
 
-                  <ol className="space-y-3">
+                  <ol className="space-y-4">
                     {timeline.map((update) => (
                       <li key={update.id} className="space-y-1.5">
                         <div className="text-sm leading-6 text-foreground">

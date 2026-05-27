@@ -20,14 +20,14 @@ export function SectionHeading({
   return (
     <div
       className={cn(
-        "space-y-3",
+        "space-y-4",
         align === "center" && "text-center",
         className,
       )}
       {...props}
     >
       {kicker ? <p className="section-kicker">{kicker}</p> : null}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
           {title}
         </h2>

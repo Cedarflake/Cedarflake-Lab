@@ -43,10 +43,10 @@ export function IncidentListItem({
   const VisibilityIcon = visibilityIconMap[incident.visibility];
 
   return (
-    <article className="surface-card px-5 py-5">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
+    <article className="surface-card px-5 py-6 md:px-6 md:py-6">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
             <h3 className="text-lg font-semibold tracking-tight text-foreground">{incident.title}</h3>
             <p className="text-sm leading-6 text-muted-foreground">{incident.summary}</p>
           </div>
@@ -64,9 +64,9 @@ export function IncidentListItem({
           </Badge>
         </div>
       </div>
-      <div className="space-y-4 pt-4">
+      <div className="space-y-5 pt-5">
         <p className="text-sm leading-6 text-muted-foreground">{incident.body}</p>
-        <div className="flex flex-wrap gap-2 pt-2">
+        <div className="flex flex-wrap gap-2.5 pt-2">
           {componentNames.map((name) => (
             <span
               key={name}
@@ -76,11 +76,11 @@ export function IncidentListItem({
             </span>
           ))}
         </div>
-        <div className="pt-2 text-xs text-muted-foreground">
+        <div className="pt-1 text-xs text-muted-foreground">
           {severityDescription ?? SEVERITY_META[incident.severity].description}
         </div>
         {href && hrefLabel ? (
-          <div className="pt-4">
+          <div className="pt-3">
             <Link
               href={href}
               className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-primary hover:text-primary"

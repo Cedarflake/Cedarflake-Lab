@@ -125,8 +125,8 @@ export default async function LocalizedHomePage({
       .filter((incident) => incident !== undefined);
     const componentNames = Array.from(
       new Set(
-        relatedIncidents.flatMap((incident) =>
-          incident.componentIds.map((componentId) => componentsById[componentId]?.name ?? componentId),
+        relatedIncidents.map(
+          (incident) => componentsById[incident.componentId]?.name ?? incident.componentId,
         ),
       ),
     );
@@ -158,12 +158,12 @@ export default async function LocalizedHomePage({
 
   return (
     <div className="page-shell">
-      <main className="page-container flex flex-col gap-14 py-14 md:gap-18 md:py-20">
+      <main className="page-container flex flex-col gap-14 py-14 md:gap-20 md:py-20">
         <div className="flex justify-end">
           <LocaleSwitcher />
         </div>
 
-        <section className="space-y-8">
+        <section className="space-y-9">
           <nav className="flex flex-wrap gap-3">
             {navigation.map((item) => (
               <a
@@ -177,7 +177,7 @@ export default async function LocalizedHomePage({
           </nav>
         </section>
 
-        <section id="uptime" className="space-y-8 pt-6 md:pt-8">
+        <section id="uptime" className="space-y-9 pt-8 md:pt-10">
           <SectionHeading
             kicker={t("granules.kicker")}
             title={t("granules.title")}
@@ -188,8 +188,8 @@ export default async function LocalizedHomePage({
             getGranuleTitle={formatGranuleTitle}
             locale={locale}
           />
-          <div className="space-y-5 border-t border-border/60 pt-6">
-            <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+          <div className="space-y-6 border-t border-border/60 pt-8">
+            <div className="grid gap-5 md:grid-cols-3 xl:grid-cols-6">
               <div className="border-y border-border/70 px-5 py-5">
                 <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
                   Uptime
@@ -251,13 +251,13 @@ export default async function LocalizedHomePage({
           </div>
         </section>
 
-        <section id="components" className="space-y-8 pt-6 md:pt-8">
+        <section id="components" className="space-y-9 pt-8 md:pt-10">
           <SectionHeading
             kicker={t("components.kicker")}
             title={t("components.title")}
             description={t("components.description")}
           />
-          <div className="space-y-6">
+          <div className="space-y-8">
             {orderedComponents.map((component) => (
               <Link
                 key={component.id}
@@ -284,7 +284,7 @@ export default async function LocalizedHomePage({
           </div>
         </section>
 
-        <section id="recent-events" className="space-y-8 pt-6 md:pt-8">
+        <section id="recent-events" className="space-y-9 pt-8 md:pt-10">
           <SectionHeading
             kicker={t("recentFeed.kicker")}
             title={t("recentFeed.title")}
