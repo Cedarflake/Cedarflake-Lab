@@ -77,6 +77,7 @@ export function StatusGranuleGrid({
     return weekdayFormatter.format(date);
   });
   const monthLabels = [] as Array<{label: string; left: number; width: number}>;
+  const availabilityLabel = locale.startsWith("zh") ? "可用性" : "Availability";
 
   if (firstDate && lastDate && rangeStart) {
     for (
@@ -179,7 +180,10 @@ export function StatusGranuleGrid({
                   cell?.granule ? (
                     <div
                       key={`${cell.granule.date}-${columnIndex}-${rowIndex}`}
-                      title={getGranuleTitle?.(cell.granule) ?? `${cell.granule.date} · ${Math.round(cell.granule.uptimeRatio * 100)}% uptime`}
+                      title={
+                        getGranuleTitle?.(cell.granule) ??
+                        `${cell.granule.date} · ${availabilityLabel} ${Math.round(cell.granule.uptimeRatio * 100)}%`
+                      }
                       className={cn(
                         "rounded-[3px] ring-1 transition",
                         granuleToneMap[cell.granule.highestSeverity],

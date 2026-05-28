@@ -1,14 +1,13 @@
-import type {DailyStatusGranule, IncidentSeverity, SystemComponent} from "@/types";
+import type {DailyStatusGranule, LifeSection} from "@/types";
 
 import {StatusGranuleStrip} from "@/components/features/status/status-granule-strip";
-import {SeverityBadge} from "@/components/features/status/severity-badge";
-import {Badge} from "@/components/ui/badge";
 
-export function SystemComponentCard({
-  component,
+export function LifeSectionCard({
+  section,
   granules,
-  currentSeverity,
+  severityLabel,
   getGranuleTitle,
+  locale,
   affectedIncidentCount,
   activeIncidentCount,
   uptimeLabel,
@@ -16,10 +15,11 @@ export function SystemComponentCard({
   incidentsLabel,
   activeLabel,
 }: {
-  component: SystemComponent;
+  section: LifeSection;
   granules: DailyStatusGranule[];
-  currentSeverity: IncidentSeverity;
+  severityLabel: string;
   getGranuleTitle?: (granule: DailyStatusGranule) => string;
+  locale?: string;
   affectedIncidentCount: number;
   activeIncidentCount: number;
   uptimeLabel: string;
@@ -36,15 +36,14 @@ export function SystemComponentCard({
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="text-lg font-semibold tracking-tight text-foreground">
-            {component.name}
+            {section.name}
           </div>
-          <p className="text-sm leading-6 text-muted-foreground">{component.description}</p>
+          <p className="text-sm leading-6 text-muted-foreground">{section.description}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <SeverityBadge severity={currentSeverity} />
-          <Badge variant="muted">{component.category}</Badge>
-          <Badge variant="muted">{affectedIncidentCount} {incidentsLabel}</Badge>
-          <Badge variant="muted">{activeIncidentCount} {activeLabel}</Badge>
+        <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-2">
+          <MetaLine label={section.category} value={severityLabel} />
+          <MetaLine label={incidentsLabel} value={String(affectedIncidentCount)} />
+          <MetaLine label={activeLabel} value={String(activeIncidentCount)} />
         </div>
       </div>
 
@@ -52,7 +51,12 @@ export function SystemComponentCard({
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {historyLabel}
         </div>
-        <StatusGranuleStrip granules={granules} compact getGranuleTitle={getGranuleTitle} />
+        <StatusGranuleStrip
+          granules={granules}
+          compact
+          getGranuleTitle={getGranuleTitle}
+          locale={locale}
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-3 lg:justify-end">
@@ -65,6 +69,15 @@ export function SystemComponentCard({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MetaLine({label, value}: {label: string; value: string}) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-border/50 py-2">
+      <span>{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
 }

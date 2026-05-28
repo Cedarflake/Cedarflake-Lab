@@ -11,6 +11,7 @@ export function UptimeHero({
   activeCount,
   scheduledCount,
   rangeLabel,
+  labels,
 }: {
   title: string;
   description: string;
@@ -18,6 +19,15 @@ export function UptimeHero({
   activeCount: number;
   scheduledCount: number;
   rangeLabel: string;
+  labels: {
+    uptime: string;
+    steadyDays: string;
+    activeEvents: string;
+    plannedMaintenance: string;
+    impactMinutes: string;
+    maintenanceMinutes: string;
+    recordedEvents: string;
+  };
 }) {
   return (
     <section className="surface-card px-6 py-8 md:px-10 md:py-10">
@@ -36,23 +46,23 @@ export function UptimeHero({
         <div className="surface-muted min-w-full space-y-4 pl-5 lg:min-w-80">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Uptime
+              {labels.uptime}
             </div>
             <div className="mt-2 text-4xl font-semibold tracking-tight text-foreground">
               {sla.uptimePercentage}%
             </div>
           </div>
           <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3 lg:grid-cols-1">
-            <Metric icon={ShieldCheck} label="Healthy days" value={`${sla.healthyGranuleCount}`} />
-            <Metric icon={Activity} label="Live incidents" value={`${activeCount}`} />
-            <Metric icon={TimerReset} label="Scheduled" value={`${scheduledCount}`} />
+            <Metric icon={ShieldCheck} label={labels.steadyDays} value={`${sla.healthyGranuleCount}`} />
+            <Metric icon={Activity} label={labels.activeEvents} value={`${activeCount}`} />
+            <Metric icon={TimerReset} label={labels.plannedMaintenance} value={`${scheduledCount}`} />
           </div>
         </div>
       </div>
       <div className="mt-8 grid gap-4 border-t border-border/70 pt-6 md:grid-cols-3">
-        <StatCard label="Affected minutes" value={`${sla.affectedMinutes}`} />
-        <StatCard label="Maintenance minutes" value={`${sla.maintenanceMinutes}`} />
-        <StatCard label="Tracked incidents" value={`${sla.impactedIncidentIds.length}`} />
+        <StatCard label={labels.impactMinutes} value={`${sla.affectedMinutes}`} />
+        <StatCard label={labels.maintenanceMinutes} value={`${sla.maintenanceMinutes}`} />
+        <StatCard label={labels.recordedEvents} value={`${sla.impactedIncidentIds.length}`} />
       </div>
     </section>
   );

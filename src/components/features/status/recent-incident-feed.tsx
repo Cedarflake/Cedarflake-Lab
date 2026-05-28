@@ -1,3 +1,5 @@
+import type {ComponentProps} from "react";
+
 import {Link} from "@/i18n/navigation";
 import {groupIncidentsByPublishedDate} from "@/lib/domain/dashboard";
 import {sortTimelineUpdatesDesc} from "@/lib/domain/incidents-feed";
@@ -5,24 +7,28 @@ import {formatCalendarDate, formatDateTime, formatRelativeTime} from "@/lib/form
 import type {
   Incident,
   IncidentLifecycleStatus,
-  SystemComponent,
-  SystemComponentId,
+  LifeSection,
+  LifeSectionId,
 } from "@/types";
+
+type IncidentLinkHref = ComponentProps<typeof Link>["href"];
 
 export function RecentIncidentFeed({
   incidents,
-  componentsById,
+  sectionsById,
   locale,
   emptyLabel,
   detailLabel,
   statusLabels,
+  getIncidentHref,
 }: {
   incidents: Incident[];
-  componentsById: Record<SystemComponentId, SystemComponent>;
+  sectionsById: Record<LifeSectionId, LifeSection>;
   locale: string;
   emptyLabel: string;
   detailLabel: string;
   statusLabels: Record<IncidentLifecycleStatus, string>;
+  getIncidentHref: (incident: Incident) => IncidentLinkHref;
 }) {
   if (incidents.length === 0) {
     return <div className="border-y border-border/70 px-6 py-8 text-sm text-muted-foreground">{emptyLabel}</div>;
@@ -39,24 +45,22 @@ export function RecentIncidentFeed({
           </h3>
           <div className="space-y-9">
             {group.incidents.map((incident) => {
-              const componentName = componentsById[incident.componentId]?.name ?? incident.componentId;
+              const sectionName = sectionsById[incident.sectionId]?.name ?? incident.sectionId;
               const timeline = sortTimelineUpdatesDesc(incident.timeline);
+              const href: IncidentLinkHref = getIncidentHref(incident);
 
               return (
                 <article key={incident.id} className="space-y-5 border-l border-border/70 pl-5">
                   <div className="space-y-3">
                     <Link
-                      href={{
-                        pathname: "/incidents/[incidentId]",
-                        params: {incidentId: incident.slug},
-                      }}
+                      href={href}
                       className="text-lg font-semibold tracking-tight text-foreground transition hover:text-primary"
                     >
                       {incident.title}
                     </Link>
                     <p className="text-sm leading-6 text-muted-foreground">{incident.summary}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span>{componentName}</span>
+                      <span>{sectionName}</span>
                     </div>
                   </div>
 
@@ -82,10 +86,7 @@ export function RecentIncidentFeed({
 
                   <div>
                     <Link
-                      href={{
-                        pathname: "/incidents/[incidentId]",
-                        params: {incidentId: incident.slug},
-                      }}
+                      href={href}
                       className="text-xs font-medium text-muted-foreground transition hover:text-primary"
                     >
                       {detailLabel}

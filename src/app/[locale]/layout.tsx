@@ -3,6 +3,7 @@ import {NextIntlClientProvider} from "next-intl";
 import {getMessages, getTranslations, setRequestLocale} from "next-intl/server";
 import {notFound} from "next/navigation";
 
+import {SiteNavbar} from "@/components/navigation/site-navbar";
 import {AppProviders} from "@/components/providers/app-providers";
 import {siteConfig} from "@/config/site";
 import {fontVariables} from "@/styles/fonts";
@@ -91,7 +92,10 @@ export default async function LocaleLayout({
     >
       <body className="min-h-full bg-background font-sans text-foreground">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AppProviders>{children}</AppProviders>
+          <AppProviders>
+            <SiteNavbar />
+            {children}
+          </AppProviders>
         </NextIntlClientProvider>
       </body>
     </html>

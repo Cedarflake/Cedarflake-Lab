@@ -1,5 +1,5 @@
 import type {EntityId, IsoDateTimeString, Visibility} from "./common";
-import type {SystemComponentId} from "./system-component";
+import type {LifeSectionId} from "./life-section";
 
 export type IncidentId = EntityId;
 
@@ -50,7 +50,7 @@ export interface Incident {
   visibility: Visibility;
   isScheduled: boolean;
   affectsUptime?: boolean;
-  componentId: SystemComponentId;
+  sectionId: LifeSectionId;
   createdAt: IsoDateTimeString;
   updatedAt: IsoDateTimeString;
   publishedAt: IsoDateTimeString;

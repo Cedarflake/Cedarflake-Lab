@@ -1,20 +1,19 @@
-import {ArrowLeft} from "lucide-react";
 import {getTranslations, setRequestLocale} from "next-intl/server";
 import {notFound} from "next/navigation";
 
 import {IncidentDetailHeader} from "@/components/features/incidents/incident-detail-header";
 import {IncidentTimeline} from "@/components/features/incidents/incident-timeline";
+import {HistoryBackButton} from "@/components/ui/history-back-button";
 import {SectionHeading} from "@/components/ui/section-heading";
-import {Link} from "@/i18n/navigation";
 import {isValidLocale, type AppLocale} from "@/i18n/routing";
-import {getComponentsById} from "@/lib/domain/dashboard";
+import {getSectionsById} from "@/lib/domain/dashboard";
 import {getIncidentBySlug, sortTimelineUpdates} from "@/lib/domain/incidents-feed";
 import {
   formatDateRange,
   formatDateTime,
   formatDurationMinutes,
 } from "@/lib/formatters";
-import {shikanekoMockData} from "@/lib/mock";
+import {getMockUserSpaceData, mockUserSpaceData} from "@/lib/mock";
 import type {
   IncidentLifecycleStatus,
   IncidentSeverity,
@@ -23,33 +22,45 @@ import type {
 
 type PageParams = Promise<{
   locale: string;
-  incidentId: string;
+  username: string;
+  eventSlug: string;
 }>;
 
 async function getValidatedParams(
   params: PageParams,
-): Promise<{locale: AppLocale; incidentId: string}> {
-  const {locale, incidentId} = await params;
+): Promise<{locale: AppLocale; username: string; eventSlug: string}> {
+  const {locale, username, eventSlug} = await params;
 
   if (!isValidLocale(locale)) {
     notFound();
   }
 
-  return {locale, incidentId};
+  return {locale, username, eventSlug};
 }
 
 export function generateStaticParams() {
-  return shikanekoMockData.incidents.map((incident) => ({incidentId: incident.slug}));
+  return mockUserSpaceData.flatMap((space) =>
+    space.incidents.map((incident) => ({
+      username: space.owner.username,
+      eventSlug: incident.slug,
+    })),
+  );
 }
 
-export default async function IncidentDetailPage({
+export default async function UserEventDetailPage({
   params,
 }: {
   params: PageParams;
 }) {
-  const {locale, incidentId} = await getValidatedParams(params);
+  const {locale, username, eventSlug} = await getValidatedParams(params);
 
   setRequestLocale(locale);
+
+  const userSpace = getMockUserSpaceData(username);
+
+  if (!userSpace) {
+    notFound();
+  }
 
   const [t, tCommon] = await Promise.all([
     getTranslations({locale, namespace: "IncidentDetail"}),
@@ -99,39 +110,36 @@ export default async function IncidentDetailPage({
     private: {label: tCommon("visibility.private.label")},
   };
 
-  const {incidents, systemComponents} = shikanekoMockData;
-  const incident = getIncidentBySlug(incidents, incidentId);
+  const {incidents, lifeSections} = userSpace;
+  const incident = getIncidentBySlug(incidents, eventSlug);
 
   if (!incident) {
     notFound();
   }
 
-  const componentsById = getComponentsById(systemComponents);
-  const componentNames = [componentsById[incident.componentId]?.name ?? incident.componentId];
-  const primaryComponent = systemComponents.find(
-    (component) => component.id === incident.componentId,
+  const sectionsById = getSectionsById(lifeSections);
+  const sectionNames = [sectionsById[incident.sectionId]?.name ?? incident.sectionId];
+  const primarySection = lifeSections.find(
+    (section) => section.id === incident.sectionId,
   );
   const timeline = sortTimelineUpdates(incident.timeline);
 
   return (
     <div className="page-shell">
       <main className="page-container flex flex-col gap-12 py-14 md:gap-16 md:py-20">
-        <Link
-          href={
-            primaryComponent
+        <HistoryBackButton
+          fallbackHref={
+            primarySection
               ? {
-                  pathname: "/components/[componentSlug]",
-                  params: {componentSlug: primaryComponent.slug},
+                  pathname: "/u/[username]/sections/[sectionSlug]",
+                  params: {username, sectionSlug: primarySection.slug},
                 }
-              : "/components"
+              : {
+                  pathname: "/u/[username]/sections",
+                  params: {username},
+                }
           }
-          className="inline-flex w-fit items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
-        >
-          <ArrowLeft className="size-4" />
-          {primaryComponent
-            ? tCommon("actions.backToComponent")
-            : tCommon("actions.backToComponents")}
-        </Link>
+        />
 
         <section className="space-y-8">
           <SectionHeading
@@ -141,7 +149,7 @@ export default async function IncidentDetailPage({
           />
           <IncidentDetailHeader
             incident={incident}
-            componentNames={componentNames}
+            sectionNames={sectionNames}
             severityLabel={severityCopy[incident.severity].label}
             statusLabel={statusCopy[incident.status].label}
             visibilityLabel={visibilityCopy[incident.visibility].label}

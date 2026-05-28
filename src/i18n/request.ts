@@ -1,15 +1,12 @@
 import {getRequestConfig} from "next-intl/server";
 
+import {loadLocaleMessages} from "@/i18n/messages";
 import {isValidLocale, routing, type AppLocale} from "@/i18n/routing";
 
 const timeZones: Record<AppLocale, string> = {
   "zh-CN": "Asia/Shanghai",
   en: "UTC",
 };
-
-async function loadMessages(locale: AppLocale) {
-  return (await import(`@/messages/${locale}.json`)).default;
-}
 
 export default getRequestConfig(async ({requestLocale}) => {
   const requestedLocale = await requestLocale;
@@ -20,7 +17,7 @@ export default getRequestConfig(async ({requestLocale}) => {
 
   return {
     locale,
-    messages: await loadMessages(locale),
+    messages: await loadLocaleMessages(locale),
     timeZone: timeZones[locale],
     now: new Date(),
   };

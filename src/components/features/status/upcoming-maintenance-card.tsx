@@ -8,10 +8,16 @@ export function UpcomingMaintenanceCard({
   incident,
   countdownLabel,
   windowLabel,
+  scheduledLabel,
+  countdownTitle,
+  windowTitle,
 }: {
   incident: Incident;
   countdownLabel: string;
   windowLabel: string;
+  scheduledLabel: string;
+  countdownTitle: string;
+  windowTitle: string;
 }) {
   return (
     <section className="surface-card px-5 py-5">
@@ -21,7 +27,7 @@ export function UpcomingMaintenanceCard({
             <h3 className="text-lg font-semibold tracking-tight text-foreground">{incident.title}</h3>
             <p className="text-sm leading-6 text-muted-foreground">{incident.summary}</p>
           </div>
-          <Badge variant="info">Scheduled</Badge>
+          <Badge variant="info">{scheduledLabel}</Badge>
         </div>
       </div>
       <div className="space-y-4 pt-4">
@@ -30,7 +36,7 @@ export function UpcomingMaintenanceCard({
             <TimerReset className="size-4 text-foreground" />
             <div>
               <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                Countdown
+                {countdownTitle}
               </div>
               <div className="text-sm font-medium text-foreground">{countdownLabel}</div>
             </div>
@@ -39,7 +45,7 @@ export function UpcomingMaintenanceCard({
             <CalendarClock className="size-4 text-foreground" />
             <div>
               <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                Window
+                {windowTitle}
               </div>
               <div className="text-sm font-medium text-foreground">{windowLabel}</div>
             </div>

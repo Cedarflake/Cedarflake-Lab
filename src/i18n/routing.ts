@@ -16,9 +16,14 @@ export const routing = defineRouting({
   localePrefix: "always",
   pathnames: {
     "/": "/",
-    "/components": "/components",
-    "/components/[componentSlug]": "/components/[componentSlug]",
-    "/incidents/[incidentId]": "/incidents/[incidentId]",
+    "/studio": "/studio",
+    "/studio/sections": "/studio/sections",
+    "/studio/events": "/studio/events",
+    "/studio/settings": "/studio/settings",
+    "/u/[username]": "/u/[username]",
+    "/u/[username]/sections": "/u/[username]/sections",
+    "/u/[username]/sections/[sectionSlug]": "/u/[username]/sections/[sectionSlug]",
+    "/u/[username]/events/[eventSlug]": "/u/[username]/events/[eventSlug]",
   },
 });
 

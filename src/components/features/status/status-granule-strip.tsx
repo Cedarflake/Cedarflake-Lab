@@ -15,12 +15,16 @@ export function StatusGranuleStrip({
   className,
   compact = false,
   getGranuleTitle,
+  locale = "en",
 }: {
   granules: DailyStatusGranule[];
   className?: string;
   compact?: boolean;
   getGranuleTitle?: (granule: DailyStatusGranule) => string;
+  locale?: string;
 }) {
+  const availabilityLabel = locale.startsWith("zh") ? "可用性" : "Availability";
+
   return (
     <div
       className={cn(
@@ -31,7 +35,10 @@ export function StatusGranuleStrip({
       {granules.map((granule) => (
         <div
           key={granule.date}
-          title={getGranuleTitle?.(granule) ?? `${granule.date} · ${Math.round(granule.uptimeRatio * 100)}% uptime`}
+          title={
+            getGranuleTitle?.(granule) ??
+            `${granule.date} · ${availabilityLabel} ${Math.round(granule.uptimeRatio * 100)}%`
+          }
           className={cn(
             compact
               ? "h-4 w-1 shrink-0 rounded-[2px] ring-1 transition md:h-4 md:w-1"

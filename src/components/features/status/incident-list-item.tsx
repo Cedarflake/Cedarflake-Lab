@@ -21,7 +21,7 @@ type IncidentLinkHref = ComponentProps<typeof Link>["href"];
 
 export function IncidentListItem({
   incident,
-  componentNames,
+  sectionNames,
   timeLabel,
   severityLabel,
   severityDescription,
@@ -31,7 +31,7 @@ export function IncidentListItem({
   hrefLabel,
 }: {
   incident: Incident;
-  componentNames: string[];
+  sectionNames: string[];
   timeLabel: string;
   severityLabel?: string;
   severityDescription?: string;
@@ -67,7 +67,7 @@ export function IncidentListItem({
       <div className="space-y-5 pt-5">
         <p className="text-sm leading-6 text-muted-foreground">{incident.body}</p>
         <div className="flex flex-wrap gap-2.5 pt-2">
-          {componentNames.map((name) => (
+          {sectionNames.map((name) => (
             <span
               key={name}
               className="border-l border-border/60 pl-2.5 text-xs text-muted-foreground"

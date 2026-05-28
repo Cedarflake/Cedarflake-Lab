@@ -2,19 +2,19 @@ import {getTranslations, setRequestLocale} from "next-intl/server";
 import {notFound} from "next/navigation";
 
 import {IncidentListItem} from "@/components/features/status/incident-list-item";
+import {HistoryBackButton} from "@/components/ui/history-back-button";
 import {SectionHeading} from "@/components/ui/section-heading";
-import {Link} from "@/i18n/navigation";
 import {isValidLocale, type AppLocale} from "@/i18n/routing";
 import {
-  getActiveIncidentsByComponent,
-  getComponentBySlug,
-  getComponentsById,
-  getIncidentsByComponent,
-  getResolvedIncidentsByComponent,
-  getUpcomingMaintenancesByComponent,
+  getActiveIncidentsBySection,
+  getIncidentsBySection,
+  getResolvedIncidentsBySection,
+  getSectionBySlug,
+  getSectionsById,
+  getUpcomingMaintenancesBySection,
 } from "@/lib/domain/dashboard";
 import {formatDateRange, formatDateTime, formatDurationMinutes} from "@/lib/formatters";
-import {shikanekoMockData} from "@/lib/mock";
+import {getMockUserSpaceData, mockUserSpaceData} from "@/lib/mock";
 import type {
   IncidentLifecycleStatus,
   IncidentSeverity,
@@ -23,38 +23,48 @@ import type {
 
 type PageParams = Promise<{
   locale: string;
-  componentSlug: string;
+  username: string;
+  sectionSlug: string;
 }>;
 
 async function getValidatedParams(
   params: PageParams,
-): Promise<{locale: AppLocale; componentSlug: string}> {
-  const {locale, componentSlug} = await params;
+): Promise<{locale: AppLocale; username: string; sectionSlug: string}> {
+  const {locale, username, sectionSlug} = await params;
 
   if (!isValidLocale(locale)) {
     notFound();
   }
 
-  return {locale, componentSlug};
+  return {locale, username, sectionSlug};
 }
 
 export function generateStaticParams() {
-  return shikanekoMockData.systemComponents.map((component) => ({
-    componentSlug: component.slug,
-  }));
+  return mockUserSpaceData.flatMap((space) =>
+    space.lifeSections.map((section) => ({
+      username: space.owner.username,
+      sectionSlug: section.slug,
+    })),
+  );
 }
 
-export default async function ComponentIncidentPage({
+export default async function UserSectionIncidentPage({
   params,
 }: {
   params: PageParams;
 }) {
-  const {locale, componentSlug} = await getValidatedParams(params);
+  const {locale, username, sectionSlug} = await getValidatedParams(params);
 
   setRequestLocale(locale);
 
+  const userSpace = getMockUserSpaceData(username);
+
+  if (!userSpace) {
+    notFound();
+  }
+
   const [t, tCommon] = await Promise.all([
-    getTranslations({locale, namespace: "ComponentPage"}),
+    getTranslations({locale, namespace: "SectionPage"}),
     getTranslations({locale, namespace: "IncidentCommon"}),
   ]);
 
@@ -96,21 +106,21 @@ export default async function ComponentIncidentPage({
     private: {label: tCommon("visibility.private.label")},
   };
 
-  const {incidents, systemComponents} = shikanekoMockData;
-  const component = getComponentBySlug(systemComponents, componentSlug);
+  const {incidents, lifeSections} = userSpace;
+  const section = getSectionBySlug(lifeSections, sectionSlug);
 
-  if (!component) {
+  if (!section) {
     notFound();
   }
 
-  const componentsById = getComponentsById(systemComponents);
-  const allComponentIncidents = getIncidentsByComponent(component.id, incidents);
-  const activeIncidents = getActiveIncidentsByComponent(component.id, incidents);
-  const scheduledIncidents = getUpcomingMaintenancesByComponent(component.id, incidents);
-  const resolvedIncidents = getResolvedIncidentsByComponent(component.id, incidents);
+  const sectionsById = getSectionsById(lifeSections);
+  const allSectionIncidents = getIncidentsBySection(section.id, incidents);
+  const activeIncidents = getActiveIncidentsBySection(section.id, incidents);
+  const scheduledIncidents = getUpcomingMaintenancesBySection(section.id, incidents);
+  const resolvedIncidents = getResolvedIncidentsBySection(section.id, incidents);
 
   const metrics = [
-    {label: t("metrics.total"), value: allComponentIncidents.length},
+    {label: t("metrics.total"), value: allSectionIncidents.length},
     {label: t("metrics.active"), value: activeIncidents.length},
     {label: t("metrics.scheduled"), value: scheduledIncidents.length},
     {label: t("metrics.resolved"), value: resolvedIncidents.length},
@@ -120,17 +130,17 @@ export default async function ComponentIncidentPage({
     <div className="page-shell">
       <main className="page-container flex flex-col gap-12 py-14 md:gap-16 md:py-20">
         <section className="space-y-8">
-          <Link
-            href="/components"
-            className="inline-flex items-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
-          >
-            {tCommon("actions.backToComponents")}
-          </Link>
+          <HistoryBackButton
+            fallbackHref={{
+              pathname: "/u/[username]/sections",
+              params: {username},
+            }}
+          />
 
           <SectionHeading
             kicker={t("hero.kicker")}
-            title={component.name}
-            description={component.description}
+            title={section.name}
+            description={section.description}
           />
 
           <div className="grid gap-6 md:grid-cols-4">
@@ -157,15 +167,15 @@ export default async function ComponentIncidentPage({
                 <IncidentListItem
                   key={incident.id}
                   incident={incident}
-                  componentNames={[componentsById[incident.componentId]?.name ?? incident.componentId]}
+                  sectionNames={[sectionsById[incident.sectionId]?.name ?? incident.sectionId]}
                   timeLabel={formatDurationMinutes(incident.window.expectedDurationMinutes, locale)}
                   severityLabel={severityCopy[incident.severity].label}
                   severityDescription={severityCopy[incident.severity].description}
                   statusLabel={statusCopy[incident.status].label}
                   visibilityLabel={visibilityCopy[incident.visibility].label}
                   href={{
-                    pathname: "/incidents/[incidentId]",
-                    params: {incidentId: incident.slug},
+                    pathname: "/u/[username]/events/[eventSlug]",
+                    params: {username, eventSlug: incident.slug},
                   }}
                   hrefLabel={tCommon("actions.viewIncident")}
                 />
@@ -190,7 +200,7 @@ export default async function ComponentIncidentPage({
                 <IncidentListItem
                   key={incident.id}
                   incident={incident}
-                  componentNames={[componentsById[incident.componentId]?.name ?? incident.componentId]}
+                  sectionNames={[sectionsById[incident.sectionId]?.name ?? incident.sectionId]}
                   timeLabel={formatDateRange(
                     incident.window.startedAt,
                     incident.window.expectedEndAt,
@@ -201,8 +211,8 @@ export default async function ComponentIncidentPage({
                   statusLabel={statusCopy[incident.status].label}
                   visibilityLabel={visibilityCopy[incident.visibility].label}
                   href={{
-                    pathname: "/incidents/[incidentId]",
-                    params: {incidentId: incident.slug},
+                    pathname: "/u/[username]/events/[eventSlug]",
+                    params: {username, eventSlug: incident.slug},
                   }}
                   hrefLabel={tCommon("actions.viewIncident")}
                 />
@@ -227,15 +237,15 @@ export default async function ComponentIncidentPage({
                 <IncidentListItem
                   key={incident.id}
                   incident={incident}
-                  componentNames={[componentsById[incident.componentId]?.name ?? incident.componentId]}
+                  sectionNames={[sectionsById[incident.sectionId]?.name ?? incident.sectionId]}
                   timeLabel={formatDateTime(incident.updatedAt, locale, {year: "numeric"})}
                   severityLabel={severityCopy[incident.severity].label}
                   severityDescription={severityCopy[incident.severity].description}
                   statusLabel={statusCopy[incident.status].label}
                   visibilityLabel={visibilityCopy[incident.visibility].label}
                   href={{
-                    pathname: "/incidents/[incidentId]",
-                    params: {incidentId: incident.slug},
+                    pathname: "/u/[username]/events/[eventSlug]",
+                    params: {username, eventSlug: incident.slug},
                   }}
                   hrefLabel={tCommon("actions.viewIncident")}
                 />

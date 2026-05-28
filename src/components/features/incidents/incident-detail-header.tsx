@@ -15,7 +15,7 @@ const visibilityIconMap = {
 
 export function IncidentDetailHeader({
   incident,
-  componentNames,
+  sectionNames,
   severityLabel,
   statusLabel,
   visibilityLabel,
@@ -27,7 +27,7 @@ export function IncidentDetailHeader({
   windowCaption,
 }: {
   incident: Incident;
-  componentNames: string[];
+  sectionNames: string[];
   severityLabel?: string;
   statusLabel?: string;
   visibilityLabel?: string;
@@ -72,7 +72,7 @@ export function IncidentDetailHeader({
           <InfoTile icon={CalendarRange} label={windowCaption} value={windowLabel} />
         </div>
         <div className="flex flex-wrap gap-2.5">
-          {componentNames.map((name) => (
+          {sectionNames.map((name) => (
             <span
               key={name}
               className="border-l border-border/60 pl-3 text-xs text-muted-foreground"

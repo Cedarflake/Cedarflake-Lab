@@ -1,4 +1,4 @@
-import type {Incident, SystemComponent} from "@/types";
+import type {Incident, LifeSection} from "@/types";
 
 function sortIncidentsByPublishedAtDesc(incidents: Incident[]) {
   return [...incidents].sort(
@@ -7,37 +7,37 @@ function sortIncidentsByPublishedAtDesc(incidents: Incident[]) {
   );
 }
 
-export function getComponentIncidentCount(
-  component: SystemComponent,
+export function getSectionIncidentCount(
+  section: LifeSection,
   incidents: Incident[],
 ) {
-  return incidents.filter((incident) => incident.componentId === component.id).length;
+  return incidents.filter((incident) => incident.sectionId === section.id).length;
 }
 
-export function getComponentBySlug(components: SystemComponent[], slug: string) {
-  return components.find((component) => component.slug === slug) ?? null;
+export function getSectionBySlug(sections: LifeSection[], slug: string) {
+  return sections.find((section) => section.slug === slug) ?? null;
 }
 
-export function getIncidentsByComponent(componentId: string, incidents: Incident[]) {
+export function getIncidentsBySection(sectionId: string, incidents: Incident[]) {
   return sortIncidentsByPublishedAtDesc(
-    incidents.filter((incident) => incident.componentId === componentId),
+    incidents.filter((incident) => incident.sectionId === sectionId),
   );
 }
 
-export function getActiveIncidentsByComponent(componentId: string, incidents: Incident[]) {
-  return getActiveIncidents(getIncidentsByComponent(componentId, incidents));
+export function getActiveIncidentsBySection(sectionId: string, incidents: Incident[]) {
+  return getActiveIncidents(getIncidentsBySection(sectionId, incidents));
 }
 
-export function getUpcomingMaintenancesByComponent(
-  componentId: string,
+export function getUpcomingMaintenancesBySection(
+  sectionId: string,
   incidents: Incident[],
   now = new Date(),
 ) {
-  return getUpcomingMaintenances(getIncidentsByComponent(componentId, incidents), now);
+  return getUpcomingMaintenances(getIncidentsBySection(sectionId, incidents), now);
 }
 
-export function getResolvedIncidentsByComponent(componentId: string, incidents: Incident[]) {
-  return getIncidentsByComponent(componentId, incidents).filter(
+export function getResolvedIncidentsBySection(sectionId: string, incidents: Incident[]) {
+  return getIncidentsBySection(sectionId, incidents).filter(
     (incident) => incident.status === "resolved",
   );
 }
@@ -97,6 +97,6 @@ export function getRecentResolvedIncidents(incidents: Incident[], limit = 4) {
     .slice(0, limit);
 }
 
-export function getComponentsById(components: SystemComponent[]) {
-  return Object.fromEntries(components.map((component) => [component.id, component]));
+export function getSectionsById(sections: LifeSection[]) {
+  return Object.fromEntries(sections.map((section) => [section.id, section]));
 }

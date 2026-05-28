@@ -11,14 +11,14 @@ import type {
   Incident,
   IncidentSeverity,
   IsoDateString,
-  SystemComponentId,
+  LifeSectionId,
 } from "@/types";
 
 export interface BuildDailyStatusGranulesOptions {
   incidents: Incident[];
   startDate: IsoDateString;
   days: number;
-  componentId?: SystemComponentId;
+  sectionId?: LifeSectionId;
 }
 
 function addDays(date: Date, days: number) {
@@ -39,11 +39,11 @@ export function buildDailyStatusGranules({
   incidents,
   startDate,
   days,
-  componentId,
+  sectionId,
 }: BuildDailyStatusGranulesOptions): DailyStatusGranule[] {
   const start = startOfDay(new Date(`${startDate}T00:00:00.000Z`));
-  const scopedIncidents = componentId
-    ? incidents.filter((incident) => incident.componentId === componentId)
+  const scopedIncidents = sectionId
+    ? incidents.filter((incident) => incident.sectionId === sectionId)
     : incidents;
 
   return Array.from({length: days}, (_, index) => {
