@@ -1,0 +1,57 @@
+/* ===================== Color Palettes (RGB triplets) ===================== */
+
+:root {
+  /* Stone palette (light mode background & foreground) */
+  --color-stone-100: 255 251 248;
+  --color-stone-150: 248 244 241;
+  --color-stone-200: 239 234 231;
+  --color-stone-250: 226 221 217;
+  --color-stone-300: 207 201 197;
+  --color-stone-350: 179 173 168;
+  --color-stone-400: 152 145 139;
+  --color-stone-450: 116 109 104;
+  --color-stone-550: 99 92 87;
+  --color-stone-600: 90 84 79;
+  --color-stone-650: 76 70 66;
+  --color-stone-700: 63 57 53;
+  --color-stone-750: 50 45 41;
+  --color-stone-800: 39 35 32;
+  --color-stone-850: 29 26 23;
+  --color-stone-900: 20 17 14;
+
+  /* Midnight palette (dark mode background) */
+  --color-midnight-100: 251 252 254;
+  --color-midnight-150: 241 245 255;
+  --color-midnight-200: 228 235 255;
+  --color-midnight-250: 209 221 255;
+  --color-midnight-300: 183 201 254;
+  --color-midnight-350: 151 171 234;
+  --color-midnight-400: 121 143 212;
+  --color-midnight-450: 83 105 182;
+  --color-midnight-550: 68 88 160;
+  --color-midnight-600: 62 80 145;
+  --color-midnight-650: 53 68 121;
+  --color-midnight-700: 44 56 96;
+  --color-midnight-750: 35 44 73;
+  --color-midnight-800: 28 35 56;
+  --color-midnight-850: 21 26 40;
+  --color-midnight-900: 14 17 27;
+
+  /* Slate palette (dark mode foreground) */
+  --color-slate-100: 251 252 254;
+  --color-slate-150: 241 245 255;
+  --color-slate-200: 229 235 250;
+  --color-slate-250: 215 222 239;
+  --color-slate-300: 194 202 223;
+  --color-slate-350: 164 173 200;
+  --color-slate-400: 135 145 176;
+  --color-slate-450: 98 109 143;
+  --color-slate-550: 82 92 123;
+  --color-slate-600: 74 84 113;
+  --color-slate-650: 62 71 96;
+  --color-slate-700: 51 58 78;
+  --color-slate-750: 40 45 62;
+  --color-slate-800: 31 36 49;
+  --color-slate-850: 23 26 37;
+  --color-slate-900: 15 17 25;
+}

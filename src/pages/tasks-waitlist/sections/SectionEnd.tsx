@@ -7,7 +7,7 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { CONTENT_MAX_WIDTH } from "../constants";
 import { CopilotTasksLogo } from "../icons";
 import { WaitlistButton } from "../components/WaitlistButton";
@@ -16,7 +16,7 @@ import { useScrollProgress } from "../hooks/useScrollProgress";
 import { useMotionValueEvent } from "framer-motion";
 
 export function SectionEnd() {
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
   const ref = useRef<HTMLDivElement>(null);
   const { lenisScroll } = useLenisScrollContext();
 
@@ -48,14 +48,14 @@ export function SectionEnd() {
           <div className="text-foreground-250 dark:text-foreground-650 relative flex size-full flex-col items-center justify-center gap-8 p-5 md:gap-10">
             {/* Headline */}
             <div className="px-8 text-center text-xl sm:text-3xl md:text-4xl">
-              {t("tasks.waitList.sectionEnd.headline")}
+              {template.finalCta.headline}
             </div>
 
             {/* Logo */}
             <div className="relative w-full px-4">
               <CopilotTasksLogo
                 className="h-auto w-full"
-                title={t("tasks.waitList.footer.title")}
+                title={template.brand.name}
               />
             </div>
 

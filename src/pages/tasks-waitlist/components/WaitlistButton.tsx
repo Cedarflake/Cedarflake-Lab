@@ -12,7 +12,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { useIsAuthenticated, useSignIn } from "@/lib/auth";
 import {
   getSessionStorageValue,
@@ -51,13 +51,6 @@ const BUTTON_STYLES: Record<ButtonPlacement, { size: string; idle: string; disab
   },
 };
 
-const BUTTON_LABELS: Record<ButtonState, string> = {
-  default: "tasks.waitList.footer.ctaJoin",
-  confirmation: "tasks.waitList.footer.ctaJoinConfirmation",
-  joined: "tasks.waitList.footer.ctaReturning",
-  signIn: "tasks.waitList.footer.ctaSignIn",
-};
-
 // Helpers
 
 function getButtonState(status: string | undefined, showingConfirmation: boolean): ButtonState {
@@ -73,7 +66,7 @@ interface WaitlistButtonProps {
 }
 
 export function WaitlistButton({ placement = "home" }: WaitlistButtonProps) {
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
   const isAuthenticated = useIsAuthenticated();
   const { status, isLoading } = useWaitlistStatus(WAITLIST_PROGRAM);
   const { join, isPending, isError } = useJoinWaitlist(WAITLIST_PROGRAM);
@@ -139,6 +132,12 @@ export function WaitlistButton({ placement = "home" }: WaitlistButtonProps) {
   const buttonState: ButtonState = isAuthenticated
     ? getButtonState(status, showingConfirmation)
     : "signIn";
+  const buttonLabels: Record<ButtonState, string> = {
+    default: template.cta.join,
+    confirmation: template.cta.joinConfirmation,
+    joined: template.cta.returning,
+    signIn: template.cta.signIn,
+  };
 
   const { size, idle, disabled } = BUTTON_STYLES[placement];
   const isDisabled = isAuthenticated && (buttonState !== "default" || isLoading);
@@ -163,7 +162,7 @@ export function WaitlistButton({ placement = "home" }: WaitlistButtonProps) {
     <>
       {/* Live region for screen readers */}
       <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {isDisabled ? t(BUTTON_LABELS[buttonState]) : ""}
+        {isDisabled ? buttonLabels[buttonState] : ""}
       </span>
 
       <button
@@ -176,7 +175,7 @@ export function WaitlistButton({ placement = "home" }: WaitlistButtonProps) {
           isDisabled ? disabled : idle,
         )}
       >
-        {t(BUTTON_LABELS[buttonState])}
+        {buttonLabels[buttonState]}
       </button>
     </>
   );

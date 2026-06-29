@@ -9,7 +9,7 @@ import React, { useMemo } from "react";
 import type { MotionValue } from "framer-motion";
 import type { LenisInstance } from "../types";
 
-import { LenisScrollContext } from "./LenisScrollContextInternal";
+import { LenisScrollContext } from "./lenisScrollContextInternal";
 
 // ===================== Provider =====================
 

@@ -15,8 +15,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "@/lib/hooks";
 import { trackPageView } from "@/lib/telemetry";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { BREAKPOINT } from "./constants";
-import { SECTION_CONFIGS } from "./data/section-configs";
+import { SECTION_CONFIGS } from "./data/sectionConfigs";
 import { useLenisSetup } from "./hooks/useLenisSetup";
 import { LenisScrollProvider } from "./context/LenisScrollContext";
 import { Section } from "./components/Section";
@@ -44,6 +45,7 @@ const SECTION_COMPONENT_MAP: Record<string, React.ComponentType<SectionContentPr
 // ===================== Main Page =====================
 
 export default function TasksWaitlistPage() {
+  const template = useTemplateConfig();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const sectionRefsByIdRef = useRef<Record<string, React.RefObject<HTMLElement | null>>>({});
@@ -83,8 +85,8 @@ export default function TasksWaitlistPage() {
   });
 
   useEffect(() => {
-    trackPageView("tasksWaitlistPreview");
-  }, []);
+    trackPageView(template.meta.pageViewId);
+  }, [template.meta.pageViewId]);
 
   const visibleSections = useMemo(() => SECTION_CONFIGS.filter((config) => !config.hidden), []);
 

@@ -4,7 +4,7 @@
 
 import { use } from "react";
 import type { LenisScrollContextValue } from "../types";
-import { LenisScrollContext } from "./LenisScrollContextInternal";
+import { LenisScrollContext } from "./lenisScrollContextInternal";
 
 export function useLenisScrollContext(): LenisScrollContextValue {
   const context = use(LenisScrollContext);

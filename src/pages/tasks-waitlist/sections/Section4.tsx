@@ -14,12 +14,12 @@ import React, { useRef, useMemo, useLayoutEffect, useReducer } from "react";
 import { motion, useMotionValue, useTransform, useMotionTemplate } from "framer-motion";
 import type { MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
 import { useThemeValue } from "@/lib/theme";
 import { useReducedMotion } from "@/lib/hooks";
 import { defaultEasing } from "@/lib/easing";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { CAROUSEL_KEYFRAMES as CK, IMAGE_BORDER_RADIUS, WIDE_MAX_WIDTH } from "../constants";
-import { CAROUSEL_IMAGES, IMAGE_ANIMATION_CONFIGS } from "../data/carousel-configs";
+import { IMAGE_ANIMATION_CONFIGS } from "../data/carouselConfigs";
 import { useSectionContext } from "../context/SectionContext";
 import { useLenisScrollContext } from "../context/useLenisScrollContext";
 import { StickyContainer } from "../components/StickyContainer";
@@ -51,7 +51,7 @@ interface WideCarouselProps {
 }
 
 function WideCarousel({ scrollYProgress }: WideCarouselProps) {
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
   const theme = useThemeValue();
   const { isNarrow } = useLenisScrollContext();
   const isReducedMotion = useReducedMotion() === true;
@@ -101,8 +101,9 @@ function WideCarousel({ scrollYProgress }: WideCarouselProps) {
   ];
 
   const imageSrcs = useMemo(
-    () => CAROUSEL_IMAGES.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
-    [theme],
+    () =>
+      template.carousel.images.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
+    [template.carousel.images, theme],
   );
 
   // ---- Image preloading ----
@@ -206,7 +207,7 @@ function WideCarousel({ scrollYProgress }: WideCarouselProps) {
               key={config.imageId}
               config={config}
               imageSrc={imageSrcs[index]!}
-              imageAlt={CAROUSEL_IMAGES[index]?.alt ?? ""}
+              imageAlt={template.carousel.images[index]?.alt ?? ""}
               scrollYProgress={progress}
               transform={imageTransforms[index]!}
               isLoaded={imagesLoaded[index] ?? false}
@@ -218,8 +219,8 @@ function WideCarousel({ scrollYProgress }: WideCarouselProps) {
           {textVisible[0] && (
             <TextOverlay
               imageIndex={0}
-              headline={t("tasks.waitList.section4.images.image1TextHeadline")}
-              description={t("tasks.waitList.section4.images.image1TextDescription")}
+              headline={template.carousel.images[0]?.headline ?? ""}
+              description={template.carousel.images[0]?.description ?? ""}
               scrollYProgress={progress}
               fadeDuration={fadeDuration}
             />
@@ -227,8 +228,8 @@ function WideCarousel({ scrollYProgress }: WideCarouselProps) {
           {textVisible[1] && (
             <TextOverlay
               imageIndex={1}
-              headline={t("tasks.waitList.section4.images.image2TextHeadline")}
-              description={t("tasks.waitList.section4.images.image2TextDescription")}
+              headline={template.carousel.images[1]?.headline ?? ""}
+              description={template.carousel.images[1]?.description ?? ""}
               scrollYProgress={progress}
               fadeDuration={fadeDuration}
             />
@@ -236,8 +237,8 @@ function WideCarousel({ scrollYProgress }: WideCarouselProps) {
           {textVisible[2] && (
             <TextOverlay
               imageIndex={2}
-              headline={t("tasks.waitList.section4.images.image3TextHeadline")}
-              description={t("tasks.waitList.section4.images.image3TextDescription")}
+              headline={template.carousel.images[2]?.headline ?? ""}
+              description={template.carousel.images[2]?.description ?? ""}
               scrollYProgress={progress}
               fadeDuration={fadeDuration}
             />
@@ -449,11 +450,13 @@ function TextOverlay({
 
 // Narrow carousel
 function NarrowCarousel() {
+  const template = useTemplateConfig();
   const theme = useThemeValue();
 
   const imageSrcs = useMemo(
-    () => CAROUSEL_IMAGES.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
-    [theme],
+    () =>
+      template.carousel.images.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
+    [template.carousel.images, theme],
   );
 
   return (
@@ -465,13 +468,13 @@ function NarrowCarousel() {
       <div className="from-background-250 absolute top-0 h-64 w-full bg-gradient-to-b to-transparent" />
 
       <div className="relative flex flex-col gap-16 px-4">
-        {CAROUSEL_IMAGES.map((image, index) => (
+        {template.carousel.images.map((image, index) => (
           <NarrowCard
             key={image.id}
             src={imageSrcs[index]!}
-            altKey={`tasks.waitList.section4.images.image${index + 1}Alt`}
-            headlineKey={`tasks.waitList.section4.images.image${index + 1}TextHeadline`}
-            descriptionKey={`tasks.waitList.section4.images.image${index + 1}TextDescription`}
+            alt={image.alt}
+            headline={image.headline}
+            description={image.description}
           />
         ))}
       </div>
@@ -481,16 +484,15 @@ function NarrowCarousel() {
 
 function NarrowCard({
   src,
-  altKey,
-  headlineKey,
-  descriptionKey,
+  alt,
+  headline,
+  description,
 }: {
   src: string;
-  altKey: string;
-  headlineKey: string;
-  descriptionKey: string;
+  alt: string;
+  headline: string;
+  description: string;
 }) {
-  const { t } = useTranslation();
   const { lenisScroll } = useLenisScrollContext();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -505,14 +507,14 @@ function NarrowCard({
     <div ref={cardRef} className="grid grid-cols-6 grid-rows-[1fr_auto] gap-y-6">
       <motion.img
         src={src}
-        alt={t(altKey)}
+        alt={alt}
         className="squircle-24 [grid-column:1/7] [grid-row:1] aspect-square w-full origin-bottom object-cover"
         style={{ scale: cardScale }}
       />
       <div className="[grid-column:1/7] [grid-row:2] flex flex-col gap-2">
-        <div className="text-foreground-800 text-lg-medium">{t(headlineKey)}</div>
+        <div className="text-foreground-800 text-lg-medium">{headline}</div>
         <div className="text-foreground-600 text-base-dense dark:text-foreground-650">
-          {t(descriptionKey)}
+          {description}
         </div>
       </div>
     </div>

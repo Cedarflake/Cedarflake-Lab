@@ -15,18 +15,18 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
 import { useReducedMotion } from "@/lib/hooks";
 import { defaultEasing } from "@/lib/easing";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { SCROLL_KEYFRAMES as K, CONTENT_MAX_WIDTH, LAYOUT_CONFIG } from "../constants";
 import { useSectionContext } from "../context/SectionContext";
 import { useLenisScrollContext } from "../context/useLenisScrollContext";
 import { RolodexItem } from "../components/RolodexItem";
-import { getRolodexItems, getDiagonalIndex, getMaxDiagonalIndex } from "../data/rolodex-items";
+import { getDiagonalIndex, getMaxDiagonalIndex } from "../data/rolodexItems";
 import { useRolodexAnimation } from "../hooks/useRolodexAnimation";
 import { useOverflowDetection } from "../hooks/useOverflowDetection";
 import { useScrollProgress } from "../hooks/useScrollProgress";
-import type { RolodexLayout, RolodexItemWithStagger } from "../types";
+import type { RolodexItem as RolodexItemData, RolodexLayout, RolodexItemWithStagger } from "../types";
 
 const CONTENT_TEXT_CLASSES = cn(
   "!text-[52px] !leading-[52px] text-4xl-medium",
@@ -46,7 +46,7 @@ export function Section2({ sectionRef: externalSectionRef }: Section2Props) {
   const { scrollYProgress, sticky, sectionRef: contextSectionRef } = useSectionContext();
   const { isNarrow, lenisScroll } = useLenisScrollContext();
   const shouldReduceMotion = useReducedMotion() === true;
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
   const sectionRef = externalSectionRef ?? contextSectionRef;
 
   const [isPaused, setIsPaused] = useState(() => shouldReduceMotion);
@@ -70,8 +70,13 @@ export function Section2({ sectionRef: externalSectionRef }: Section2Props) {
     threshold: LAYOUT_CONFIG.layoutSwitchThreshold,
   });
   const layout: RolodexLayout = isOverflowing ? "5-line" : "3-line";
-  const items = useMemo(() => prepareItems(layout), [layout]);
-  const referenceItems = useMemo(() => prepareItems("3-line"), []);
+  const layoutItems =
+    layout === "5-line" ? template.rolodex.layouts.fiveLine : template.rolodex.layouts.threeLine;
+  const items = useMemo(() => prepareItems(layoutItems), [layoutItems]);
+  const referenceItems = useMemo(
+    () => prepareItems(template.rolodex.layouts.threeLine),
+    [template.rolodex.layouts.threeLine],
+  );
   const rowCount = layout === "5-line" ? 5 : 3;
   const rows = useMemo(
     () => Array.from({ length: rowCount }, (_, i) => items.filter((item) => item.row === i)),
@@ -279,7 +284,7 @@ export function Section2({ sectionRef: externalSectionRef }: Section2Props) {
               visibility: introVisibility,
             }}
           >
-            <div className="relative md:bottom-12">{t("tasks.waitList.section2.introText")}</div>
+            <div className="relative md:bottom-12">{template.rolodex.introText}</div>
           </motion.div>
 
           {/* Row-based items */}
@@ -308,11 +313,7 @@ export function Section2({ sectionRef: externalSectionRef }: Section2Props) {
         {isNarrow && (
           <button
             type="button"
-            aria-label={t(
-              isPaused
-                ? "tasks.waitList.section2.carouselPlay"
-                : "tasks.waitList.section2.carouselPause",
-            )}
+            aria-label={isPaused ? template.rolodex.playLabel : template.rolodex.pauseLabel}
             aria-pressed={isPaused}
             onClick={() => setIsPaused((p) => !p)}
             className={cn(
@@ -355,8 +356,7 @@ export function Section2({ sectionRef: externalSectionRef }: Section2Props) {
 }
 
 // Helpers
-function prepareItems(layout: RolodexLayout): RolodexItemWithStagger[] {
-  const rawItems = getRolodexItems(layout);
+function prepareItems(rawItems: RolodexItemData[]): RolodexItemWithStagger[] {
   const maxDiagonal = getMaxDiagonalIndex(rawItems);
 
   return rawItems.map((item) => ({

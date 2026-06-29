@@ -8,16 +8,16 @@
 
 import React, { useState, useEffect, useMemo, useReducer } from "react";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
 import { useReducedMotion } from "@/lib/hooks";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { useMotionValueEvent } from "framer-motion";
 import { HEADER_HEIGHT_OFFSET, SCROLL_KEYFRAMES } from "../constants";
-import { SECTION_CONFIGS } from "../data/section-configs";
+import { SECTION_CONFIGS } from "../data/sectionConfigs";
 import { useLenisScrollContext } from "../context/useLenisScrollContext";
 import { useScrollProgress } from "../hooks/useScrollProgress";
 
 export function SkipToContent() {
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
   const { lenisScroll, lenis, isNarrow } = useLenisScrollContext();
   const shouldReduceMotion = useReducedMotion();
   const [section1Element, setSection1Element] = useReducer(
@@ -84,7 +84,7 @@ export function SkipToContent() {
         scrollToContent();
       }}
     >
-      {t("tasks.waitList.skipToContent")}
+      {template.accessibility.skipToContent}
     </a>
   );
 }

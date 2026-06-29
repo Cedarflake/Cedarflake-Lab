@@ -12,10 +12,10 @@
 
 import React, { useCallback, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
 import { useReducedMotion } from "@/lib/hooks";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { HEADER_HEIGHT_OFFSET } from "../constants";
-import { SECTION_CONFIGS, getEffectiveHeightMultiplier } from "../data/section-configs";
+import { SECTION_CONFIGS, getEffectiveHeightMultiplier } from "../data/sectionConfigs";
 import { useLenisScrollContext } from "../context/useLenisScrollContext";
 import { SectionContext } from "../context/SectionContext";
 import { useScrollProgress } from "../hooks/useScrollProgress";
@@ -60,7 +60,7 @@ export function Section({
 
   const { lenisScroll, isNarrow } = useLenisScrollContext();
   const shouldReduceMotion = useReducedMotion() === true;
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
   const sectionConfig = sectionId ? SECTION_CONFIGS.find((s) => s.id === sectionId) : undefined;
 
   const narrowOverrides = isNarrow ? sectionConfig?.narrowOverrides : undefined;
@@ -109,8 +109,7 @@ export function Section({
     : undefined;
 
   const zIndex = sectionConfig?.zIndex;
-  const ariaLabel = sectionConfig?.ariaLabel;
-  const ariaLabelText = typeof ariaLabel === "string" ? String(t(ariaLabel)) : undefined;
+  const ariaLabelText = sectionId ? template.accessibility.sectionLabels[sectionId] : undefined;
 
   const overlapFraction = effectiveOverlap ? previousSectionMultiplier / totalMultiplier : 0;
   const [startEdge, endEdge] = scrollTrackingEdge;

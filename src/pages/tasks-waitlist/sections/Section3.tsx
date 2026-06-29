@@ -15,11 +15,11 @@ import React, { useId, useRef } from "react";
 import { motion, useMotionValue, useTransform, useMotionTemplate } from "framer-motion";
 import type { MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
 import { useReducedMotion } from "@/lib/hooks";
 import { defaultEasing } from "@/lib/easing";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
+import type { TemplateFeatureItem } from "@/template/types";
 import { CONTENT_MAX_WIDTH } from "../constants";
-import { FEATURE_ITEMS, FEATURE_SEGMENT_SIZE } from "../data/feature-items";
 import { useSectionContext } from "../context/SectionContext";
 import { useLenisScrollContext } from "../context/useLenisScrollContext";
 import { useScrollProgress } from "../hooks/useScrollProgress";
@@ -59,7 +59,9 @@ interface Section3ContentProps {
 }
 
 function Section3Content({ isNarrow, sectionRef }: Section3ContentProps) {
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
+  const featureItems = template.features.items;
+  const featureSegmentSize = 1 / featureItems.length;
   const { lenisScroll } = useLenisScrollContext();
   const shouldReduceMotion = useReducedMotion() === true;
   const { scrollYProgress: entryProgress } = useScrollProgress({
@@ -132,10 +134,10 @@ function Section3Content({ isNarrow, sectionRef }: Section3ContentProps) {
           style={{ opacity: headerOpacity, scale: headerScale }}
         >
           <h1 className="text-foreground-900 text-2xl-medium md:text-3xl">
-            {t("tasks.waitList.section3.headerHeadline")}
+            {template.features.headline}
           </h1>
           <p className="text-foreground-700 text-base-dense-medium md:text-md max-w-[95%] md:max-w-[70%]">
-            {t("tasks.waitList.section3.headerSubtitle")}
+            {template.features.subtitle}
           </p>
         </motion.div>
 
@@ -150,16 +152,16 @@ function Section3Content({ isNarrow, sectionRef }: Section3ContentProps) {
           style={{ opacity: contentOpacity, y: contentY }}
         >
           <div className={cn("flex size-full flex-col items-center", isNarrow && "pt-16")}>
-            {FEATURE_ITEMS.map((feature, index) => (
+            {featureItems.map((feature, index) => (
               <FeatureItem
-                key={feature.titleKey}
+                key={feature.title}
                 feature={feature}
                 index={index}
-                totalItems={FEATURE_ITEMS.length}
+                totalItems={featureItems.length}
+                segmentSize={featureSegmentSize}
                 sectionProgress={mainProgress}
                 isNarrow={isNarrow}
                 shouldReduceMotion={shouldReduceMotion}
-                t={t}
               />
             ))}
           </div>
@@ -172,23 +174,23 @@ function Section3Content({ isNarrow, sectionRef }: Section3ContentProps) {
 // ===================== Feature Item =====================
 
 interface FeatureItemProps {
-  feature: (typeof FEATURE_ITEMS)[number];
+  feature: TemplateFeatureItem;
   index: number;
   totalItems: number;
+  segmentSize: number;
   sectionProgress: MotionValue<number>;
   isNarrow: boolean;
   shouldReduceMotion: boolean;
-  t: (key: string) => string;
 }
 
 function FeatureItem({
   feature,
   index,
   totalItems,
+  segmentSize,
   sectionProgress,
   isNarrow,
   shouldReduceMotion,
-  t,
 }: FeatureItemProps) {
   const itemRef = useRef<HTMLDivElement>(null);
   const { lenisScroll } = useLenisScrollContext();
@@ -199,7 +201,6 @@ function FeatureItem({
   });
 
   const progress = isNarrow ? itemProgress : sectionProgress;
-  const segmentSize = FEATURE_SEGMENT_SIZE;
   const segmentStart = index * segmentSize;
   const segmentEnd = (index + 1) * segmentSize;
 
@@ -327,18 +328,18 @@ function FeatureItem({
           className="text-lg-medium gpu-text w-full origin-left will-change-transform md:text-xl rtl:origin-right"
           style={{ scale: shouldReduceMotion || isNarrow ? undefined : titleScale }}
         >
-          {t(feature.titleKey)}
+          {feature.title}
         </motion.h1>
         <motion.div
           className="flex flex-col gap-4 pt-1.5 will-change-[opacity]"
           style={{ opacity: descOpacity }}
         >
-          <div className="text-base-dense sm:line-clamp-2">{t(feature.descriptionKey)}</div>
+          <div className="text-base-dense sm:line-clamp-2">{feature.description}</div>
           <div className="flex flex-wrap gap-2">
             {feature.actionItems.map((action) => (
               <ActionBadge
-                key={`${action.labelKey}::${action.icon ?? ""}`}
-                labelKey={action.labelKey}
+                key={`${action.label}::${action.icon ?? ""}`}
+                label={action.label}
                 icon={action.icon}
               />
             ))}

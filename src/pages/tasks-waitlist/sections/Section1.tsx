@@ -9,10 +9,10 @@
 import React from "react";
 import { motion, useMotionValue, useTransform, useMotionTemplate } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n";
 import { useReducedMotion } from "@/lib/hooks";
 import { useThemeValue } from "@/lib/theme";
 import { defaultEasing } from "@/lib/easing";
+import { useTemplateConfig } from "@/template/useTemplateConfig";
 import { useSectionContext } from "../context/SectionContext";
 import { useLenisScrollContext } from "../context/useLenisScrollContext";
 import { useScrollProgress } from "../hooks/useScrollProgress";
@@ -30,7 +30,7 @@ export function Section1({ sectionRef: externalSectionRef }: Section1Props) {
   const { sticky, sectionRef: contextSectionRef } = useSectionContext();
   const { isNarrow, lenisScroll } = useLenisScrollContext();
   const shouldReduceMotion = useReducedMotion() === true;
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
   const theme = useThemeValue();
   const sectionRef = externalSectionRef ?? contextSectionRef;
   const { scrollYProgress: progress } = useScrollProgress({
@@ -81,7 +81,7 @@ export function Section1({ sectionRef: externalSectionRef }: Section1Props) {
           >
             <img
               className="absolute inset-0 size-full object-cover object-right rtl:-scale-x-100"
-              src={`/static/cmc/images/tasks/waitlist/background/background-${theme ?? "light"}.jpg`}
+              src={theme === "dark" ? template.hero.backgroundDark : template.hero.backgroundLight}
               alt="Background"
             />
             <div className="to-background-250 absolute bottom-0 h-32 w-full bg-gradient-to-b from-transparent" />
@@ -96,7 +96,7 @@ export function Section1({ sectionRef: externalSectionRef }: Section1Props) {
             <div className="mt-16 p-5 @[768px]/section-one:mt-0 @[768px]/section-one:px-12 @[768px]/section-one:py-16">
               <CopilotWordmark
                 className="h-[64px] w-[130px] origin-top-left scale-90 @[768px]/section-one:scale-100 rtl:origin-top-right"
-                title={t("tasks.waitList.section1.wordmarkAlt")}
+                title={template.brand.wordmarkAlt}
               />
             </div>
 
@@ -104,8 +104,8 @@ export function Section1({ sectionRef: externalSectionRef }: Section1Props) {
             <div className="absolute bottom-0 mb-0 flex w-full flex-col flex-wrap justify-between gap-x-10 gap-y-4 p-5 @[768px]/section-one:flex-row @[768px]/section-one:items-end @[768px]/section-one:gap-8 @[768px]/section-one:p-12 @[768px]/section-one:pe-6">
               {/* Headline */}
               <div className="text-3xl-medium @[768px]/section-one:text-4xl-medium inline-block max-w-[min(420px,75%)] shrink-0 grow @[768px]/section-one:flex @[768px]/section-one:max-w-full @[768px]/section-one:flex-col @[768px]/section-one:!text-[60px] @[768px]/section-one:!leading-[60px]">
-                <span>{t("tasks.waitList.section1.headlineTop")}</span>
-                <span>{t("tasks.waitList.section1.headlineBottom")}</span>
+                <span>{template.hero.headlineTop}</span>
+                <span>{template.hero.headlineBottom}</span>
               </div>
 
               {/* Wide: centered scroll indicator */}
@@ -116,7 +116,7 @@ export function Section1({ sectionRef: externalSectionRef }: Section1Props) {
               {/* Description + CTA */}
               <div className="text-md flex grow flex-col gap-4 md:gap-2.5 @[1024px]/section-one:max-w-[420px]">
                 <div className="max-w-[420px] @[1024px]/section-one:max-w-full">
-                  {t("tasks.waitList.section1.description")}
+                  {template.hero.description}
                 </div>
                 <div className="pointer-events-auto flex min-h-14 items-center justify-between gap-5">
                   <WaitlistButton placement="home" />
@@ -134,7 +134,7 @@ export function Section1({ sectionRef: externalSectionRef }: Section1Props) {
 }
 
 function ScrollHint({ stacked = false }: { stacked?: boolean }) {
-  const { t } = useTranslation();
+  const template = useTemplateConfig();
 
   return (
     <div className={stacked ? "flex flex-col items-center" : "flex items-center gap-3"}>
@@ -145,7 +145,7 @@ function ScrollHint({ stacked = false }: { stacked?: boolean }) {
         )}
         isActive={false}
       >
-        <div className="text-base-dense">{t("tasks.waitList.footer.scrollIndicator")}</div>
+        <div className="text-base-dense">{template.hero.scrollIndicator}</div>
       </ShimmerText>
       <ScrollIndicator size={stacked ? "size-10" : "size-8"} gap={stacked ? "-mt-7" : "-mt-6"} />
     </div>

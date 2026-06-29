@@ -1,0 +1,7 @@
+/* ===================== Font Faces ===================== */
+
+@font-face {
+  font-family: Ginto;
+  font-style: normal;
+  src: url(/static/cmc/fonts/Ginto-Copilot-Upright-Variable.woff2) format("woff2");
+}

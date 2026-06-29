@@ -41,14 +41,16 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 interface ActionBadgeProps {
-  labelKey: string;
+  label?: string;
+  labelKey?: string;
   icon?: string;
   className?: string;
 }
 
-export function ActionBadge({ labelKey, icon, className }: ActionBadgeProps) {
+export function ActionBadge({ label, labelKey, icon, className }: ActionBadgeProps) {
   const { t } = useTranslation();
   const IconComponent = icon ? ICON_MAP[icon] : undefined;
+  const text = label ?? (labelKey ? t(labelKey) : "");
 
   return (
     <span
@@ -61,7 +63,7 @@ export function ActionBadge({ labelKey, icon, className }: ActionBadgeProps) {
       )}
     >
       {IconComponent && <IconComponent className="size-4 shrink-0 md:size-5" />}
-      <span className="px-0.5">{t(labelKey)}</span>
+      <span className="px-0.5">{text}</span>
     </span>
   );
 }
