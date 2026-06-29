@@ -161,9 +161,12 @@ function AnimatedFlipText({
   const vis5 = useTransform(visState, (s: number) => (s === 5 ? "visible" : "hidden"));
 
   return (
-    <span className="relative inline-flex flex-col" style={{ perspective: "1000px" }}>
+    <span
+      className="relative inline-flex flex-col whitespace-nowrap"
+      style={{ perspective: "1000px" }}
+    >
       {/* Invisible measurement layer to reserve max width */}
-      <span className="invisible flex h-0 flex-col" aria-hidden="true">
+      <span className="invisible flex h-0 flex-col whitespace-nowrap" aria-hidden="true">
         <span>{content1}</span>
         <span>{content2}</span>
         <span>{content3}</span>
@@ -172,7 +175,7 @@ function AnimatedFlipText({
       <span className="absolute inset-0">
         {/* Layer 1: content1 front / content2 back (transition 1) */}
         <motion.span
-          className="inline-block"
+          className="inline-block whitespace-nowrap"
           style={{
             transformStyle: "preserve-3d",
             rotateX: rotate1,
@@ -180,11 +183,14 @@ function AnimatedFlipText({
             pointerEvents: "none",
           }}
         >
-          <motion.span className="inline-block" style={{ backfaceVisibility: "hidden" }}>
+          <motion.span
+            className="inline-block whitespace-nowrap"
+            style={{ backfaceVisibility: "hidden" }}
+          >
             <span>{content1}</span>
           </motion.span>
           <motion.span
-            className="absolute start-0 top-0 inline-block"
+            className="absolute start-0 top-0 inline-block whitespace-nowrap"
             style={{ backfaceVisibility: "hidden", rotateX: 180 }}
           >
             <span>{content2}</span>
@@ -193,7 +199,7 @@ function AnimatedFlipText({
 
         {/* Layer 2: static content2 (between flips) */}
         <motion.span
-          className="absolute start-0 top-0 inline-block"
+          className="absolute start-0 top-0 inline-block whitespace-nowrap"
           style={{ visibility: vis2, pointerEvents: "none" }}
         >
           <span>{content2}</span>
@@ -201,7 +207,7 @@ function AnimatedFlipText({
 
         {/* Layer 3: content2 front / content3 back (transition 2) */}
         <motion.span
-          className="absolute start-0 top-0 inline-block"
+          className="absolute start-0 top-0 inline-block whitespace-nowrap"
           style={{
             transformStyle: "preserve-3d",
             rotateX: rotate2,
@@ -225,7 +231,7 @@ function AnimatedFlipText({
 
         {/* Layer 4: static content3 */}
         <motion.span
-          className="absolute start-0 top-0 inline-block"
+          className="absolute start-0 top-0 inline-block whitespace-nowrap"
           style={{ visibility: vis4, pointerEvents: "none" }}
         >
           <span>{content3}</span>
@@ -234,7 +240,7 @@ function AnimatedFlipText({
         {/* Layer 5: content3 -> content1 reset (narrow only) */}
         {isNarrow && (
           <motion.span
-            className="absolute start-0 top-0 inline-block"
+            className="absolute start-0 top-0 inline-block whitespace-nowrap"
             style={{
               transformStyle: "preserve-3d",
               rotateX: rotateReset,
