@@ -9,7 +9,7 @@
 import { CAROUSEL_KEYFRAMES as K } from "../constants";
 import type { CarouselImage, ImageAnimationConfig } from "../types";
 
-const ASSET_BASE = "/static/cmc";
+const ASSET_BASE = "";
 
 // ===================== Image Sources =====================
 

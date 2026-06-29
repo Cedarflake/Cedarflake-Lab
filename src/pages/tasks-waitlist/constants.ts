@@ -26,7 +26,7 @@ export const SHOW_LOGO_ICON = false;
 // ===================== Assets =====================
 
 /** Base path for static assets (with trailing slash removed) */
-export const STATIC_ASSET_PREFIX = "/static/cmc".replace(/\/$/, "");
+export const STATIC_ASSET_PREFIX = "";
 
 // ===================== Section 2 - Rolodex Scroll Keyframes =====================
 
