@@ -94,10 +94,10 @@ export const CopilotTasksLogo: React.FC<IconProps> = ({ title, titleId, ...props
       y="140"
       fill="currentColor"
       fillOpacity="0.55"
-      fontFamily="Ginto, ui-sans-serif, system-ui, sans-serif"
+      fontFamily={revaeaLogoFont}
       fontSize="30"
-      fontWeight="520"
-      letterSpacing="0"
+      fontWeight="700"
+      letterSpacing="0.2"
       textAnchor="middle"
     >
       Woven by Will, Lit by Peace
