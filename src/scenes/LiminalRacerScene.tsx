@@ -1,7 +1,7 @@
 import { useRef } from "react"
 
 import { Environment, PerspectiveCamera, Stars } from "@react-three/drei"
-import { Canvas, useFrame } from "@react-three/fiber"
+import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { BoostGates } from "@/entities/BoostGates"
@@ -74,6 +74,7 @@ function RacerWorld() {
   const damage = useGameStore((state) => state.damage)
   const addDriftCharge = useGameStore((state) => state.addDriftCharge)
   const cashOutDrift = useGameStore((state) => state.cashOutDrift)
+  const isPortrait = useThree((state) => state.size.width / state.size.height < 0.76)
 
   useFrame((state, delta) => {
     const runtime = runtimeRef.current
@@ -136,7 +137,6 @@ function RacerWorld() {
       runtime.x * 0.38,
       Math.min(delta * 2.4, 1),
     )
-    const isPortrait = state.size.width / state.size.height < 0.76
     const cameraY = isPortrait ? 3.7 + runtime.speed * 0.005 : 5.8 + runtime.speed * 0.015
     const cameraZ = isPortrait ? 5.8 + runtime.speed * 0.008 : 10.5 + runtime.speed * 0.025
     const lookAtZ = isPortrait ? 1.6 : -8
@@ -228,10 +228,18 @@ function RacerWorld() {
       <color attach="background" args={[dreamPalette.skyTop]} />
       <fog attach="fog" args={[dreamPalette.fog, 24, 170]} />
       <ambientLight intensity={0.82} />
-      <directionalLight position={[8, 11, 7]} intensity={2.4} castShadow />
+      <directionalLight position={[8, 11, 7]} intensity={2.4} castShadow={!isPortrait} />
       <pointLight position={[0, 5, 2]} color={dreamPalette.carGlow} intensity={10} distance={14} />
-      <Environment preset="sunset" />
-      <Stars radius={120} depth={42} count={1400} factor={2.3} saturation={0.2} fade speed={0.28} />
+      {isPortrait ? null : <Environment preset="sunset" />}
+      <Stars
+        radius={120}
+        depth={42}
+        count={isPortrait ? 720 : 1400}
+        factor={2.3}
+        saturation={0.2}
+        fade
+        speed={0.28}
+      />
       <Track distance={runtimeRef.current.distance} />
       <BoostGates distance={runtimeRef.current.distance} boostGates={visibleBoostGates} />
       <DreamObjects distance={runtimeRef.current.distance} obstacles={visibleObstacles} />
