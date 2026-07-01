@@ -2,6 +2,7 @@
 
 import { GameOverlay } from "@/ui/GameOverlay"
 import { Hud } from "@/ui/Hud"
+import { TouchControls } from "@/ui/TouchControls"
 
 import "./App.css"
 
@@ -18,6 +19,7 @@ export function App() {
         <LiminalRacerScene />
       </Suspense>
       <Hud />
+      <TouchControls />
       <GameOverlay />
     </main>
   )

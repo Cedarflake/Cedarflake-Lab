@@ -11,6 +11,7 @@ import { Track } from "@/entities/Track"
 import { createCheckpoints, createObstacles } from "@/game/generation"
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { useGameStore } from "@/game/useGameStore"
+import { useInputStore } from "@/game/useInputStore"
 import { useInput } from "@/game/useInput"
 import { clamp, lerp } from "@/game/number"
 
@@ -54,7 +55,14 @@ function RacerWorld() {
       return
     }
 
-    const input = inputRef.current
+    const keyboardInput = inputRef.current
+    const touchInput = useInputStore.getState().input
+    const input = {
+      steer: clamp(keyboardInput.steer + touchInput.steer, -1, 1),
+      throttle: Math.max(keyboardInput.throttle, touchInput.throttle),
+      brake: Math.max(keyboardInput.brake, touchInput.brake),
+      isDrifting: keyboardInput.isDrifting || touchInput.isDrifting,
+    }
     const grip = input.isDrifting ? trackConfig.driftGrip : trackConfig.normalGrip
     const acceleration =
       input.throttle * trackConfig.baseAcceleration - input.brake * trackConfig.braking

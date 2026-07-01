@@ -235,6 +235,51 @@
   overflow-wrap: anywhere;
 }
 
+.touch-controls {
+  position: absolute;
+  inset: auto 14px 14px;
+  z-index: 3;
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  pointer-events: none;
+}
+
+.touch-controls__steer,
+.touch-controls__drive {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+
+.touch-controls__drive {
+  justify-content: end;
+}
+
+.touch-controls button {
+  min-width: 64px;
+  min-height: 58px;
+  padding: 0 14px;
+  color: rgba(49, 39, 56, 0.86);
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  background: rgba(255, 247, 218, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(80, 58, 78, 0.18);
+  backdrop-filter: blur(16px);
+}
+
+.touch-controls__go {
+  min-width: 82px;
+  min-height: 76px;
+  background: rgba(255, 235, 154, 0.84);
+}
+
+.touch-controls__drift {
+  background: rgba(211, 244, 237, 0.76);
+}
 @media (max-width: 760px) {
   .hud {
     inset: 12px 12px auto;
@@ -268,8 +313,12 @@
     grid-template-columns: 1fr;
   }
 
+  .touch-controls {
+    display: grid;
+  }
+
   .pause-button {
     right: 14px;
-    bottom: 14px;
+    bottom: 110px;
   }
 }

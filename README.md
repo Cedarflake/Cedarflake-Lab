@@ -1,4 +1,4 @@
-# Liminal Drift
+﻿# Liminal Drift
 
 A dreamcore 3D driving game prototype built with React 19, TypeScript, Vite, Three.js, React Three Fiber, Drei, and Zustand.
 
@@ -21,6 +21,7 @@ pnpm check:canvas -- http://localhost:5175/
 - Steer: `WASD` or arrow keys
 - Drift: `Space` or `Shift`
 - Pause: `Esc`
+- Touch: on-screen buttons on mobile viewports
 
 ## Project Structure
 
