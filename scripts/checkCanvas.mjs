@@ -97,7 +97,7 @@ for (const viewport of viewports) {
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
     await page.mouse.down()
   } else {
-    await page.locator("body").focus()
+    await page.locator(".game-shell").focus()
     await page.keyboard.down("w")
   }
 

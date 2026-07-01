@@ -9,6 +9,10 @@
     linear-gradient(180deg, #f7d6cb 0%, #d8d2df 42%, #9ecfd1 100%);
 }
 
+.game-shell:focus {
+  outline: none;
+}
+
 .game-shell::before {
   position: absolute;
   inset: 0;

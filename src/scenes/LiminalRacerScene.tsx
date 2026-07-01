@@ -224,7 +224,7 @@ function RacerWorld() {
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 5.8, 10.5]} fov={54} />
+      <PerspectiveCamera makeDefault position={[0, 5.8, 10.5]} rotation={[-0.28, 0, 0]} fov={54} />
       <color attach="background" args={[dreamPalette.skyTop]} />
       <fog attach="fog" args={[dreamPalette.fog, 24, 170]} />
       <ambientLight intensity={0.82} />

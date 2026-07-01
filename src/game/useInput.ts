@@ -9,6 +9,8 @@ const initialInput: PlayerInput = {
   isDrifting: false,
 }
 
+const keyboardListenerOptions = { capture: true } as const
+
 export function useInput() {
   const inputRef = useRef<PlayerInput>({ ...initialInput })
   const keysRef = useRef<Set<string>>(new Set())
@@ -39,12 +41,16 @@ export function useInput() {
       updateInput()
     }
 
-    window.addEventListener("keydown", handleKeyDown)
-    window.addEventListener("keyup", handleKeyUp)
+    document.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
+    document.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
+    window.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
+    window.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-      window.removeEventListener("keyup", handleKeyUp)
+      document.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
+      document.removeEventListener("keyup", handleKeyUp, keyboardListenerOptions)
+      window.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
+      window.removeEventListener("keyup", handleKeyUp, keyboardListenerOptions)
     }
   }, [])
 

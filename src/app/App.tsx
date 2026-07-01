@@ -15,7 +15,7 @@ const LiminalRacerScene = lazy(() =>
 
 export function App() {
   return (
-    <main className="game-shell">
+    <main className="game-shell" tabIndex={-1}>
       <Suspense fallback={<div className="scene-loading" aria-hidden="true" />}>
         <LiminalRacerScene />
       </Suspense>
