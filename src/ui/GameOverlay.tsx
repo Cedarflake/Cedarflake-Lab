@@ -61,9 +61,17 @@ export function GameOverlay() {
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown)
+    function handleBlur() {
+      if (status === "running") pause()
+    }
 
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    window.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("blur", handleBlur)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("blur", handleBlur)
+    }
   }, [pause, resume, status])
 
   if (status === "running") {
