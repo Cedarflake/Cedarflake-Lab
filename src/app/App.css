@@ -281,6 +281,38 @@
   line-height: 1.7;
 }
 
+.overlay__stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 22px 0 0;
+}
+
+.overlay__stats div {
+  min-width: 0;
+  padding: 10px 11px;
+  background: rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+}
+
+.overlay__stats dt {
+  margin-block-end: 4px;
+  color: rgba(73, 58, 82, 0.58);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.overlay__stats dd {
+  margin: 0;
+  overflow: hidden;
+  color: rgba(47, 37, 53, 0.86);
+  font-size: 0.96rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .overlay__actions {
   display: flex;
   flex-wrap: wrap;
@@ -425,6 +457,10 @@
 
   .controls {
     grid-template-columns: 1fr;
+  }
+
+  .overlay__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .touch-controls {

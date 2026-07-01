@@ -1,8 +1,5 @@
-﻿import { useGameStore } from "@/game/useGameStore"
-
-function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value)
-}
+import { formatNumber } from "@/game/format"
+import { useGameStore } from "@/game/useGameStore"
 
 export function Hud() {
   const score = useGameStore((state) => state.score)

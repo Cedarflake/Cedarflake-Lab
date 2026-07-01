@@ -1,10 +1,53 @@
-﻿import { useEffect } from "react"
+import { useEffect } from "react"
 
+import { formatNumber } from "@/game/format"
 import { useGameStore } from "@/game/useGameStore"
+
+interface RunStatsProps {
+  bestScore: number
+  combo: number
+  distance: number
+  integrity: number
+  score: number
+  showBest?: boolean
+}
+
+function RunStats({ bestScore, combo, distance, integrity, score, showBest }: RunStatsProps) {
+  return (
+    <dl className="overlay__stats">
+      <div>
+        <dt>Score</dt>
+        <dd>{formatNumber(score)}</dd>
+      </div>
+      <div>
+        <dt>Distance</dt>
+        <dd>{formatNumber(distance)} m</dd>
+      </div>
+      <div>
+        <dt>Combo</dt>
+        <dd>{combo.toFixed(1)}x</dd>
+      </div>
+      <div>
+        <dt>Integrity</dt>
+        <dd>{formatNumber(integrity)}%</dd>
+      </div>
+      {showBest ? (
+        <div>
+          <dt>Best</dt>
+          <dd>{formatNumber(bestScore)}</dd>
+        </div>
+      ) : null}
+    </dl>
+  )
+}
 
 export function GameOverlay() {
   const status = useGameStore((state) => state.status)
   const score = useGameStore((state) => state.score)
+  const bestScore = useGameStore((state) => state.bestScore)
+  const distance = useGameStore((state) => state.distance)
+  const integrity = useGameStore((state) => state.integrity)
+  const combo = useGameStore((state) => state.combo)
   const start = useGameStore((state) => state.start)
   const pause = useGameStore((state) => state.pause)
   const resume = useGameStore((state) => state.resume)
@@ -38,6 +81,13 @@ export function GameOverlay() {
           <p className="overlay__eyebrow">A quiet exit sign hums overhead</p>
           <h1>Liminal Drift</h1>
           <p>Resume before the road forgets where it was going.</p>
+          <RunStats
+            bestScore={bestScore}
+            combo={combo}
+            distance={distance}
+            integrity={integrity}
+            score={score}
+          />
           <div className="overlay__actions">
             <button type="button" onClick={resume}>
               Resume
@@ -58,6 +108,14 @@ export function GameOverlay() {
           <p className="overlay__eyebrow">Signal lost at {Math.round(score)} points</p>
           <h1>The mall closes itself</h1>
           <p>The car is still warm. The corridor is longer than before.</p>
+          <RunStats
+            bestScore={bestScore}
+            combo={combo}
+            distance={distance}
+            integrity={integrity}
+            score={score}
+            showBest
+          />
           <div className="overlay__actions">
             <button type="button" onClick={restart}>
               Drive again
