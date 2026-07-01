@@ -11,6 +11,7 @@ export function Hud() {
   const distance = useGameStore((state) => state.distance)
   const integrity = useGameStore((state) => state.integrity)
   const combo = useGameStore((state) => state.combo)
+  const driftCharge = useGameStore((state) => state.driftCharge)
   const lastEvent = useGameStore((state) => state.lastEvent)
 
   return (
@@ -39,8 +40,13 @@ export function Hud() {
         <small>{lastEvent}</small>
       </div>
 
-      <div className="hud__integrity" aria-label="Vehicle integrity">
-        <span style={{ inlineSize: `${integrity}%` }} />
+      <div className="hud__meters">
+        <div className="hud__integrity" aria-label="Vehicle integrity">
+          <span style={{ inlineSize: `${integrity}%` }} />
+        </div>
+        <div className="hud__drift" aria-label="Drift charge">
+          <span style={{ inlineSize: `${Math.min((driftCharge / 1600) * 100, 100)}%` }} />
+        </div>
       </div>
     </section>
   )

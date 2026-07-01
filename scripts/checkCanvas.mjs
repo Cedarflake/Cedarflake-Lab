@@ -29,28 +29,47 @@ const viewports = [
 
 function samplePng(buffer) {
   const png = PNG.sync.read(buffer)
-  const points = [
-    [0.5, 0.5],
-    [0.35, 0.55],
-    [0.65, 0.55],
-    [0.5, 0.72],
-    [0.5, 0.28],
-  ]
+  const points = Array.from({ length: 9 }, (_, yIndex) =>
+    Array.from({ length: 9 }, (_, xIndex) => [
+      0.15 + ((xIndex + 0.5) / 9) * 0.7,
+      0.32 + ((yIndex + 0.5) / 9) * 0.44,
+    ]),
+  ).flat()
   const colors = points.map(([xRatio, yRatio]) => {
     const x = Math.floor(png.width * xRatio)
     const y = Math.floor(png.height * yRatio)
     const index = (png.width * y + x) * 4
 
-    return [png.data[index], png.data[index + 1], png.data[index + 2], png.data[index + 3]].join(
-      ",",
-    )
+    return {
+      color: [
+        png.data[index] ?? 0,
+        png.data[index + 1] ?? 0,
+        png.data[index + 2] ?? 0,
+        png.data[index + 3] ?? 0,
+      ].join(","),
+      luminance:
+        (png.data[index] ?? 0) * 0.2126 +
+        (png.data[index + 1] ?? 0) * 0.7152 +
+        (png.data[index + 2] ?? 0) * 0.0722,
+      yRatio,
+    }
   })
-  const uniqueColors = new Set(colors)
-  const hasVisiblePixels = colors.some((color) => color !== "0,0,0,0" && color !== "0,0,0,255")
+  const uniqueColors = new Set(colors.map((sample) => sample.color))
+  const luminanceValues = colors.map((sample) => sample.luminance)
+  const minLuminance = Math.min(...luminanceValues)
+  const maxLuminance = Math.max(...luminanceValues)
+  const hasVisiblePixels = colors.some(
+    (sample) => sample.color !== "0,0,0,0" && sample.color !== "0,0,0,255",
+  )
+  const hasSceneContrast = maxLuminance - minLuminance > 8 || minLuminance < 242
 
   return {
-    ok: hasVisiblePixels && uniqueColors.size > 1,
-    colors,
+    ok: hasVisiblePixels && uniqueColors.size > 18 && hasSceneContrast,
+    colors: colors.slice(0, 8).map((sample) => sample.color),
+    hasSceneContrast,
+    minLuminance,
+    maxLuminance,
+    uniqueColorCount: uniqueColors.size,
     width: png.width,
     height: png.height,
   }
@@ -64,19 +83,18 @@ for (const viewport of viewports) {
 
   await page.goto(url, { waitUntil: "domcontentloaded" })
   await page.getByRole("button", { name: "Start driving" }).click()
-  const canvas = page.locator("canvas")
-  await canvas.waitFor()
-  await page.waitForTimeout(1200)
+  await page.locator("canvas").waitFor()
 
+  await page.keyboard.down("w")
+
+  await page.waitForTimeout(2600)
   await page.screenshot({
     path: join(outputPath, `${viewport.name}.png`),
     fullPage: true,
   })
 
-  const canvasBuffer = await canvas.screenshot({
-    path: join(outputPath, `${viewport.name}-canvas.png`),
-  })
-  const sample = samplePng(canvasBuffer)
+  const screenshot = await page.screenshot()
+  const sample = samplePng(screenshot)
 
   await context.close()
 

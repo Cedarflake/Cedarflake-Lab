@@ -10,6 +10,7 @@ interface GameState {
   integrity: number
   combo: number
   bestScore: number
+  driftCharge: number
   lastEvent: string
   impactId: number
   start: () => void
@@ -18,6 +19,8 @@ interface GameState {
   restart: () => void
   setTelemetry: (telemetry: GameTelemetry) => void
   addScore: (score: number, event: string) => void
+  addDriftCharge: (score: number) => void
+  cashOutDrift: () => void
   damage: (amount: number) => void
 }
 
@@ -34,6 +37,7 @@ const initialRunState = {
   distance: 0,
   integrity: 100,
   combo: 1,
+  driftCharge: 0,
   lastEvent: "Find the exit ramp",
   impactId: 0,
 }
@@ -80,6 +84,34 @@ export const useGameStore = create<GameState>((set) => ({
         lastEvent: event,
       }
     }),
+  addDriftCharge: (score) =>
+    set((state) => {
+      const driftCharge = Math.min(state.driftCharge + score, 1600)
+
+      return {
+        driftCharge,
+        lastEvent: driftCharge > 180 ? "Liminal drift" : state.lastEvent,
+      }
+    }),
+  cashOutDrift: () =>
+    set((state) => {
+      if (state.driftCharge < 120) {
+        return {
+          driftCharge: 0,
+        }
+      }
+
+      const driftScore = Math.round(state.driftCharge * state.combo)
+      const nextScore = state.score + driftScore
+
+      return {
+        score: nextScore,
+        bestScore: resolveBestScore(state.bestScore, nextScore),
+        combo: Math.min(state.combo + 0.35, 5),
+        driftCharge: 0,
+        lastEvent: `Drift cashed +${driftScore}`,
+      }
+    }),
   damage: (amount) =>
     set((state) => {
       const integrity = Math.max(0, state.integrity - amount)
@@ -89,6 +121,7 @@ export const useGameStore = create<GameState>((set) => ({
         integrity,
         score: nextScore,
         combo: 1,
+        driftCharge: 0,
         status: integrity <= 0 ? "ended" : state.status,
         bestScore: resolveBestScore(state.bestScore, nextScore),
         lastEvent: integrity <= 0 ? "The road folded in on itself" : "Static in the headlights",

@@ -60,11 +60,14 @@ function pruneHandledEvents(handledEvents: Set<string>, currentIndex: number) {
 function RacerWorld() {
   const carRef = useRef<Group | null>(null)
   const runtimeRef = useRef<RuntimeState>(createRuntimeState())
+  const wasDriftingRef = useRef(false)
   const inputRef = useInput()
   const status = useGameStore((state) => state.status)
   const setTelemetry = useGameStore((state) => state.setTelemetry)
   const addScore = useGameStore((state) => state.addScore)
   const damage = useGameStore((state) => state.damage)
+  const addDriftCharge = useGameStore((state) => state.addDriftCharge)
+  const cashOutDrift = useGameStore((state) => state.cashOutDrift)
 
   useFrame((state, delta) => {
     const runtime = runtimeRef.current
@@ -104,6 +107,17 @@ function RacerWorld() {
     runtime.distance += runtime.speed * delta
     runtime.steering = lerp(runtime.steering, input.steer, Math.min(delta * 7, 1))
 
+    const isScoringDrift =
+      input.isDrifting && Math.abs(runtime.velocityX) > 4.2 && runtime.speed > 22
+    if (isScoringDrift) {
+      addDriftCharge((Math.abs(runtime.velocityX) + runtime.speed * 0.18) * delta * 18)
+    }
+
+    if (!input.isDrifting && wasDriftingRef.current) {
+      cashOutDrift()
+    }
+    wasDriftingRef.current = input.isDrifting
+
     const car = carRef.current
     if (car) {
       car.position.x = lerp(car.position.x, runtime.x, Math.min(delta * 11, 1))
@@ -116,17 +130,14 @@ function RacerWorld() {
       runtime.x * 0.38,
       Math.min(delta * 2.4, 1),
     )
-    state.camera.position.y = lerp(
-      state.camera.position.y,
-      5.8 + runtime.speed * 0.015,
-      Math.min(delta * 2.4, 1),
-    )
-    state.camera.position.z = lerp(
-      state.camera.position.z,
-      10.5 + runtime.speed * 0.025,
-      Math.min(delta * 2.4, 1),
-    )
-    state.camera.lookAt(runtime.x * 0.28, 0.65, -8)
+    const isPortrait = state.size.width / state.size.height < 0.76
+    const cameraY = isPortrait ? 3.7 + runtime.speed * 0.005 : 5.8 + runtime.speed * 0.015
+    const cameraZ = isPortrait ? 5.8 + runtime.speed * 0.008 : 10.5 + runtime.speed * 0.025
+    const lookAtZ = isPortrait ? 1.6 : -8
+
+    state.camera.position.y = lerp(state.camera.position.y, cameraY, Math.min(delta * 2.4, 1))
+    state.camera.position.z = lerp(state.camera.position.z, cameraZ, Math.min(delta * 2.4, 1))
+    state.camera.lookAt(runtime.x * 0.28, isPortrait ? 0.36 : 0.55, lookAtZ)
 
     const obstacleIndex = Math.max(0, Math.floor((runtime.distance - 90) / 46))
     pruneHandledEvents(runtime.handledObstacles, obstacleIndex)
@@ -187,7 +198,7 @@ function RacerWorld() {
       <fog attach="fog" args={[dreamPalette.fog, 24, 170]} />
       <ambientLight intensity={0.82} />
       <directionalLight position={[8, 11, 7]} intensity={2.4} castShadow />
-      <pointLight position={[0, 5, 2]} color={dreamPalette.carGlow} intensity={18} distance={16} />
+      <pointLight position={[0, 5, 2]} color={dreamPalette.carGlow} intensity={10} distance={14} />
       <Environment preset="sunset" />
       <Stars radius={120} depth={42} count={1400} factor={2.3} saturation={0.2} fade speed={0.28} />
       <Track distance={runtimeRef.current.distance} />
