@@ -1,0 +1,32 @@
+﻿export const trackConfig = {
+  laneWidth: 3.2,
+  roadHalfWidth: 7.8,
+  segmentLength: 18,
+  visibleSegments: 34,
+  obstacleCount: 34,
+  checkpointSpacing: 180,
+  maxSpeed: 58,
+  baseAcceleration: 34,
+  braking: 52,
+  drag: 14,
+  steering: 13,
+  driftGrip: 0.58,
+  normalGrip: 0.86,
+  collisionDamage: 22,
+  checkpointScore: 900,
+  passScore: 80,
+} as const
+
+export const dreamPalette = {
+  fog: "#f0c8d9",
+  skyTop: "#f7dccf",
+  skyBottom: "#a9d8da",
+  road: "#f3dfd8",
+  roadEdge: "#7ac8c1",
+  car: "#fff7dc",
+  carGlow: "#f7a8b8",
+  pool: "#9edee5",
+  peach: "#f0a58f",
+  mint: "#9ad9bd",
+  lemon: "#f4dc8c",
+} as const

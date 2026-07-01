@@ -1,0 +1,275 @@
+﻿.game-shell {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 249, 202, 0.94), transparent 26%),
+    radial-gradient(circle at 86% 18%, rgba(137, 218, 213, 0.74), transparent 30%),
+    linear-gradient(180deg, #f7d6cb 0%, #d8d2df 42%, #9ecfd1 100%);
+}
+
+.game-shell::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(180deg, transparent, black 18%, black 70%, transparent);
+  opacity: 0.32;
+}
+
+.game-shell::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at center, transparent 0 48%, rgba(92, 61, 82, 0.2) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(110, 170, 178, 0.18));
+  mix-blend-mode: multiply;
+}
+
+.scene-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 244, 200, 0.8), transparent 28%),
+    linear-gradient(180deg, #f7d6cb, #9ecfd1);
+}
+.game-shell canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hud {
+  position: absolute;
+  inset: 24px 24px auto;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(160px, 1.2fr) repeat(3, minmax(112px, 0.6fr));
+  gap: 10px;
+  align-items: stretch;
+  pointer-events: none;
+}
+
+.hud__cluster {
+  min-width: 0;
+  padding: 12px 14px;
+  color: rgba(47, 37, 53, 0.88);
+  background: rgba(255, 252, 238, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 8px;
+  box-shadow: 0 18px 48px rgba(98, 68, 88, 0.14);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.hud__cluster--primary {
+  background: rgba(255, 244, 213, 0.72);
+}
+
+.hud__label {
+  display: block;
+  margin-block-end: 4px;
+  color: rgba(73, 58, 82, 0.62);
+  font-size: 0.68rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.hud strong {
+  display: block;
+  overflow: hidden;
+  font-size: clamp(1.05rem, 2vw, 1.72rem);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud small {
+  display: block;
+  overflow: hidden;
+  margin-block-start: 5px;
+  color: rgba(73, 58, 82, 0.62);
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud__integrity {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+}
+
+.hud__integrity span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #94dccf, #f4dc8c, #f0a58f);
+  border-radius: inherit;
+  transition: inline-size 240ms ease;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.12), transparent 34%),
+    rgba(57, 44, 63, 0.18);
+  backdrop-filter: blur(10px);
+}
+
+.overlay__panel {
+  width: min(560px, 100%);
+  padding: clamp(24px, 5vw, 42px);
+  color: #352b3b;
+  background: rgba(255, 247, 226, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 8px;
+  box-shadow: 0 28px 80px rgba(82, 58, 84, 0.24);
+  backdrop-filter: blur(24px) saturate(1.16);
+}
+
+.overlay__eyebrow {
+  margin: 0 0 10px;
+  color: #78727c;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.overlay h1 {
+  margin: 0;
+  color: #302738;
+  font-size: clamp(2.6rem, 9vw, 5.5rem);
+  font-weight: 760;
+  line-height: 0.92;
+}
+
+.overlay p {
+  max-width: 44rem;
+  margin: 18px 0 0;
+  color: rgba(49, 39, 56, 0.72);
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  line-height: 1.7;
+}
+
+.overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-block-start: 26px;
+}
+
+.overlay button,
+.pause-button {
+  min-height: 44px;
+  padding: 0 18px;
+  color: #322738;
+  cursor: pointer;
+  background: #fff0b8;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(121, 84, 98, 0.16);
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.overlay button:hover,
+.pause-button:hover {
+  background: #fff7d4;
+  box-shadow: 0 16px 36px rgba(121, 84, 98, 0.22);
+  transform: translateY(-1px);
+}
+
+.overlay .button-secondary {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.pause-button {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  z-index: 3;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 28px 0 0;
+}
+
+.controls div {
+  min-width: 0;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+}
+
+.controls dt {
+  margin-block-end: 4px;
+  color: #7a6a7c;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.controls dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .hud {
+    inset: 12px 12px auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .hud__cluster {
+    padding: 8px 10px;
+  }
+
+  .hud__label {
+    margin-block-end: 2px;
+    font-size: 0.58rem;
+  }
+
+  .hud strong {
+    font-size: 1.02rem;
+  }
+
+  .hud small {
+    margin-block-start: 3px;
+    font-size: 0.66rem;
+  }
+
+  .hud__integrity {
+    height: 6px;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+  }
+
+  .pause-button {
+    right: 14px;
+    bottom: 14px;
+  }
+}
