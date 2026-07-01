@@ -87,6 +87,40 @@
   animation: impact-flash 520ms ease-out both;
 }
 
+.feedback-ripple {
+  position: absolute;
+  inset: 12% 18% 18%;
+  z-index: 2;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  opacity: 0;
+  filter: blur(0.2px);
+  mix-blend-mode: screen;
+  animation: feedback-ripple 680ms ease-out both;
+}
+
+.feedback-ripple--boost {
+  background: radial-gradient(circle, rgba(183, 241, 221, 0.24), transparent 66%);
+  box-shadow:
+    0 0 36px rgba(183, 241, 221, 0.3),
+    inset 0 0 44px rgba(255, 255, 255, 0.26);
+}
+
+.feedback-ripple--checkpoint {
+  background: radial-gradient(circle, rgba(255, 240, 184, 0.28), transparent 66%);
+  box-shadow:
+    0 0 38px rgba(244, 220, 140, 0.32),
+    inset 0 0 44px rgba(255, 255, 255, 0.28);
+}
+
+.feedback-ripple--drift {
+  background: radial-gradient(circle, rgba(247, 168, 184, 0.24), transparent 66%);
+  box-shadow:
+    0 0 40px rgba(247, 168, 184, 0.32),
+    inset 0 0 44px rgba(255, 255, 255, 0.26);
+}
+
 @keyframes impact-flash {
   from {
     opacity: 1;
@@ -96,6 +130,22 @@
   to {
     opacity: 0;
     transform: scale(1.04);
+  }
+}
+
+@keyframes feedback-ripple {
+  0% {
+    opacity: 0;
+    transform: scale(0.58);
+  }
+
+  24% {
+    opacity: 0.78;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
   }
 }
 .hud {

@@ -2,6 +2,8 @@
 
 import type { GameStatus } from "@/shared/types"
 
+type FeedbackKind = "boost" | "checkpoint" | "drift"
+
 interface GameState {
   status: GameStatus
   score: number
@@ -13,6 +15,8 @@ interface GameState {
   driftCharge: number
   lastEvent: string
   impactId: number
+  feedbackId: number
+  feedbackKind: FeedbackKind | null
   start: () => void
   pause: () => void
   resume: () => void
@@ -40,6 +44,8 @@ const initialRunState = {
   driftCharge: 0,
   lastEvent: "Find the exit ramp",
   impactId: 0,
+  feedbackId: 0,
+  feedbackKind: null,
 }
 
 function readBestScore() {
@@ -63,6 +69,14 @@ function resolveBestScore(currentBest: number, nextScore: number) {
   return bestScore
 }
 
+function resolveFeedbackKind(event: string): FeedbackKind | null {
+  if (event === "Signal boost") return "boost"
+  if (event.startsWith("Checkpoint")) return "checkpoint"
+  if (event.startsWith("Drift cashed")) return "drift"
+
+  return null
+}
+
 export const useGameStore = create<GameState>((set) => ({
   status: "ready",
   bestScore: readBestScore(),
@@ -76,12 +90,15 @@ export const useGameStore = create<GameState>((set) => ({
     set((state) => {
       const nextScore = state.score + Math.round(score * state.combo)
       const nextCombo = Math.min(state.combo + 0.08, 5)
+      const feedbackKind = resolveFeedbackKind(event)
 
       return {
         score: nextScore,
         bestScore: resolveBestScore(state.bestScore, nextScore),
         combo: nextCombo,
         lastEvent: event,
+        feedbackId: feedbackKind ? state.feedbackId + 1 : state.feedbackId,
+        feedbackKind: feedbackKind ?? state.feedbackKind,
       }
     }),
   addDriftCharge: (score) =>
@@ -110,6 +127,8 @@ export const useGameStore = create<GameState>((set) => ({
         combo: Math.min(state.combo + 0.35, 5),
         driftCharge: 0,
         lastEvent: `Drift cashed +${driftScore}`,
+        feedbackId: state.feedbackId + 1,
+        feedbackKind: "drift",
       }
     }),
   damage: (amount) =>
