@@ -41,16 +41,23 @@ export function useInput() {
       updateInput()
     }
 
+    function resetInput() {
+      keysRef.current.clear()
+      updateInput()
+    }
+
     document.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
     document.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
     window.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
     window.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
+    window.addEventListener("blur", resetInput)
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
       document.removeEventListener("keyup", handleKeyUp, keyboardListenerOptions)
       window.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
       window.removeEventListener("keyup", handleKeyUp, keyboardListenerOptions)
+      window.removeEventListener("blur", resetInput)
     }
   }, [])
 
