@@ -1,9 +1,22 @@
 import { useEffect, useRef } from "react"
 
+import { useGameStore } from "@/game/useGameStore"
 import { useInputStore } from "@/game/useInputStore"
 import type { PlayerInput } from "@/shared/types"
 
 const keyboardListenerOptions = { capture: true } as const
+const drivingKeys = new Set([
+  " ",
+  "arrowdown",
+  "arrowleft",
+  "arrowright",
+  "arrowup",
+  "a",
+  "d",
+  "s",
+  "shift",
+  "w",
+])
 
 function resolveKeyboardInput(keys: Set<string>): PlayerInput {
   const steerLeft = keys.has("arrowleft") || keys.has("a")
@@ -30,12 +43,24 @@ export function useKeyboardInput() {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      keysRef.current.add(event.key.toLowerCase())
+      const key = event.key.toLowerCase()
+
+      if (useGameStore.getState().status === "running" && drivingKeys.has(key)) {
+        event.preventDefault()
+      }
+
+      keysRef.current.add(key)
       updateInput()
     }
 
     function handleKeyUp(event: KeyboardEvent) {
-      keysRef.current.delete(event.key.toLowerCase())
+      const key = event.key.toLowerCase()
+
+      if (useGameStore.getState().status === "running" && drivingKeys.has(key)) {
+        event.preventDefault()
+      }
+
+      keysRef.current.delete(key)
       updateInput()
     }
 
