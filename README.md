@@ -14,6 +14,7 @@ pnpm lint
 pnpm format
 pnpm check
 pnpm check:canvas -- http://localhost:5175/
+pnpm check:interaction -- http://localhost:5175/
 ```
 
 ## Controls
@@ -34,7 +35,8 @@ src/
   shared/   Shared TypeScript types
   ui/       HUD and menu overlays
 scripts/
-  checkCanvas.mjs  Playwright screenshot and canvas pixel verification
+  checkCanvas.mjs       Playwright screenshot and canvas pixel verification
+  checkInteraction.mjs  Playwright mobile touch driving smoke check
 ```
 
 ## Notes

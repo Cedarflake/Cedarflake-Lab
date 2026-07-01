@@ -11,7 +11,8 @@
     "format": "prettier . --write",
     "check": "pnpm lint && pnpm run check:generation && pnpm build",
     "check:canvas": "node scripts/checkCanvas.mjs",
-    "check:generation": "tsx scripts/checkGeneration.ts"
+    "check:generation": "tsx scripts/checkGeneration.ts",
+    "check:interaction": "node scripts/checkInteraction.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
