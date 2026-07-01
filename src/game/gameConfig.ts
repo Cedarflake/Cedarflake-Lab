@@ -15,6 +15,8 @@
   collisionDamage: 22,
   checkpointScore: 900,
   passScore: 80,
+  boostScore: 220,
+  boostSpeed: 16,
 } as const
 
 export const dreamPalette = {
@@ -25,6 +27,7 @@ export const dreamPalette = {
   roadEdge: "#62c7c0",
   car: "#fff7dc",
   carGlow: "#f7a8b8",
+  boost: "#b7f1dd",
   pool: "#9edee5",
   peach: "#f0a58f",
   mint: "#9ad9bd",

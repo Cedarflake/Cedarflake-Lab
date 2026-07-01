@@ -84,8 +84,22 @@ for (const viewport of viewports) {
   await page.goto(url, { waitUntil: "domcontentloaded" })
   await page.getByRole("button", { name: "Start driving" }).click()
   await page.locator("canvas").waitFor()
+  await page.waitForTimeout(300)
 
-  await page.keyboard.down("w")
+  if (viewport.name === "mobile") {
+    const goButton = page.getByRole("button", { name: "Go" })
+    const box = await goButton.boundingBox()
+
+    if (!box) {
+      throw new Error("Expected Go button to be visible")
+    }
+
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.down()
+  } else {
+    await page.locator("body").focus()
+    await page.keyboard.down("w")
+  }
 
   await page.waitForTimeout(2600)
   await page.screenshot({

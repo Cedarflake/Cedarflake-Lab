@@ -4,12 +4,15 @@ import { Environment, PerspectiveCamera, Stars } from "@react-three/drei"
 import { Canvas, useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
+import { BoostGates } from "@/entities/BoostGates"
 import { Checkpoints } from "@/entities/Checkpoints"
 import { DreamObjects } from "@/entities/DreamObjects"
 import { PlayerCar } from "@/entities/PlayerCar"
 import { Track } from "@/entities/Track"
 import {
+  createBoostGateAt,
   createObstacleAt,
+  createVisibleBoostGates,
   createVisibleCheckpoints,
   createVisibleObstacles,
 } from "@/game/generation"
@@ -27,6 +30,7 @@ interface RuntimeState {
   steering: number
   handledObstacles: Set<string>
   handledCheckpoints: Set<string>
+  handledBoostGates: Set<string>
 }
 
 const initialRuntime: RuntimeState = {
@@ -37,6 +41,7 @@ const initialRuntime: RuntimeState = {
   steering: 0,
   handledObstacles: new Set(),
   handledCheckpoints: new Set(),
+  handledBoostGates: new Set(),
 }
 
 function createRuntimeState(): RuntimeState {
@@ -44,6 +49,7 @@ function createRuntimeState(): RuntimeState {
     ...initialRuntime,
     handledObstacles: new Set(),
     handledCheckpoints: new Set(),
+    handledBoostGates: new Set(),
   }
 }
 
@@ -164,6 +170,30 @@ function RacerWorld() {
       }
     }
 
+    const boostGateIndex = Math.max(0, Math.floor((runtime.distance - 125) / 138))
+    pruneHandledEvents(runtime.handledBoostGates, boostGateIndex)
+
+    for (let index = boostGateIndex; index <= boostGateIndex + 2; index += 1) {
+      const boostGate = createBoostGateAt(index)
+      const distanceToBoostGate = boostGate.distance - runtime.distance
+
+      if (
+        distanceToBoostGate < 1.4 &&
+        distanceToBoostGate > -3.2 &&
+        !runtime.handledBoostGates.has(boostGate.id)
+      ) {
+        const boostX = boostGate.lane * trackConfig.laneWidth
+        const caughtBoost = Math.abs(runtime.x - boostX) < boostGate.width + 0.55
+
+        if (caughtBoost) {
+          runtime.speed = Math.min(runtime.speed + trackConfig.boostSpeed, trackConfig.maxSpeed)
+          addScore(trackConfig.boostScore + runtime.speed * 3, "Signal boost")
+        }
+
+        runtime.handledBoostGates.add(boostGate.id)
+      }
+    }
+
     const checkpointIndex = Math.max(
       0,
       Math.floor(runtime.distance / trackConfig.checkpointSpacing),
@@ -189,6 +219,7 @@ function RacerWorld() {
   })
 
   const visibleObstacles = createVisibleObstacles(runtimeRef.current.distance)
+  const visibleBoostGates = createVisibleBoostGates(runtimeRef.current.distance)
   const visibleCheckpoints = createVisibleCheckpoints(runtimeRef.current.distance)
 
   return (
@@ -202,6 +233,7 @@ function RacerWorld() {
       <Environment preset="sunset" />
       <Stars radius={120} depth={42} count={1400} factor={2.3} saturation={0.2} fade speed={0.28} />
       <Track distance={runtimeRef.current.distance} />
+      <BoostGates distance={runtimeRef.current.distance} boostGates={visibleBoostGates} />
       <DreamObjects distance={runtimeRef.current.distance} obstacles={visibleObstacles} />
       <Checkpoints distance={runtimeRef.current.distance} checkpoints={visibleCheckpoints} />
       <PlayerCar

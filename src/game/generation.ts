@@ -1,4 +1,4 @@
-import type { Checkpoint, Obstacle } from "@/shared/types"
+import type { BoostGate, Checkpoint, Obstacle } from "@/shared/types"
 
 import { trackConfig } from "./gameConfig"
 
@@ -30,6 +30,15 @@ export function createCheckpointAt(index: number): Checkpoint {
   }
 }
 
+export function createBoostGateAt(index: number): BoostGate {
+  return {
+    id: `boost-${index}`,
+    lane: Math.floor(hash(index + 43) * 3) - 1,
+    distance: 125 + index * 138 + hash(index + 53) * 28,
+    width: 1.8,
+  }
+}
+
 export function createVisibleObstacles(distance: number, lookBehind = 24, lookAhead = 270) {
   const spacing = 46
   const startIndex = Math.max(0, Math.floor((distance - 90 - lookBehind) / spacing))
@@ -49,5 +58,15 @@ export function createVisibleCheckpoints(distance: number, lookBehind = 24, look
 
   return Array.from({ length: endIndex - startIndex + 1 }, (_, offset) =>
     createCheckpointAt(startIndex + offset),
+  )
+}
+
+export function createVisibleBoostGates(distance: number, lookBehind = 24, lookAhead = 270) {
+  const spacing = 138
+  const startIndex = Math.max(0, Math.floor((distance - 125 - lookBehind) / spacing))
+  const endIndex = Math.ceil((distance + lookAhead - 125) / spacing)
+
+  return Array.from({ length: endIndex - startIndex + 1 }, (_, offset) =>
+    createBoostGateAt(startIndex + offset),
   )
 }

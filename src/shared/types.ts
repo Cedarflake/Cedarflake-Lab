@@ -20,3 +20,10 @@ export interface Checkpoint {
   distance: number
   width: number
 }
+
+export interface BoostGate {
+  id: string
+  lane: number
+  distance: number
+  width: number
+}
