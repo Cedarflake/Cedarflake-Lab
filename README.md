@@ -57,5 +57,6 @@ scripts/
 ## Notes
 
 - The project targets React 19 and the current React Three Fiber 9 / Drei 10 line.
+- UI text uses a bundled Space Grotesk subset under the SIL Open Font License.
 - `pnpm-workspace.yaml` contains the pnpm 11 project settings, including the `use-sync-external-store` override used to keep peer dependencies clean.
 - Mobile rendering is verified with Playwright. The scene keeps the canvas DPR at `1` for stable headless mobile WebGL output.

@@ -1,3 +1,11 @@
+@font-face {
+  font-family: Liminal-Drift-UI;
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/fonts/space-grotesk-latin.woff2") format("woff2");
+}
+
 :root {
   color: #2d2633;
   background: #f5d9d1;
