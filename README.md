@@ -21,14 +21,14 @@ pnpm build
 pnpm lint
 pnpm format
 pnpm check
-pnpm check:canvas -- http://localhost:5175/
-pnpm check:interaction -- http://localhost:5175/
+pnpm check:canvas -- <dev-server-url>
+pnpm check:interaction -- <dev-server-url>
 ```
 
 ## Verification
 
 - `pnpm check` runs lint, procedural generation checks, and production build.
-- `pnpm check:canvas -- <url>` captures desktop and mobile screenshots and checks the 3D scene is visible.
+- `pnpm check:canvas -- <url>` captures desktop and mobile screenshots, checks the 3D scene is visible, and verifies speed / distance telemetry advances.
 - `pnpm check:interaction -- <url>` verifies mobile Start + Go touch driving advances speed and distance.
 
 ## Controls
@@ -52,6 +52,8 @@ src/
 scripts/
   checkCanvas.mjs       Playwright screenshot and canvas pixel verification
   checkInteraction.mjs  Playwright mobile touch driving smoke check
+public/
+  fonts/                Bundled UI font subset and license
 ```
 
 ## Notes
