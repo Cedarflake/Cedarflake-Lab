@@ -4,6 +4,14 @@ A dreamcore 3D driving game prototype built with React 19, TypeScript, Vite, Thr
 
 Drive through a soft, empty highway made of pastel road plates, pool-blue edges, floating mall signs, signal boost gates, near misses, and checkpoints that feel like half-remembered exits.
 
+## Gameplay
+
+- Chase checkpoints to score and repair the car.
+- Hit signal boost gates for speed bursts and score pulses.
+- Drift through bends to bank charge, then release to cash out.
+- Slip past obstacles for near-miss rewards, but collisions damage integrity.
+- Keep a local best score across runs.
+
 ## Scripts
 
 ```txt
@@ -16,6 +24,12 @@ pnpm check
 pnpm check:canvas -- http://localhost:5175/
 pnpm check:interaction -- http://localhost:5175/
 ```
+
+## Verification
+
+- `pnpm check` runs lint, procedural generation checks, and production build.
+- `pnpm check:canvas -- <url>` captures desktop and mobile screenshots and checks the 3D scene is visible.
+- `pnpm check:interaction -- <url>` verifies mobile Start + Go touch driving advances speed and distance.
 
 ## Controls
 
