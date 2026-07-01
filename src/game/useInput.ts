@@ -18,6 +18,18 @@ const drivingKeys = new Set([
   "w",
 ])
 
+function resolveAxis(value: number | undefined, deadzone = 0.16) {
+  if (!value || Math.abs(value) < deadzone) return 0
+
+  return value
+}
+
+function resolveButton(button: GamepadButton | undefined) {
+  if (!button) return 0
+
+  return button.pressed ? 1 : button.value
+}
+
 function resolveKeyboardInput(keys: Set<string>): PlayerInput {
   const steerLeft = keys.has("arrowleft") || keys.has("a")
   const steerRight = keys.has("arrowright") || keys.has("d")
@@ -32,11 +44,44 @@ function resolveKeyboardInput(keys: Set<string>): PlayerInput {
   }
 }
 
+function resolveGamepadInput(gamepads: readonly (Gamepad | null)[]): PlayerInput {
+  const gamepad = gamepads.find((item) => item?.connected)
+
+  if (!gamepad) {
+    return {
+      steer: 0,
+      throttle: 0,
+      brake: 0,
+      isDrifting: false,
+    }
+  }
+
+  const leftStickX = resolveAxis(gamepad.axes[0])
+  const steerLeft = resolveButton(gamepad.buttons[14])
+  const steerRight = resolveButton(gamepad.buttons[15])
+  const throttle = Math.max(resolveButton(gamepad.buttons[7]), resolveButton(gamepad.buttons[0]))
+  const brake = Math.max(resolveButton(gamepad.buttons[6]), resolveButton(gamepad.buttons[1]))
+
+  return {
+    steer: leftStickX || steerRight - steerLeft,
+    throttle,
+    brake,
+    isDrifting: resolveButton(gamepad.buttons[4]) > 0 || resolveButton(gamepad.buttons[5]) > 0,
+  }
+}
+
 export function useKeyboardInput() {
   const keysRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    const { resetKeyboardInput, resetTouchInput, setKeyboardInput } = useInputStore.getState()
+    const {
+      resetGamepadInput,
+      resetKeyboardInput,
+      resetTouchInput,
+      setGamepadInput,
+      setKeyboardInput,
+    } = useInputStore.getState()
+    let animationFrame = 0
 
     function updateInput() {
       setKeyboardInput(resolveKeyboardInput(keysRef.current))
@@ -66,6 +111,7 @@ export function useKeyboardInput() {
 
     function resetInput() {
       keysRef.current.clear()
+      resetGamepadInput()
       resetKeyboardInput()
       resetTouchInput()
     }
@@ -76,12 +122,23 @@ export function useKeyboardInput() {
       }
     }
 
+    function syncGamepadInput() {
+      if (useGameStore.getState().status === "running") {
+        setGamepadInput(resolveGamepadInput(navigator.getGamepads()))
+      } else {
+        resetGamepadInput()
+      }
+
+      animationFrame = window.requestAnimationFrame(syncGamepadInput)
+    }
+
     document.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
     document.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
     document.addEventListener("visibilitychange", resetWhenHidden)
     window.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
     window.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
     window.addEventListener("blur", resetInput)
+    animationFrame = window.requestAnimationFrame(syncGamepadInput)
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
@@ -90,6 +147,7 @@ export function useKeyboardInput() {
       window.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
       window.removeEventListener("keyup", handleKeyUp, keyboardListenerOptions)
       window.removeEventListener("blur", resetInput)
+      window.cancelAnimationFrame(animationFrame)
     }
   }, [])
 }

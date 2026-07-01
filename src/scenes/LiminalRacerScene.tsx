@@ -74,7 +74,10 @@ function RacerWorld() {
   const wasDriftingRef = useRef(false)
   const status = useGameStore((state) => state.status)
   const isDrifting = useInputStore(
-    (state) => state.keyboardInput.isDrifting || state.touchInput.isDrifting,
+    (state) =>
+      state.gamepadInput.isDrifting ||
+      state.keyboardInput.isDrifting ||
+      state.touchInput.isDrifting,
   )
   const setTelemetry = useGameStore((state) => state.setTelemetry)
   const addScore = useGameStore((state) => state.addScore)
@@ -93,12 +96,12 @@ function RacerWorld() {
       return
     }
 
-    const { keyboardInput, touchInput } = useInputStore.getState()
+    const { gamepadInput, keyboardInput, touchInput } = useInputStore.getState()
     const input = {
-      steer: clamp(keyboardInput.steer + touchInput.steer, -1, 1),
-      throttle: Math.max(keyboardInput.throttle, touchInput.throttle),
-      brake: Math.max(keyboardInput.brake, touchInput.brake),
-      isDrifting: keyboardInput.isDrifting || touchInput.isDrifting,
+      steer: clamp(keyboardInput.steer + gamepadInput.steer + touchInput.steer, -1, 1),
+      throttle: Math.max(keyboardInput.throttle, gamepadInput.throttle, touchInput.throttle),
+      brake: Math.max(keyboardInput.brake, gamepadInput.brake, touchInput.brake),
+      isDrifting: keyboardInput.isDrifting || gamepadInput.isDrifting || touchInput.isDrifting,
     }
     const grip = input.isDrifting ? trackConfig.driftGrip : trackConfig.normalGrip
     const acceleration =

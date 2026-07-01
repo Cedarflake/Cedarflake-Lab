@@ -39,6 +39,7 @@ pnpm check:interaction -- <dev-server-url>
 - Steer: `A` / `D` or `Left` / `Right`
 - Drift: `Space` or `Shift`
 - Pause: `Esc`
+- Gamepad: left stick / D-pad to steer, triggers to drive and brake, shoulders to drift
 - Touch: on-screen buttons on mobile viewports
 
 ## Project Structure
