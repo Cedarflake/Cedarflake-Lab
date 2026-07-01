@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 import { chromium, devices } from "playwright"
 import { PNG } from "pngjs"
 
-const url = process.argv.find((value) => value.startsWith("http")) ?? "http://localhost:5175/"
+const url = process.argv.find((value) => value.startsWith("http")) ?? "http://localhost:5173/"
 const outputDir = new URL("../artifacts/", import.meta.url)
 const outputPath = fileURLToPath(outputDir)
 

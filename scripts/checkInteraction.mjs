@@ -1,6 +1,6 @@
 import { chromium, devices } from "playwright"
 
-const url = process.argv.find((value) => value.startsWith("http")) ?? "http://localhost:5175/"
+const url = process.argv.find((value) => value.startsWith("http")) ?? "http://localhost:5173/"
 
 function readMetric(text, label) {
   const match = text.match(new RegExp(`${label}\\s+(\\d+)`, "i"))
