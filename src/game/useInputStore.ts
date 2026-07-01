@@ -10,19 +10,25 @@ const emptyInput: PlayerInput = {
 }
 
 interface InputState {
-  input: PlayerInput
-  setInput: (input: Partial<PlayerInput>) => void
-  resetInput: () => void
+  keyboardInput: PlayerInput
+  touchInput: PlayerInput
+  setKeyboardInput: (input: PlayerInput) => void
+  setTouchInput: (input: Partial<PlayerInput>) => void
+  resetKeyboardInput: () => void
+  resetTouchInput: () => void
 }
 
 export const useInputStore = create<InputState>((set) => ({
-  input: emptyInput,
-  setInput: (input) =>
+  keyboardInput: emptyInput,
+  touchInput: emptyInput,
+  setKeyboardInput: (input) => set({ keyboardInput: input }),
+  setTouchInput: (input) =>
     set((state) => ({
-      input: {
-        ...state.input,
+      touchInput: {
+        ...state.touchInput,
         ...input,
       },
     })),
-  resetInput: () => set({ input: emptyInput }),
+  resetKeyboardInput: () => set({ keyboardInput: emptyInput }),
+  resetTouchInput: () => set({ touchInput: emptyInput }),
 }))

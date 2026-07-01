@@ -1,5 +1,6 @@
-﻿import { useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 
+import { useInputStore } from "@/game/useInputStore"
 import type { PlayerInput } from "@/shared/types"
 
 const initialInput: PlayerInput = {
@@ -11,24 +12,28 @@ const initialInput: PlayerInput = {
 
 const keyboardListenerOptions = { capture: true } as const
 
-export function useInput() {
-  const inputRef = useRef<PlayerInput>({ ...initialInput })
+function resolveKeyboardInput(keys: Set<string>): PlayerInput {
+  const steerLeft = keys.has("arrowleft") || keys.has("a")
+  const steerRight = keys.has("arrowright") || keys.has("d")
+  const throttle = keys.has("arrowup") || keys.has("w")
+  const brake = keys.has("arrowdown") || keys.has("s")
+
+  return {
+    steer: Number(steerRight) - Number(steerLeft),
+    throttle: Number(throttle),
+    brake: Number(brake),
+    isDrifting: keys.has(" ") || keys.has("shift"),
+  }
+}
+
+export function useKeyboardInput() {
   const keysRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    function updateInput() {
-      const keys = keysRef.current
-      const steerLeft = keys.has("arrowleft") || keys.has("a")
-      const steerRight = keys.has("arrowright") || keys.has("d")
-      const throttle = keys.has("arrowup") || keys.has("w")
-      const brake = keys.has("arrowdown") || keys.has("s")
+    const setKeyboardInput = useInputStore.getState().setKeyboardInput
 
-      inputRef.current = {
-        steer: Number(steerRight) - Number(steerLeft),
-        throttle: Number(throttle),
-        brake: Number(brake),
-        isDrifting: keys.has(" ") || keys.has("shift"),
-      }
+    function updateInput() {
+      setKeyboardInput(resolveKeyboardInput(keysRef.current))
     }
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -43,7 +48,7 @@ export function useInput() {
 
     function resetInput() {
       keysRef.current.clear()
-      updateInput()
+      setKeyboardInput(initialInput)
     }
 
     document.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
@@ -60,6 +65,4 @@ export function useInput() {
       window.removeEventListener("blur", resetInput)
     }
   }, [])
-
-  return inputRef
 }

@@ -1,5 +1,6 @@
 ﻿import { lazy, Suspense } from "react"
 
+import { useKeyboardInput } from "@/game/useInput"
 import { DrivingFeedback } from "@/ui/DrivingFeedback"
 import { GameOverlay } from "@/ui/GameOverlay"
 import { Hud } from "@/ui/Hud"
@@ -14,6 +15,8 @@ const LiminalRacerScene = lazy(() =>
 )
 
 export function App() {
+  useKeyboardInput()
+
   return (
     <main className="game-shell" tabIndex={-1}>
       <Suspense fallback={<div className="scene-loading" aria-hidden="true" />}>

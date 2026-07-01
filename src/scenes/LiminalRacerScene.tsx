@@ -19,7 +19,6 @@ import {
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { clamp, lerp } from "@/game/number"
 import { useGameStore } from "@/game/useGameStore"
-import { useInput } from "@/game/useInput"
 import { useInputStore } from "@/game/useInputStore"
 
 interface RuntimeState {
@@ -67,8 +66,10 @@ function RacerWorld() {
   const carRef = useRef<Group | null>(null)
   const runtimeRef = useRef<RuntimeState>(createRuntimeState())
   const wasDriftingRef = useRef(false)
-  const inputRef = useInput()
   const status = useGameStore((state) => state.status)
+  const isDrifting = useInputStore(
+    (state) => state.keyboardInput.isDrifting || state.touchInput.isDrifting,
+  )
   const setTelemetry = useGameStore((state) => state.setTelemetry)
   const addScore = useGameStore((state) => state.addScore)
   const damage = useGameStore((state) => state.damage)
@@ -86,8 +87,7 @@ function RacerWorld() {
       return
     }
 
-    const keyboardInput = inputRef.current
-    const touchInput = useInputStore.getState().input
+    const { keyboardInput, touchInput } = useInputStore.getState()
     const input = {
       steer: clamp(keyboardInput.steer + touchInput.steer, -1, 1),
       throttle: Math.max(keyboardInput.throttle, touchInput.throttle),
@@ -248,11 +248,7 @@ function RacerWorld() {
       <BoostGates distance={runtimeRef.current.distance} boostGates={visibleBoostGates} />
       <DreamObjects distance={runtimeRef.current.distance} obstacles={visibleObstacles} />
       <Checkpoints distance={runtimeRef.current.distance} checkpoints={visibleCheckpoints} />
-      <PlayerCar
-        carRef={carRef}
-        steering={runtimeRef.current.steering}
-        isDrifting={inputRef.current.isDrifting}
-      />
+      <PlayerCar carRef={carRef} steering={runtimeRef.current.steering} isDrifting={isDrifting} />
     </>
   )
 }

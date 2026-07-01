@@ -13,11 +13,11 @@ interface ControlButtonProps {
 }
 
 function ControlButton({ label, press, release, className }: ControlButtonProps) {
-  const setInput = useInputStore((state) => state.setInput)
+  const setTouchInput = useInputStore((state) => state.setTouchInput)
 
   function handlePress(event: PointerEvent<HTMLButtonElement>) {
     event.currentTarget.setPointerCapture(event.pointerId)
-    setInput(press)
+    setTouchInput(press)
   }
 
   function handleRelease(event: PointerEvent<HTMLButtonElement>) {
@@ -25,7 +25,7 @@ function ControlButton({ label, press, release, className }: ControlButtonProps)
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
 
-    setInput(release)
+    setTouchInput(release)
   }
 
   return (
