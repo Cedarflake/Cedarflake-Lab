@@ -2,7 +2,7 @@
 
 A dreamcore 3D driving game prototype built with React 19, TypeScript, Vite, Three.js, React Three Fiber, Drei, and Zustand.
 
-Drive through a soft, empty highway made of pastel road plates, pool-blue edges, floating mall signs, and checkpoints that feel like half-remembered exits.
+Drive through a soft, empty highway made of pastel road plates, pool-blue edges, floating mall signs, signal boost gates, near misses, and checkpoints that feel like half-remembered exits.
 
 ## Scripts
 
@@ -19,7 +19,8 @@ pnpm check:interaction -- http://localhost:5175/
 
 ## Controls
 
-- Steer: `WASD` or arrow keys
+- Drive: `W` / `S` or `Up` / `Down`
+- Steer: `A` / `D` or `Left` / `Right`
 - Drift: `Space` or `Shift`
 - Pause: `Esc`
 - Touch: on-screen buttons on mobile viewports

@@ -142,8 +142,12 @@ export function GameOverlay() {
         </div>
         <dl className="controls">
           <div>
+            <dt>Drive</dt>
+            <dd>W / S / Up / Down</dd>
+          </div>
+          <div>
             <dt>Steer</dt>
-            <dd>WASD / Arrows</dd>
+            <dd>A / D / Left / Right</dd>
           </div>
           <div>
             <dt>Drift</dt>
