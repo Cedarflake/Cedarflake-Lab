@@ -316,7 +316,7 @@ export function LiminalRacerScene() {
       aria-label="Liminal Drift 3D racing scene"
       shadows
       dpr={1}
-      gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
+      gl={{ antialias: true, alpha: false }}
     >
       <RacerWorld />
     </Canvas>
