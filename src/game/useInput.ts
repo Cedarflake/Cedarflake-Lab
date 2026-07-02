@@ -132,8 +132,6 @@ export function useKeyboardInput() {
       animationFrame = window.requestAnimationFrame(syncGamepadInput)
     }
 
-    document.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
-    document.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
     document.addEventListener("visibilitychange", resetWhenHidden)
     window.addEventListener("keydown", handleKeyDown, keyboardListenerOptions)
     window.addEventListener("keyup", handleKeyUp, keyboardListenerOptions)
@@ -141,8 +139,6 @@ export function useKeyboardInput() {
     animationFrame = window.requestAnimationFrame(syncGamepadInput)
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
-      document.removeEventListener("keyup", handleKeyUp, keyboardListenerOptions)
       document.removeEventListener("visibilitychange", resetWhenHidden)
       window.removeEventListener("keydown", handleKeyDown, keyboardListenerOptions)
       window.removeEventListener("keyup", handleKeyUp, keyboardListenerOptions)
