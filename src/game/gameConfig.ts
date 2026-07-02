@@ -3,7 +3,6 @@
   roadHalfWidth: 7.8,
   segmentLength: 18,
   visibleSegments: 34,
-  obstacleCount: 34,
   checkpointSpacing: 180,
   maxSpeed: 58,
   baseAcceleration: 34,
@@ -25,7 +24,6 @@
 export const dreamPalette = {
   fog: "#f0c8d9",
   skyTop: "#f7dccf",
-  skyBottom: "#a9d8da",
   road: "#e7e0e4",
   roadEdge: "#62c7c0",
   car: "#fff7dc",
