@@ -122,6 +122,26 @@ function measureSceneDifference(beforeBuffer, afterBuffer) {
 
 const browser = await chromium.launch()
 
+{
+  const context = await browser.newContext()
+  const page = await context.newPage()
+
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get() {
+        throw new DOMException("localStorage is unavailable", "SecurityError")
+      },
+    })
+  })
+  await page.goto(url, { waitUntil: "domcontentloaded" })
+  await page.getByRole("button", { name: "Start driving" }).click()
+  await page.locator("canvas").waitFor()
+  await context.close()
+
+  console.log("blocked storage ok")
+}
+
 for (const viewport of viewports) {
   const context = await browser.newContext(viewport.options)
   const page = await context.newPage()

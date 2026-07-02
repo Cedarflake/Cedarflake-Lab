@@ -28,3 +28,35 @@ jobs:
 
       - name: Check
         run: pnpm check
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser smoke checks
+        run: |
+          pnpm exec vite --host 127.0.0.1 --port 5173 > /tmp/liminal-drift-vite.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:5173/ >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "Vite server did not become ready" >&2
+              cat /tmp/liminal-drift-vite.log >&2
+              exit 1
+            fi
+            sleep 1
+          done
+
+          node scripts/checkCanvas.mjs http://127.0.0.1:5173/
+          node scripts/checkInteraction.mjs http://127.0.0.1:5173/
+
+      - name: Upload browser artifacts
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke-artifacts
+          path: artifacts/
+          if-no-files-found: ignore

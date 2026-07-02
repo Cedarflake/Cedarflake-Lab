@@ -51,14 +51,25 @@ const initialRunState = {
 }
 
 function readBestScore() {
-  const value = window.localStorage.getItem(bestScoreKey)
+  let value: string | null = null
+
+  try {
+    value = window.localStorage.getItem(bestScoreKey)
+  } catch {
+    return 0
+  }
+
   const score = Number(value)
 
   return Number.isFinite(score) ? score : 0
 }
 
 function saveBestScore(score: number) {
-  window.localStorage.setItem(bestScoreKey, String(score))
+  try {
+    window.localStorage.setItem(bestScoreKey, String(score))
+  } catch {
+    return
+  }
 }
 
 function resolveBestScore(currentBest: number, nextScore: number) {
