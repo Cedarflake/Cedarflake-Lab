@@ -11,6 +11,12 @@ const budgets = {
   largestAssetBytes: 780 * kib,
   totalJsGzipBytes: 360 * kib,
 }
+const expectedChunkPrefixes = [
+  "LiminalRacerScene-",
+  "react-three-vendor-",
+  "react-vendor-",
+  "three-core-",
+]
 
 /**
  * @param {number} bytes
@@ -27,6 +33,19 @@ function formatKib(bytes) {
 function assertBudget(actual, limit, label) {
   if (actual > limit) {
     throw new Error(`${label} exceeded budget: ${formatKib(actual)} > ${formatKib(limit)}`)
+  }
+}
+
+/**
+ * @param {string[]} assetNames
+ */
+function assertExpectedChunks(assetNames) {
+  const missingPrefixes = expectedChunkPrefixes.filter(
+    (prefix) => !assetNames.some((assetName) => assetName.startsWith(prefix)),
+  )
+
+  if (missingPrefixes.length > 0) {
+    throw new Error(`Missing expected bundle chunks: ${missingPrefixes.join(", ")}`)
   }
 }
 
@@ -56,6 +75,7 @@ const largestAsset = assetReports.reduce(
   { name: "", rawBytes: 0, gzipBytes: 0 },
 )
 
+assertExpectedChunks(assetReports.map((report) => report.name))
 assertBudget(totalJsGzipBytes, budgets.totalJsGzipBytes, "Total JS gzip size")
 assertBudget(totalCssGzipBytes, budgets.cssGzipBytes, "Total CSS gzip size")
 assertBudget(largestAsset.rawBytes, budgets.largestAssetBytes, "Largest asset raw size")
