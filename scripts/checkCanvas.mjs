@@ -201,6 +201,28 @@ try {
     console.log("blocked storage ok")
   }
 
+  {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await page.addInitScript(() => {
+      window.localStorage.setItem("liminal-drift:best-score", "-12")
+    })
+    await page.goto(url, { waitUntil: "domcontentloaded" })
+    await page.getByRole("button", { name: "Start driving" }).click()
+    await page.locator("canvas").waitFor()
+
+    const bestText = await page.locator(".hud__cluster--primary small").innerText()
+
+    if (bestText !== "Best 0") {
+      throw new Error(`Expected invalid negative best score to clamp to 0, got "${bestText}"`)
+    }
+
+    await context.close()
+
+    console.log("invalid best score ok")
+  }
+
   for (const viewport of viewports) {
     const context = await browser.newContext(viewport.options)
     const page = await context.newPage()

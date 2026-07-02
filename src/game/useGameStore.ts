@@ -61,7 +61,7 @@ function readBestScore() {
 
   const score = Number(value)
 
-  return Number.isFinite(score) ? score : 0
+  return Number.isFinite(score) && score > 0 ? score : 0
 }
 
 function saveBestScore(score: number) {
