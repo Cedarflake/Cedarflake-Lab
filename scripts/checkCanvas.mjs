@@ -100,7 +100,8 @@ for (const viewport of viewports) {
   await page.goto(url, { waitUntil: "domcontentloaded" })
   await page.getByRole("button", { name: "Start driving" }).click()
   await page.locator("canvas").waitFor()
-  await page.waitForTimeout(300)
+  await page.getByRole("button", { name: "Pause" }).waitFor()
+  await page.waitForTimeout(700)
 
   if (viewport.name === "mobile") {
     const goButton = page.getByRole("button", { name: "Go" })
@@ -113,7 +114,6 @@ for (const viewport of viewports) {
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
     await page.mouse.down()
   } else {
-    await page.locator(".game-shell").focus()
     await page.keyboard.down("w")
   }
 
