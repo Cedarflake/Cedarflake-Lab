@@ -145,6 +145,19 @@ async function assertActiveButton(page, label) {
 
 /**
  * @param {import("playwright").Page} page
+ * @param {string} firstLabel
+ * @param {string} lastLabel
+ */
+async function assertDialogTabWrap(page, firstLabel, lastLabel) {
+  await assertActiveButton(page, firstLabel)
+  await page.keyboard.press("Shift+Tab")
+  await assertActiveButton(page, lastLabel)
+  await page.keyboard.press("Tab")
+  await assertActiveButton(page, firstLabel)
+}
+
+/**
+ * @param {import("playwright").Page} page
  * @param {boolean} hidden
  */
 async function assertAmbientGameHidden(page, hidden) {
@@ -265,6 +278,7 @@ try {
     await assertFontPreload(page)
     await assertModalDialog(page, "Start race")
     await assertActiveButton(page, "Start driving")
+    await assertDialogTabWrap(page, "Start driving", "Start driving")
     await page.locator("canvas").waitFor()
     await assertAmbientGameHidden(page, true)
     await page.getByRole("button", { name: "Start driving" }).click()
@@ -314,6 +328,7 @@ try {
     await page.goto(url, { waitUntil: "domcontentloaded" })
     await assertModalDialog(page, "Start race")
     await assertActiveButton(page, "Start driving")
+    await assertDialogTabWrap(page, "Start driving", "Start driving")
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
     await assertAmbientGameHidden(page, false)
@@ -392,6 +407,7 @@ try {
     await pressEscapeWithRepeat(page)
     await assertModalDialog(page, "Paused")
     await assertActiveButton(page, "Resume")
+    await assertDialogTabWrap(page, "Resume", "Restart")
     await assertAmbientGameHidden(page, true)
 
     await context.close()

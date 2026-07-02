@@ -1,7 +1,8 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 
 import { formatNumber } from "@/game/format"
 import { useGameStore } from "@/game/useGameStore"
+import type { GameStatus } from "@/shared/types"
 
 interface RunStatsProps {
   bestScore: number
@@ -41,6 +42,79 @@ function RunStats({ bestScore, combo, distance, integrity, score, showBest }: Ru
   )
 }
 
+function getDialogFocusTargets(dialog: HTMLElement) {
+  return Array.from(
+    dialog.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((element) => !element.hasAttribute("disabled") && element.offsetParent !== null)
+}
+
+function useDialogFocusTrap(status: GameStatus) {
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (status === "running") {
+      return
+    }
+
+    const dialog = dialogRef.current
+
+    if (!dialog) {
+      return
+    }
+
+    const activeDialog = dialog
+    const previousActiveElement =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const focusTargets = getDialogFocusTargets(activeDialog)
+    focusTargets[0]?.focus()
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Tab") {
+        return
+      }
+
+      const targets = getDialogFocusTargets(activeDialog)
+
+      if (targets.length === 0) {
+        event.preventDefault()
+        return
+      }
+
+      const firstTarget = targets[0]
+      const lastTarget = targets.at(-1)
+
+      if (!firstTarget || !lastTarget) {
+        return
+      }
+
+      if (event.shiftKey && document.activeElement === firstTarget) {
+        event.preventDefault()
+        lastTarget.focus()
+      } else if (!event.shiftKey && document.activeElement === lastTarget) {
+        event.preventDefault()
+        firstTarget.focus()
+      } else if (!activeDialog.contains(document.activeElement)) {
+        event.preventDefault()
+        firstTarget.focus()
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown, true)
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true)
+
+      if (previousActiveElement?.isConnected) {
+        previousActiveElement.focus()
+      }
+    }
+  }, [status])
+
+  return dialogRef
+}
+
 export function GameOverlay() {
   const status = useGameStore((state) => state.status)
   const score = useGameStore((state) => state.score)
@@ -52,6 +126,7 @@ export function GameOverlay() {
   const pause = useGameStore((state) => state.pause)
   const resume = useGameStore((state) => state.resume)
   const restart = useGameStore((state) => state.restart)
+  const dialogRef = useDialogFocusTrap(status)
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -88,7 +163,7 @@ export function GameOverlay() {
 
   if (status === "paused") {
     return (
-      <div className="overlay" role="dialog" aria-modal="true" aria-label="Paused">
+      <div ref={dialogRef} className="overlay" role="dialog" aria-modal="true" aria-label="Paused">
         <div className="overlay__panel">
           <p className="overlay__eyebrow">A quiet exit sign hums overhead</p>
           <h1>Liminal Drift</h1>
@@ -101,7 +176,7 @@ export function GameOverlay() {
             score={score}
           />
           <div className="overlay__actions">
-            <button type="button" onClick={resume} autoFocus>
+            <button type="button" onClick={resume}>
               Resume
             </button>
             <button type="button" className="button-secondary" onClick={restart}>
@@ -115,7 +190,13 @@ export function GameOverlay() {
 
   if (status === "ended") {
     return (
-      <div className="overlay" role="dialog" aria-modal="true" aria-label="Race ended">
+      <div
+        ref={dialogRef}
+        className="overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Race ended"
+      >
         <div className="overlay__panel">
           <p className="overlay__eyebrow">Signal lost at {Math.round(score)} points</p>
           <h1>The mall closes itself</h1>
@@ -129,7 +210,7 @@ export function GameOverlay() {
             showBest
           />
           <div className="overlay__actions">
-            <button type="button" onClick={restart} autoFocus>
+            <button type="button" onClick={restart}>
               Drive again
             </button>
           </div>
@@ -139,7 +220,13 @@ export function GameOverlay() {
   }
 
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-label="Start race">
+    <div
+      ref={dialogRef}
+      className="overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Start race"
+    >
       <div className="overlay__panel">
         <p className="overlay__eyebrow">Dreamcore night driving</p>
         <h1>Liminal Drift</h1>
@@ -148,7 +235,7 @@ export function GameOverlay() {
           feel half remembered.
         </p>
         <div className="overlay__actions">
-          <button type="button" onClick={start} autoFocus>
+          <button type="button" onClick={start}>
             Start driving
           </button>
         </div>
