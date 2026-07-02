@@ -103,6 +103,14 @@ async function readProgressValue(page, label) {
   return value
 }
 
+async function assertModalDialog(page, label) {
+  const modal = await page.getByRole("dialog", { name: label }).getAttribute("aria-modal")
+
+  if (modal !== "true") {
+    throw new Error(`Expected ${label} dialog to be modal`)
+  }
+}
+
 function measureSceneDifference(beforeBuffer, afterBuffer) {
   const before = PNG.sync.read(beforeBuffer)
   const after = PNG.sync.read(afterBuffer)
@@ -148,6 +156,7 @@ try {
       })
     })
     await page.goto(url, { waitUntil: "domcontentloaded" })
+    await assertModalDialog(page, "Start race")
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
     await context.close()
@@ -160,6 +169,7 @@ try {
     const page = await context.newPage()
 
     await page.goto(url, { waitUntil: "domcontentloaded" })
+    await assertModalDialog(page, "Start race")
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
     await page.getByRole("button", { name: "Pause" }).waitFor()
@@ -220,8 +230,6 @@ try {
     const sample = samplePng(screenshot)
     const sceneDifference = measureSceneDifference(beforeMotion, afterMotion)
 
-    await context.close()
-
     if (!sample.ok) {
       throw new Error(`${viewport.name} canvas check failed: ${JSON.stringify(sample)}`)
     }
@@ -229,6 +237,17 @@ try {
     if (sceneDifference < 2) {
       throw new Error(`${viewport.name} scene did not visibly move: ${sceneDifference.toFixed(2)}`)
     }
+
+    if (viewport.name === "mobile") {
+      await page.mouse.up()
+    } else {
+      await page.keyboard.up("w")
+    }
+
+    await page.getByRole("button", { name: "Pause" }).click()
+    await assertModalDialog(page, "Paused")
+
+    await context.close()
 
     console.log(`${viewport.name} canvas ok`, {
       ...sample,
