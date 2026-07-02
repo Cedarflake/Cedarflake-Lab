@@ -73,6 +73,7 @@ function RacerWorld() {
   const runtimeRef = useRef<RuntimeState>(createRuntimeState())
   const wasDriftingRef = useRef(false)
   const status = useGameStore((state) => state.status)
+  const visualDistance = useGameStore((state) => state.distance)
   const isDrifting = useInputStore(
     (state) =>
       state.gamepadInput.isDrifting ||
@@ -253,10 +254,10 @@ function RacerWorld() {
     setTelemetry({ speed: runtime.speed, distance: runtime.distance })
   })
 
-  const visibleObstacles = createVisibleObstacles(runtimeRef.current.distance)
-  const visibleBoostGates = createVisibleBoostGates(runtimeRef.current.distance)
-  const visibleCheckpoints = createVisibleCheckpoints(runtimeRef.current.distance)
-  const visibleMemoryShards = createVisibleMemoryShards(runtimeRef.current.distance)
+  const visibleObstacles = createVisibleObstacles(visualDistance)
+  const visibleBoostGates = createVisibleBoostGates(visualDistance)
+  const visibleCheckpoints = createVisibleCheckpoints(visualDistance)
+  const visibleMemoryShards = createVisibleMemoryShards(visualDistance)
 
   return (
     <>
@@ -275,12 +276,17 @@ function RacerWorld() {
         fade
         speed={0.28}
       />
-      <Track distance={runtimeRef.current.distance} />
-      <BoostGates distance={runtimeRef.current.distance} boostGates={visibleBoostGates} />
-      <MemoryShards distance={runtimeRef.current.distance} memoryShards={visibleMemoryShards} />
-      <DreamObjects distance={runtimeRef.current.distance} obstacles={visibleObstacles} />
-      <Checkpoints distance={runtimeRef.current.distance} checkpoints={visibleCheckpoints} />
-      <PlayerCar carRef={carRef} steering={runtimeRef.current.steering} isDrifting={isDrifting} />
+      <Track distance={visualDistance} />
+      <BoostGates distance={visualDistance} boostGates={visibleBoostGates} />
+      <MemoryShards distance={visualDistance} memoryShards={visibleMemoryShards} />
+      <DreamObjects distance={visualDistance} obstacles={visibleObstacles} />
+      <Checkpoints distance={visualDistance} checkpoints={visibleCheckpoints} />
+      <PlayerCar
+        carRef={carRef}
+        steering={runtimeRef.current.steering}
+        isDrifting={isDrifting}
+        distance={visualDistance}
+      />
     </>
   )
 }

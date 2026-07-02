@@ -10,9 +10,10 @@ interface PlayerCarProps {
   carRef: RefObject<Group | null>
   steering: number
   isDrifting: boolean
+  distance: number
 }
 
-export function PlayerCar({ carRef, steering, isDrifting }: PlayerCarProps) {
+export function PlayerCar({ carRef, steering, isDrifting, distance }: PlayerCarProps) {
   const wheelPositions = useMemo(
     (): Array<[number, number, number]> => [
       [-0.86, -0.28, 1.16],
@@ -67,10 +68,16 @@ export function PlayerCar({ carRef, steering, isDrifting }: PlayerCarProps) {
       </mesh>
 
       {wheelPositions.map(([x, y, z], index) => (
-        <mesh key={index} position={[x, y, z]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.31, 0.31, 0.25, 24]} />
-          <meshStandardMaterial color="#6d6070" roughness={0.55} />
-        </mesh>
+        <group key={index} position={[x, y, z]} rotation={[Math.PI / 2, 0, distance * 0.24]}>
+          <mesh>
+            <cylinderGeometry args={[0.31, 0.31, 0.25, 24]} />
+            <meshStandardMaterial color="#6d6070" roughness={0.55} />
+          </mesh>
+          <mesh position={[0, 0.132, 0.2]}>
+            <boxGeometry args={[0.08, 0.025, 0.28]} />
+            <meshBasicMaterial color={dreamPalette.carGlow} transparent opacity={0.72} />
+          </mesh>
+        </group>
       ))}
     </group>
   )
