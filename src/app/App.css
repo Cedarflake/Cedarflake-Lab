@@ -49,6 +49,12 @@
     linear-gradient(180deg, #f7d6cb, #9ecfd1);
 }
 
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
 .scene-error {
   position: absolute;
   inset: 0;

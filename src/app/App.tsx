@@ -1,6 +1,7 @@
 import { Component, lazy, Suspense } from "react"
 import type { ReactNode } from "react"
 
+import { useGameStore } from "@/game/useGameStore"
 import { useKeyboardInput } from "@/game/useInput"
 import { DrivingFeedback } from "@/ui/DrivingFeedback"
 import { GameOverlay } from "@/ui/GameOverlay"
@@ -53,19 +54,23 @@ class SceneErrorBoundary extends Component<SceneErrorBoundaryProps, SceneErrorBo
 }
 
 export function App() {
+  const status = useGameStore((state) => state.status)
+
   useKeyboardInput()
 
   return (
     <main className="game-shell" tabIndex={-1}>
-      <SceneErrorBoundary>
-        <Suspense
-          fallback={
-            <div className="scene-loading" role="status" aria-label="Loading 3D racing scene" />
-          }
-        >
-          <LiminalRacerScene />
-        </Suspense>
-      </SceneErrorBoundary>
+      <div className="scene-layer" aria-hidden={status !== "running"}>
+        <SceneErrorBoundary>
+          <Suspense
+            fallback={
+              <div className="scene-loading" role="status" aria-label="Loading 3D racing scene" />
+            }
+          >
+            <LiminalRacerScene />
+          </Suspense>
+        </SceneErrorBoundary>
+      </div>
       <DrivingFeedback />
       <Hud />
       <TouchControls />

@@ -2,6 +2,7 @@ import { formatNumber } from "@/game/format"
 import { useGameStore } from "@/game/useGameStore"
 
 export function Hud() {
+  const status = useGameStore((state) => state.status)
   const score = useGameStore((state) => state.score)
   const bestScore = useGameStore((state) => state.bestScore)
   const speed = useGameStore((state) => state.speed)
@@ -13,7 +14,7 @@ export function Hud() {
   const driftPercent = Math.min((driftCharge / 1600) * 100, 100)
 
   return (
-    <section className="hud" aria-label="Race telemetry">
+    <section className="hud" aria-label="Race telemetry" aria-hidden={status !== "running"}>
       <div className="hud__cluster hud__cluster--primary">
         <span className="hud__label">Score</span>
         <strong>{formatNumber(score)}</strong>

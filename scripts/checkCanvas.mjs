@@ -145,6 +145,24 @@ async function assertActiveButton(page, label) {
 
 /**
  * @param {import("playwright").Page} page
+ * @param {boolean} hidden
+ */
+async function assertAmbientGameHidden(page, hidden) {
+  const expectedValue = String(hidden)
+  const actualValues = {
+    hud: await page.locator(".hud").getAttribute("aria-hidden"),
+    sceneLayer: await page.locator(".scene-layer").getAttribute("aria-hidden"),
+  }
+
+  if (actualValues.sceneLayer !== expectedValue || actualValues.hud !== expectedValue) {
+    throw new Error(
+      `Expected ambient game aria-hidden=${expectedValue}, got ${JSON.stringify(actualValues)}`,
+    )
+  }
+}
+
+/**
+ * @param {import("playwright").Page} page
  */
 async function pressEscapeWithRepeat(page) {
   await page.evaluate(() => {
@@ -233,8 +251,10 @@ try {
     await page.goto(url, { waitUntil: "domcontentloaded" })
     await assertModalDialog(page, "Start race")
     await assertActiveButton(page, "Start driving")
-    await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
+    await assertAmbientGameHidden(page, true)
+    await page.getByRole("button", { name: "Start driving" }).click()
+    await assertAmbientGameHidden(page, false)
     await context.close()
 
     console.log("blocked storage ok")
@@ -282,6 +302,7 @@ try {
     await assertActiveButton(page, "Start driving")
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
+    await assertAmbientGameHidden(page, false)
     await page.getByRole("button", { name: "Pause" }).waitFor()
     await page.waitForTimeout(700)
     const beforeMotion = await page.locator("canvas").screenshot()
@@ -357,6 +378,7 @@ try {
     await pressEscapeWithRepeat(page)
     await assertModalDialog(page, "Paused")
     await assertActiveButton(page, "Resume")
+    await assertAmbientGameHidden(page, true)
 
     await context.close()
 
