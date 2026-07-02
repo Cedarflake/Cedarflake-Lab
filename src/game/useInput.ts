@@ -82,6 +82,7 @@ export function useKeyboardInput() {
       setKeyboardInput,
     } = useInputStore.getState()
     let animationFrame = 0
+    let wasRunning = false
 
     function updateInput() {
       setKeyboardInput(resolveKeyboardInput(keysRef.current))
@@ -133,11 +134,13 @@ export function useKeyboardInput() {
 
     function syncGamepadInput() {
       if (useGameStore.getState().status === "running") {
+        wasRunning = true
         const gamepads = typeof navigator.getGamepads === "function" ? navigator.getGamepads() : []
 
         setGamepadInput(resolveGamepadInput(gamepads))
-      } else {
-        resetGamepadInput()
+      } else if (wasRunning) {
+        wasRunning = false
+        resetInput()
       }
 
       animationFrame = window.requestAnimationFrame(syncGamepadInput)
