@@ -205,7 +205,8 @@
 }
 .hud {
   position: absolute;
-  inset: 24px 24px auto;
+  inset: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right)) auto
+    calc(24px + env(safe-area-inset-left));
   z-index: 3;
   display: grid;
   grid-template-columns: minmax(160px, 1.2fr) repeat(3, minmax(112px, 0.6fr));
@@ -294,7 +295,8 @@
   z-index: 4;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right))
+    calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
   background:
     radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.12), transparent 34%),
     rgba(57, 44, 63, 0.18);
@@ -413,8 +415,8 @@
 
 .pause-button {
   position: absolute;
-  right: 24px;
-  bottom: 24px;
+  right: calc(24px + env(safe-area-inset-right));
+  bottom: calc(24px + env(safe-area-inset-bottom));
   z-index: 3;
 }
 
@@ -446,7 +448,8 @@
 
 .touch-controls {
   position: absolute;
-  inset: auto 14px 14px;
+  inset: auto calc(14px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom))
+    calc(14px + env(safe-area-inset-left));
   z-index: 3;
   display: none;
   grid-template-columns: 1fr 1fr;
@@ -525,7 +528,8 @@
 
 @media (max-width: 760px) {
   .hud {
-    inset: 12px 12px auto;
+    inset: calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) auto
+      calc(12px + env(safe-area-inset-left));
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 7px;
   }
@@ -566,7 +570,7 @@
   }
 
   .pause-button {
-    right: 14px;
-    bottom: 110px;
+    right: calc(14px + env(safe-area-inset-right));
+    bottom: calc(110px + env(safe-area-inset-bottom));
   }
 }
