@@ -84,7 +84,7 @@ export function GameOverlay() {
 
   if (status === "paused") {
     return (
-      <div className="overlay" role="dialog" aria-label="Paused">
+      <div className="overlay" role="dialog" aria-modal="true" aria-label="Paused">
         <div className="overlay__panel">
           <p className="overlay__eyebrow">A quiet exit sign hums overhead</p>
           <h1>Liminal Drift</h1>
@@ -111,7 +111,7 @@ export function GameOverlay() {
 
   if (status === "ended") {
     return (
-      <div className="overlay" role="dialog" aria-label="Race ended">
+      <div className="overlay" role="dialog" aria-modal="true" aria-label="Race ended">
         <div className="overlay__panel">
           <p className="overlay__eyebrow">Signal lost at {Math.round(score)} points</p>
           <h1>The mall closes itself</h1>
@@ -135,7 +135,7 @@ export function GameOverlay() {
   }
 
   return (
-    <div className="overlay" role="dialog" aria-label="Start race">
+    <div className="overlay" role="dialog" aria-modal="true" aria-label="Start race">
       <div className="overlay__panel">
         <p className="overlay__eyebrow">Dreamcore night driving</p>
         <h1>Liminal Drift</h1>
