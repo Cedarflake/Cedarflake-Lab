@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from "react"
+import { lazy, Suspense } from "react"
 
 import { useKeyboardInput } from "@/game/useInput"
 import { DrivingFeedback } from "@/ui/DrivingFeedback"

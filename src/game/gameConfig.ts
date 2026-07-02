@@ -1,4 +1,4 @@
-﻿export const trackConfig = {
+export const trackConfig = {
   laneWidth: 3.2,
   roadHalfWidth: 7.8,
   segmentLength: 18,

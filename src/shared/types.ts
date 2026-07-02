@@ -1,4 +1,4 @@
-﻿export type GameStatus = "ready" | "running" | "paused" | "ended"
+export type GameStatus = "ready" | "running" | "paused" | "ended"
 
 export interface PlayerInput {
   steer: number

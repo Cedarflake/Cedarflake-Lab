@@ -1,4 +1,4 @@
-﻿import { useGameStore } from "@/game/useGameStore"
+import { useGameStore } from "@/game/useGameStore"
 
 export function DrivingFeedback() {
   const speed = useGameStore((state) => state.speed)
