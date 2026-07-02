@@ -2,6 +2,8 @@ packages:
   - .
 nodeVersion: 22.22.2
 engineStrict: true
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
 overrides:
   use-sync-external-store: 1.4.0
 allowBuilds:
