@@ -15,6 +15,8 @@ Drive through a soft, empty highway made of pastel road plates, pool-blue edges,
 
 ## Scripts
 
+Requires Node.js 22 through 24 and pnpm 11.
+
 ```txt
 pnpm install
 pnpm dev
