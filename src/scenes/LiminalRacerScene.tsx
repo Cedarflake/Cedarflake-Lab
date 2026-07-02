@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 
 import { PerspectiveCamera, Stars } from "@react-three/drei"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
@@ -21,6 +21,7 @@ import {
 } from "@/game/generation"
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { clamp, lerp } from "@/game/number"
+import { resolveRelativeTrackCenter } from "@/game/trackPath"
 import { useGameStore } from "@/game/useGameStore"
 import { useInputStore } from "@/game/useInputStore"
 
@@ -71,15 +72,12 @@ function pruneHandledEvents(handledEvents: Set<string>, currentIndex: number) {
 function RacerWorld() {
   const carRef = useRef<Group | null>(null)
   const runtimeRef = useRef<RuntimeState>(createRuntimeState())
+  const distanceRef = useRef(0)
   const wasDriftingRef = useRef(false)
+  const lastTelemetryAtRef = useRef(0)
+  const runId = useGameStore((state) => state.runId)
   const status = useGameStore((state) => state.status)
   const visualDistance = useGameStore((state) => state.distance)
-  const isDrifting = useInputStore(
-    (state) =>
-      state.gamepadInput.isDrifting ||
-      state.keyboardInput.isDrifting ||
-      state.touchInput.isDrifting,
-  )
   const setTelemetry = useGameStore((state) => state.setTelemetry)
   const addScore = useGameStore((state) => state.addScore)
   const damage = useGameStore((state) => state.damage)
@@ -88,12 +86,26 @@ function RacerWorld() {
   const cashOutDrift = useGameStore((state) => state.cashOutDrift)
   const isPortrait = useThree((state) => state.size.width / state.size.height < 0.76)
 
+  useEffect(() => {
+    runtimeRef.current = createRuntimeState()
+    distanceRef.current = 0
+    wasDriftingRef.current = false
+    lastTelemetryAtRef.current = 0
+    setTelemetry({ speed: 0, distance: 0 })
+  }, [runId, setTelemetry])
+
   useFrame((state, delta) => {
     const runtime = runtimeRef.current
+    distanceRef.current = runtime.distance
 
     if (status !== "running") {
       runtime.speed = lerp(runtime.speed, 0, Math.min(delta * 2.2, 1))
-      setTelemetry({ speed: runtime.speed, distance: runtime.distance })
+      distanceRef.current = runtime.distance
+      const elapsedTime = state.clock.getElapsedTime()
+      if (elapsedTime - lastTelemetryAtRef.current > 1 / 20) {
+        lastTelemetryAtRef.current = elapsedTime
+        setTelemetry({ speed: runtime.speed, distance: runtime.distance })
+      }
       return
     }
 
@@ -123,6 +135,7 @@ function RacerWorld() {
       trackConfig.roadHalfWidth - 1.05,
     )
     runtime.distance += runtime.speed * delta
+    distanceRef.current = runtime.distance
     runtime.steering = lerp(runtime.steering, input.steer, Math.min(delta * 7, 1))
 
     const isScoringDrift =
@@ -141,20 +154,19 @@ function RacerWorld() {
       car.position.x = lerp(car.position.x, runtime.x, Math.min(delta * 11, 1))
       car.position.y = 0.62 + Math.sin(runtime.distance * 0.12) * 0.035
       car.rotation.y = -runtime.velocityX * 0.018
+      car.rotation.z = input.isDrifting ? -runtime.steering * 0.08 : 0
     }
 
-    state.camera.position.x = lerp(
-      state.camera.position.x,
-      runtime.x * 0.38,
-      Math.min(delta * 2.4, 1),
-    )
-    const cameraY = isPortrait ? 3.7 + runtime.speed * 0.005 : 2.6 + runtime.speed * 0.004
-    const cameraZ = isPortrait ? 5.8 + runtime.speed * 0.008 : 4.4 + runtime.speed * 0.007
-    const lookAtZ = isPortrait ? 1.6 : 0.7
+    const cameraX = runtime.x * (isPortrait ? 0.28 : 0.18)
+    state.camera.position.x = lerp(state.camera.position.x, cameraX, Math.min(delta * 2.4, 1))
+    const cameraY = isPortrait ? 5.6 + runtime.speed * 0.004 : 5.2 + runtime.speed * 0.006
+    const cameraZ = isPortrait ? 10.2 + runtime.speed * 0.009 : 11.2 + runtime.speed * 0.012
+    const lookAtY = isPortrait ? 1.35 : 1.55
+    const lookAtZ = isPortrait ? -8.8 : -13.5
 
     state.camera.position.y = lerp(state.camera.position.y, cameraY, Math.min(delta * 2.4, 1))
     state.camera.position.z = lerp(state.camera.position.z, cameraZ, Math.min(delta * 2.4, 1))
-    state.camera.lookAt(runtime.x * 0.28, isPortrait ? 0.36 : 0.32, lookAtZ)
+    state.camera.lookAt(runtime.x * 0.2, lookAtY, lookAtZ)
 
     const obstacleIndex = Math.max(0, Math.floor((runtime.distance - 90) / 46))
     pruneHandledEvents(runtime.handledObstacles, obstacleIndex)
@@ -168,7 +180,9 @@ function RacerWorld() {
         distanceToObstacle > -4 &&
         !runtime.handledObstacles.has(obstacle.id)
       ) {
-        const obstacleX = obstacle.lane * trackConfig.laneWidth
+        const obstacleX =
+          resolveRelativeTrackCenter(obstacle.distance, runtime.distance) +
+          obstacle.lane * trackConfig.laneWidth
         const hit = Math.abs(runtime.x - obstacleX) < obstacle.width + 0.9
 
         if (hit) {
@@ -195,7 +209,9 @@ function RacerWorld() {
         distanceToBoostGate > -3.2 &&
         !runtime.handledBoostGates.has(boostGate.id)
       ) {
-        const boostX = boostGate.lane * trackConfig.laneWidth
+        const boostX =
+          resolveRelativeTrackCenter(boostGate.distance, runtime.distance) +
+          boostGate.lane * trackConfig.laneWidth
         const caughtBoost = Math.abs(runtime.x - boostX) < boostGate.width + 0.55
 
         if (caughtBoost) {
@@ -219,7 +235,9 @@ function RacerWorld() {
         distanceToShard > -3.4 &&
         !runtime.handledMemoryShards.has(memoryShard.id)
       ) {
-        const shardX = memoryShard.lane * trackConfig.laneWidth
+        const shardX =
+          resolveRelativeTrackCenter(memoryShard.distance, runtime.distance) +
+          memoryShard.lane * trackConfig.laneWidth
 
         if (Math.abs(runtime.x - shardX) < 1.05) {
           addScore(trackConfig.memoryShardScore + runtime.speed * 2.5, "Memory shard")
@@ -251,7 +269,11 @@ function RacerWorld() {
       }
     }
 
-    setTelemetry({ speed: runtime.speed, distance: runtime.distance })
+    const elapsedTime = state.clock.getElapsedTime()
+    if (elapsedTime - lastTelemetryAtRef.current > 1 / 20) {
+      lastTelemetryAtRef.current = elapsedTime
+      setTelemetry({ speed: runtime.speed, distance: runtime.distance })
+    }
   })
 
   const visibleObstacles = createVisibleObstacles(visualDistance)
@@ -261,9 +283,9 @@ function RacerWorld() {
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 2.6, 4.4]} rotation={[-0.28, 0, 0]} fov={58} />
+      <PerspectiveCamera makeDefault position={[0, 5.2, 11.2]} rotation={[-0.24, 0, 0]} fov={50} />
       <color attach="background" args={[dreamPalette.skyTop]} />
-      <fog attach="fog" args={[dreamPalette.fog, 24, 170]} />
+      <fog attach="fog" args={[dreamPalette.fog, 42, 210]} />
       <ambientLight intensity={0.82} />
       <directionalLight position={[8, 11, 7]} intensity={2.4} castShadow={!isPortrait} />
       <pointLight position={[0, 5, 2]} color={dreamPalette.carGlow} intensity={10} distance={14} />
@@ -276,17 +298,14 @@ function RacerWorld() {
         fade
         speed={0.28}
       />
-      <Track distance={visualDistance} />
-      <BoostGates distance={visualDistance} boostGates={visibleBoostGates} />
-      <MemoryShards distance={visualDistance} memoryShards={visibleMemoryShards} />
-      <DreamObjects distance={visualDistance} obstacles={visibleObstacles} />
-      <Checkpoints distance={visualDistance} checkpoints={visibleCheckpoints} />
-      <PlayerCar
-        carRef={carRef}
-        steering={runtimeRef.current.steering}
-        isDrifting={isDrifting}
-        distance={visualDistance}
-      />
+      <group key={runId}>
+        <Track distanceRef={distanceRef} />
+        <BoostGates distanceRef={distanceRef} boostGates={visibleBoostGates} />
+        <MemoryShards distanceRef={distanceRef} memoryShards={visibleMemoryShards} />
+        <DreamObjects distanceRef={distanceRef} obstacles={visibleObstacles} />
+        <Checkpoints distanceRef={distanceRef} checkpoints={visibleCheckpoints} />
+        <PlayerCar carRef={carRef} distanceRef={distanceRef} />
+      </group>
     </>
   )
 }

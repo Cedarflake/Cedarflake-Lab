@@ -1,19 +1,25 @@
-﻿import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import type { RefObject } from "react"
 
 import { RoundedBox, Trail } from "@react-three/drei"
+import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { dreamPalette } from "@/game/gameConfig"
 
-interface PlayerCarProps {
-  carRef: RefObject<Group | null>
-  steering: number
-  isDrifting: boolean
-  distance: number
+interface WheelRef {
+  rotation: {
+    set: (x: number, y: number, z: number) => void
+  }
 }
 
-export function PlayerCar({ carRef, steering, isDrifting, distance }: PlayerCarProps) {
+interface PlayerCarProps {
+  carRef: RefObject<Group | null>
+  distanceRef: RefObject<number>
+}
+
+export function PlayerCar({ carRef, distanceRef }: PlayerCarProps) {
+  const wheelRefs = useRef<Array<WheelRef | null>>([])
   const wheelPositions = useMemo(
     (): Array<[number, number, number]> => [
       [-0.86, -0.28, 1.16],
@@ -24,8 +30,18 @@ export function PlayerCar({ carRef, steering, isDrifting, distance }: PlayerCarP
     [],
   )
 
+  useFrame(() => {
+    const wheelRotation = distanceRef.current * 0.24
+
+    wheelRefs.current.forEach((wheel) => {
+      if (!wheel) return
+
+      wheel.rotation.set(wheelRotation, 0, Math.PI / 2)
+    })
+  })
+
   return (
-    <group ref={carRef} rotation={[0, -steering * 0.08, isDrifting ? -steering * 0.08 : 0]}>
+    <group ref={carRef}>
       <Trail
         width={1.1}
         length={7}
@@ -68,13 +84,19 @@ export function PlayerCar({ carRef, steering, isDrifting, distance }: PlayerCarP
       </mesh>
 
       {wheelPositions.map(([x, y, z], index) => (
-        <group key={index} position={[x, y, z]} rotation={[Math.PI / 2, 0, distance * 0.24]}>
+        <group
+          key={index}
+          position={[x, y, z]}
+          ref={(wheel) => {
+            wheelRefs.current[index] = wheel
+          }}
+        >
           <mesh>
             <cylinderGeometry args={[0.31, 0.31, 0.25, 24]} />
             <meshStandardMaterial color="#6d6070" roughness={0.55} />
           </mesh>
-          <mesh position={[0, 0.132, 0.2]}>
-            <boxGeometry args={[0.08, 0.025, 0.28]} />
+          <mesh position={[0, 0.2, 0.13]}>
+            <boxGeometry args={[0.27, 0.08, 0.025]} />
             <meshBasicMaterial color={dreamPalette.carGlow} transparent opacity={0.72} />
           </mesh>
         </group>

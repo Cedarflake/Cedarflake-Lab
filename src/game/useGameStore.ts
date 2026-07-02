@@ -17,6 +17,7 @@ interface GameState {
   impactId: number
   feedbackId: number
   feedbackKind: FeedbackKind | null
+  runId: number
   start: () => void
   pause: () => void
   resume: () => void
@@ -83,11 +84,13 @@ function resolveFeedbackKind(event: string): FeedbackKind | null {
 export const useGameStore = create<GameState>((set) => ({
   status: "ready",
   bestScore: readBestScore(),
+  runId: 0,
   ...initialRunState,
-  start: () => set({ status: "running", ...initialRunState }),
+  start: () => set((state) => ({ status: "running", runId: state.runId + 1, ...initialRunState })),
   pause: () => set((state) => (state.status === "running" ? { status: "paused" } : state)),
   resume: () => set((state) => (state.status === "paused" ? { status: "running" } : state)),
-  restart: () => set({ status: "running", ...initialRunState }),
+  restart: () =>
+    set((state) => ({ status: "running", runId: state.runId + 1, ...initialRunState })),
   setTelemetry: (telemetry) => set(telemetry),
   addScore: (score, event) =>
     set((state) => {
