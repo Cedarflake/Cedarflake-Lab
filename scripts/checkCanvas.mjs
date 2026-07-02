@@ -156,6 +156,33 @@ async function pressEscapeWithRepeat(page) {
 }
 
 /**
+ * @param {import("playwright").Page} page
+ */
+async function assertReducedMotionStyles(page) {
+  const styles = await page.evaluate(() => {
+    const speedVeil = document.querySelector(".speed-veil")
+    const startButton = document.querySelector(".overlay button")
+
+    if (!(speedVeil instanceof HTMLElement) || !(startButton instanceof HTMLElement)) {
+      return null
+    }
+
+    return {
+      speedVeilDisplay: getComputedStyle(speedVeil).display,
+      startButtonTransition: getComputedStyle(startButton).transitionDuration,
+    }
+  })
+
+  if (!styles) {
+    throw new Error("Expected reduced-motion style targets to exist")
+  }
+
+  if (styles.speedVeilDisplay !== "none" || styles.startButtonTransition !== "0s") {
+    throw new Error(`Reduced-motion styles were not applied: ${JSON.stringify(styles)}`)
+  }
+}
+
+/**
  * @param {Buffer | Uint8Array} beforeBuffer
  * @param {Buffer | Uint8Array} afterBuffer
  */
@@ -233,6 +260,17 @@ try {
     await context.close()
 
     console.log("invalid best score ok")
+  }
+
+  {
+    const context = await browser.newContext({ reducedMotion: "reduce" })
+    const page = await context.newPage()
+
+    await page.goto(url, { waitUntil: "domcontentloaded" })
+    await assertReducedMotionStyles(page)
+    await context.close()
+
+    console.log("reduced motion ok")
   }
 
   for (const viewport of viewports) {

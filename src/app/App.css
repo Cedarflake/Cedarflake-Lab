@@ -493,6 +493,30 @@
 .touch-controls__drift {
   background: rgba(211, 244, 237, 0.76);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .speed-veil,
+  .feedback-ripple,
+  .impact-flash {
+    display: none;
+  }
+
+  .hud__integrity span,
+  .hud__drift span,
+  .overlay button,
+  .pause-button,
+  .scene-error button,
+  .touch-controls button {
+    transition: none;
+  }
+
+  .overlay button:hover,
+  .pause-button:hover,
+  .scene-error button:hover {
+    transform: none;
+  }
+}
+
 @media (max-width: 760px) {
   .hud {
     inset: 12px 12px auto;
