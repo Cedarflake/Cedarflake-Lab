@@ -2,7 +2,7 @@ export const trackConfig = {
   laneWidth: 3.2,
   roadHalfWidth: 7.8,
   segmentLength: 18,
-  visibleSegments: 34,
+  visibleSegments: 22,
   checkpointSpacing: 180,
   maxSpeed: 58,
   maxSpeedBonus: 12,

@@ -1,7 +1,6 @@
 import { useRef } from "react"
 import type { RefObject } from "react"
 
-import { RoundedBox } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
@@ -16,29 +15,14 @@ interface BoostGatesProps {
 
 interface BoostGateNodeProps {
   boostGate: BoostGate
-  distanceRef: RefObject<number>
+  nodeRef: (node: Group | null) => void
 }
 
-function BoostGateNode({ boostGate, distanceRef }: BoostGateNodeProps) {
-  const gateRef = useRef<Group | null>(null)
-
-  useFrame(() => {
-    const gate = gateRef.current
-    if (!gate) return
-
-    const distance = distanceRef.current
-    const z = -(boostGate.distance - distance) + 2
-    const x =
-      resolveRelativeTrackCenter(boostGate.distance, distance) +
-      boostGate.lane * trackConfig.laneWidth
-
-    gate.position.set(x, 0.08, z)
-    gate.visible = z <= 18 && z >= -260
-  })
-
+function BoostGateNode({ boostGate, nodeRef }: BoostGateNodeProps) {
   return (
-    <group ref={gateRef}>
-      <RoundedBox args={[boostGate.width, 0.08, 2.6]} radius={0.08} smoothness={8}>
+    <group ref={nodeRef}>
+      <mesh>
+        <boxGeometry args={[boostGate.width, 0.08, 2.6]} />
         <meshStandardMaterial
           color={dreamPalette.boost}
           emissive={dreamPalette.boost}
@@ -46,7 +30,7 @@ function BoostGateNode({ boostGate, distanceRef }: BoostGateNodeProps) {
           transparent
           opacity={0.88}
         />
-      </RoundedBox>
+      </mesh>
       <mesh position={[0, 0.07, 0]}>
         <boxGeometry args={[0.16, 0.08, 2.9]} />
         <meshBasicMaterial color="#fff7c6" transparent opacity={0.72} />
@@ -56,10 +40,35 @@ function BoostGateNode({ boostGate, distanceRef }: BoostGateNodeProps) {
 }
 
 export function BoostGates({ boostGates, distanceRef }: BoostGatesProps) {
+  const gateRefs = useRef<Array<Group | null>>([])
+
+  useFrame(() => {
+    const distance = distanceRef.current
+
+    boostGates.forEach((boostGate, index) => {
+      const gate = gateRefs.current[index]
+      if (!gate) return
+
+      const z = -(boostGate.distance - distance) + 2
+      const x =
+        resolveRelativeTrackCenter(boostGate.distance, distance) +
+        boostGate.lane * trackConfig.laneWidth
+
+      gate.position.set(x, 0.08, z)
+      gate.visible = z <= 18 && z >= -260
+    })
+  })
+
   return (
     <group>
-      {boostGates.map((boostGate) => (
-        <BoostGateNode key={boostGate.id} boostGate={boostGate} distanceRef={distanceRef} />
+      {boostGates.map((boostGate, index) => (
+        <BoostGateNode
+          key={boostGate.id}
+          boostGate={boostGate}
+          nodeRef={(node) => {
+            gateRefs.current[index] = node
+          }}
+        />
       ))}
     </group>
   )

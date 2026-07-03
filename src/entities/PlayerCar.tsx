@@ -56,14 +56,14 @@ export function PlayerCar({ carRef, distanceRef, isDriftingRef }: PlayerCarProps
 
   return (
     <group ref={carRef}>
-      <RoundedBox args={[1.9, 0.54, 3.05]} radius={0.18} smoothness={8} position={[0, 0.18, 0]}>
+      <RoundedBox args={[1.9, 0.54, 3.05]} radius={0.18} smoothness={6} position={[0, 0.18, 0]}>
         <meshStandardMaterial color={dreamPalette.car} roughness={0.28} metalness={0.16} />
       </RoundedBox>
 
       <RoundedBox
         args={[1.22, 0.52, 1.25]}
         radius={0.18}
-        smoothness={8}
+        smoothness={6}
         position={[0, 0.62, -0.24]}
       >
         <meshPhysicalMaterial
@@ -94,7 +94,7 @@ export function PlayerCar({ carRef, distanceRef, isDriftingRef }: PlayerCarProps
           }}
         >
           <mesh>
-            <cylinderGeometry args={[0.31, 0.31, 0.25, 24]} />
+            <cylinderGeometry args={[0.31, 0.31, 0.25, 18]} />
             <meshStandardMaterial color="#6d6070" roughness={0.55} />
           </mesh>
           <mesh position={[0, 0.2, 0.13]}>

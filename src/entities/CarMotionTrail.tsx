@@ -28,8 +28,8 @@ interface CarMotionTrailProps {
   speedRef: RefObject<number>
 }
 
-const maxControlSamples = 26
-const trailSegmentCount = 64
+const maxControlSamples = 22
+const trailSegmentCount = 44
 const minDistanceSpacing = 0.5
 const minLateralSpacing = 0.08
 const trailOffsets = [0] as const
@@ -112,7 +112,7 @@ function sampleTrailPoint(samples: TrailSample[], progress: number) {
 function smoothTrailSamples(samples: TrailSample[]) {
   let smoothedSamples = samples.map((sample) => ({ ...sample }))
 
-  for (let pass = 0; pass < 3; pass += 1) {
+  for (let pass = 0; pass < 2; pass += 1) {
     smoothedSamples = smoothedSamples.map((sample, index) => {
       if (index === 0 || index === smoothedSamples.length - 1) {
         return sample

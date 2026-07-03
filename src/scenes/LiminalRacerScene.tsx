@@ -59,6 +59,7 @@ const initialRuntime: RuntimeState = {
 const maxFrameDelta = 0.1
 const baseCameraFov = 50
 const maxCameraFov = 58
+const telemetryIntervalSeconds = 1 / 10
 const worldWindowUpdateDistance = 24
 
 function createRuntimeState(): RuntimeState {
@@ -128,7 +129,7 @@ function RacerWorld() {
       speedRef.current = runtime.speed
       runtime.speed = lerp(runtime.speed, 0, Math.min(frameDelta * 2.2, 1))
       distanceRef.current = runtime.distance
-      if (elapsedTime - lastTelemetryAtRef.current > 1 / 20) {
+      if (elapsedTime - lastTelemetryAtRef.current > telemetryIntervalSeconds) {
         lastTelemetryAtRef.current = elapsedTime
         setTelemetry({ speed: runtime.speed, distance: runtime.distance })
       }
@@ -355,21 +356,15 @@ function RacerWorld() {
       }
     }
 
-    if (elapsedTime - lastTelemetryAtRef.current > 1 / 20) {
+    if (elapsedTime - lastTelemetryAtRef.current > telemetryIntervalSeconds) {
       lastTelemetryAtRef.current = elapsedTime
       setTelemetry({ speed: runtime.speed, distance: runtime.distance })
     }
   })
 
   const visibleObstacles = useMemo(() => createVisibleObstacles(worldDistance), [worldDistance])
-  const visibleBoostGates = useMemo(
-    () => createVisibleBoostGates(worldDistance),
-    [worldDistance],
-  )
-  const visibleCheckpoints = useMemo(
-    () => createVisibleCheckpoints(worldDistance),
-    [worldDistance],
-  )
+  const visibleBoostGates = useMemo(() => createVisibleBoostGates(worldDistance), [worldDistance])
+  const visibleCheckpoints = useMemo(() => createVisibleCheckpoints(worldDistance), [worldDistance])
   const visibleMemoryShards = useMemo(
     () => createVisibleMemoryShards(worldDistance),
     [worldDistance],
@@ -391,7 +386,7 @@ function RacerWorld() {
       <Stars
         radius={120}
         depth={42}
-        count={isPortrait ? 720 : 1400}
+        count={isPortrait ? 360 : 720}
         factor={2.3}
         saturation={0.2}
         fade
@@ -415,7 +410,7 @@ export function LiminalRacerScene() {
     <Canvas
       aria-label="Liminal Drift 3D racing scene"
       dpr={1}
-      gl={{ antialias: true, alpha: false }}
+      gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
     >
       <RacerWorld />
     </Canvas>

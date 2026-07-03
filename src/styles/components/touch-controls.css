@@ -32,7 +32,7 @@
   border: var(--border-glass);
   border-radius: var(--radius-control);
   box-shadow: 0 14px 34px rgba(80, 58, 78, 0.18);
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
   transition:
     background-color var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard),

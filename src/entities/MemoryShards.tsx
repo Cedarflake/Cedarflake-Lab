@@ -1,7 +1,6 @@
 import { useRef } from "react"
 import type { RefObject } from "react"
 
-import { Float } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
@@ -15,53 +14,60 @@ interface MemoryShardsProps {
 }
 
 interface MemoryShardNodeProps {
-  distanceRef: RefObject<number>
-  memoryShard: MemoryShard
+  nodeRef: (node: Group | null) => void
 }
 
-function MemoryShardNode({ distanceRef, memoryShard }: MemoryShardNodeProps) {
-  const shardRef = useRef<Group | null>(null)
-
-  useFrame(() => {
-    const shard = shardRef.current
-    if (!shard) return
-
-    const distance = distanceRef.current
-    const z = -(memoryShard.distance - distance) + 2
-    const x =
-      resolveRelativeTrackCenter(memoryShard.distance, distance) +
-      memoryShard.lane * trackConfig.laneWidth
-
-    shard.position.set(x, 1.1, z)
-    shard.visible = z <= 18 && z >= -260
-  })
-
+function MemoryShardNode({ nodeRef }: MemoryShardNodeProps) {
   return (
-    <Float speed={0.9} floatIntensity={0.32} rotationIntensity={0.42}>
-      <group ref={shardRef}>
-        <mesh rotation={[0.62, 0.28, 0.72]}>
-          <octahedronGeometry args={[0.42, 0]} />
-          <meshStandardMaterial
-            color="#fff0b8"
-            emissive={dreamPalette.lemon}
-            emissiveIntensity={0.42}
-            roughness={0.36}
-          />
-        </mesh>
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.72, 0.018, 8, 56]} />
-          <meshBasicMaterial color={dreamPalette.carGlow} transparent opacity={0.46} />
-        </mesh>
-      </group>
-    </Float>
+    <group ref={nodeRef}>
+      <mesh rotation={[0.62, 0.28, 0.72]}>
+        <octahedronGeometry args={[0.42, 0]} />
+        <meshStandardMaterial
+          color="#fff0b8"
+          emissive={dreamPalette.lemon}
+          emissiveIntensity={0.42}
+          roughness={0.36}
+        />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.72, 0.018, 8, 36]} />
+        <meshBasicMaterial color={dreamPalette.carGlow} transparent opacity={0.46} />
+      </mesh>
+    </group>
   )
 }
 
 export function MemoryShards({ distanceRef, memoryShards }: MemoryShardsProps) {
+  const shardRefs = useRef<Array<Group | null>>([])
+
+  useFrame(() => {
+    const distance = distanceRef.current
+
+    memoryShards.forEach((memoryShard, index) => {
+      const shard = shardRefs.current[index]
+      if (!shard) return
+
+      const z = -(memoryShard.distance - distance) + 2
+      const x =
+        resolveRelativeTrackCenter(memoryShard.distance, distance) +
+        memoryShard.lane * trackConfig.laneWidth
+      const phase = distance * 0.035 + index * 0.9
+
+      shard.position.set(x, 1.1 + Math.sin(phase) * 0.24, z)
+      shard.rotation.set(Math.sin(phase) * 0.08, phase * 0.22, Math.cos(phase) * 0.08)
+      shard.visible = z <= 18 && z >= -260
+    })
+  })
+
   return (
     <group>
-      {memoryShards.map((memoryShard) => (
-        <MemoryShardNode key={memoryShard.id} distanceRef={distanceRef} memoryShard={memoryShard} />
+      {memoryShards.map((memoryShard, index) => (
+        <MemoryShardNode
+          key={memoryShard.id}
+          nodeRef={(node) => {
+            shardRefs.current[index] = node
+          }}
+        />
       ))}
     </group>
   )
