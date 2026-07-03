@@ -1,3 +1,6 @@
+import { useEffect, useRef } from "react"
+
+import { pulseHaptics } from "@/game/haptics"
 import { useGameStore } from "@/game/useGameStore"
 
 import "./DrivingFeedback.css"
@@ -11,6 +14,26 @@ export function DrivingFeedback() {
   const feedbackPoints = useGameStore((state) => state.feedbackPoints)
   const lastEvent = useGameStore((state) => state.lastEvent)
   const opacity = status === "running" ? Math.min(speed / 90, 0.42) : 0
+  const lastFeedbackIdRef = useRef(0)
+  const lastImpactIdRef = useRef(0)
+
+  useEffect(() => {
+    if (feedbackId <= 0 || feedbackId === lastFeedbackIdRef.current) {
+      return
+    }
+
+    lastFeedbackIdRef.current = feedbackId
+    pulseHaptics(feedbackKind === "drift" || feedbackKind === "checkpoint" ? [12, 28, 18] : 14)
+  }, [feedbackId, feedbackKind])
+
+  useEffect(() => {
+    if (impactId <= 0 || impactId === lastImpactIdRef.current) {
+      return
+    }
+
+    lastImpactIdRef.current = impactId
+    pulseHaptics([24, 36, 24])
+  }, [impactId])
 
   return (
     <>

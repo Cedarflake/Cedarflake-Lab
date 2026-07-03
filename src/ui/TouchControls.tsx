@@ -1,6 +1,7 @@
 import { useEffect } from "react"
 import type { PointerEvent } from "react"
 
+import { pulseHaptics } from "@/game/haptics"
 import { useGameStore } from "@/game/useGameStore"
 import { useInputStore } from "@/game/useInputStore"
 import type { PlayerInput } from "@/shared/types"
@@ -21,6 +22,7 @@ function ControlButton({ label, press, release, className }: ControlButtonProps)
 
   function handlePress(event: PointerEvent<HTMLButtonElement>) {
     event.currentTarget.setPointerCapture(event.pointerId)
+    pulseHaptics(10)
     setTouchInput(press)
   }
 
