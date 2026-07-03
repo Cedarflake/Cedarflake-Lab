@@ -12,7 +12,7 @@ export interface Obstacle {
   lane: number
   distance: number
   width: number
-  kind: "pillar" | "pool" | "arch"
+  kind: "pillar" | "hole" | "wall"
 }
 
 export interface Checkpoint {

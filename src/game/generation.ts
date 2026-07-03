@@ -2,7 +2,7 @@ import type { BoostGate, Checkpoint, MemoryShard, Obstacle } from "@/shared/type
 
 import { trackConfig } from "./gameConfig"
 
-const obstacleKinds: Array<Obstacle["kind"]> = ["pillar", "pool", "arch"]
+const obstacleKinds: Array<Obstacle["kind"]> = ["pillar", "hole", "wall"]
 
 function hash(seed: number) {
   const value = Math.sin(seed * 12.9898) * 43758.5453
@@ -17,7 +17,7 @@ export function createObstacleAt(index: number): Obstacle {
     id: `obstacle-${index}`,
     lane,
     distance: 90 + index * 46 + hash(index + 21) * 22,
-    width: kind === "arch" ? 2.2 : 1.35 + hash(index + 31) * 0.7,
+    width: kind === "wall" ? 1.55 : 1.35 + hash(index + 31) * 0.7,
     kind,
   }
 }

@@ -11,6 +11,10 @@ import { DreamObjects } from "@/entities/DreamObjects"
 import { MemoryShards } from "@/entities/MemoryShards"
 import { PlayerCar } from "@/entities/PlayerCar"
 import { Track } from "@/entities/Track"
+import {
+  resolveObstacleCollisionHalfWidth,
+  resolveObstacleNearMissHalfWidth,
+} from "@/game/collision"
 import { resolveRunDifficulty } from "@/game/difficulty"
 import {
   createBoostGateAt,
@@ -211,7 +215,8 @@ function RacerWorld() {
         const obstacleX =
           resolveRelativeTrackCenter(obstacle.distance, runtime.distance) +
           obstacle.lane * trackConfig.laneWidth
-        const hit = Math.abs(runtime.x - obstacleX) < obstacle.width + 0.9
+        const obstacleOffset = Math.abs(runtime.x - obstacleX)
+        const hit = obstacleOffset < resolveObstacleCollisionHalfWidth(obstacle)
 
         if (hit) {
           const isRecovering = isCollisionRecovering(
@@ -239,7 +244,7 @@ function RacerWorld() {
             runtime.handledObstacles.add(obstacle.id)
             return
           }
-        } else if (Math.abs(runtime.x - obstacleX) < obstacle.width + 1.75) {
+        } else if (obstacleOffset < resolveObstacleNearMissHalfWidth(obstacle)) {
           addScore(trackConfig.nearMissScore + runtime.speed * 4, {
             label: "Near miss",
             feedbackKind: "near-miss",

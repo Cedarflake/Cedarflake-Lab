@@ -10,6 +10,7 @@ import {
 const samples = [0, 250, 1200, 4800, 12000]
 const lookBehind = 24
 const lookAhead = 270
+const expectedObstacleKinds = new Set<Obstacle["kind"]>(["pillar", "hole", "wall"])
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -61,6 +62,7 @@ function assertObstacle(obstacle: Obstacle) {
   assert(obstacle.lane >= -2 && obstacle.lane <= 2, `Invalid obstacle lane ${obstacle.id}`)
   assert(obstacle.distance > 0, `Invalid obstacle distance ${obstacle.id}`)
   assert(obstacle.width > 0, `Invalid obstacle width ${obstacle.id}`)
+  assert(expectedObstacleKinds.has(obstacle.kind), `Invalid obstacle kind ${obstacle.id}`)
 }
 
 function assertBoostGate(boostGate: BoostGate) {

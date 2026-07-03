@@ -5,6 +5,7 @@ import { Float, RoundedBox } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
+import { wallObstacleWidth } from "@/game/collision"
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { wrapDistance } from "@/game/number"
 import { resolveRelativeTrackCenter } from "@/game/trackPath"
@@ -124,55 +125,59 @@ function ObstacleNode({ distanceRef, obstacle }: ObstacleNodeProps) {
       resolveRelativeTrackCenter(obstacle.distance, distance) +
       obstacle.lane * trackConfig.laneWidth
 
-    const y = obstacle.kind === "pool" ? 0.01 : obstacle.kind === "arch" ? 1.2 : 0.82
+    const y = obstacle.kind === "hole" ? 0.01 : obstacle.kind === "wall" ? 0.78 : 0.82
 
     obstacleGroup.position.set(x, y, z)
     obstacleGroup.visible = z <= 16 && z >= -260
   })
 
-  if (obstacle.kind === "pool") {
+  if (obstacle.kind === "hole") {
     return (
       <group ref={obstacleRef}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[obstacle.width * 1.05, 48]} />
           <meshStandardMaterial
-            color={dreamPalette.pool}
-            emissive={dreamPalette.pool}
-            emissiveIntensity={0.16}
+            color={dreamPalette.hole}
+            emissive={dreamPalette.holeDepth}
+            emissiveIntensity={0.18}
             transparent
-            opacity={0.84}
+            opacity={0.88}
           />
+        </mesh>
+        <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[obstacle.width * 0.72, 40]} />
+          <meshBasicMaterial color={dreamPalette.holeDepth} transparent opacity={0.9} />
         </mesh>
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <torusGeometry args={[obstacle.width * 1.08, 0.035, 8, 64]} />
-          <meshBasicMaterial color="#fff7c6" transparent opacity={0.68} />
+          <meshBasicMaterial color="#e2ded9" transparent opacity={0.68} />
         </mesh>
       </group>
     )
   }
 
-  if (obstacle.kind === "arch") {
+  if (obstacle.kind === "wall") {
     return (
       <group ref={obstacleRef}>
-        <mesh position={[0, -1.18, 0]}>
-          <boxGeometry args={[3.4, 0.04, 1.42]} />
+        <mesh position={[0, -0.8, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[obstacle.width * 0.96, 40]} />
           <meshBasicMaterial color="#fff7c6" transparent opacity={0.36} />
         </mesh>
-        <mesh position={[-1.25, 0, 0]}>
-          <boxGeometry args={[0.34, 2.4, 0.34]} />
-          <meshStandardMaterial color={dreamPalette.peach} />
-        </mesh>
-        <mesh position={[1.25, 0, 0]}>
-          <boxGeometry args={[0.34, 2.4, 0.34]} />
-          <meshStandardMaterial color={dreamPalette.peach} />
-        </mesh>
-        <mesh position={[0, 1.15, 0]}>
-          <boxGeometry args={[2.84, 0.34, 0.34]} />
+        <RoundedBox args={[wallObstacleWidth, 1.45, 0.48]} radius={0.08} smoothness={6}>
           <meshStandardMaterial
             color={dreamPalette.peach}
             emissive={dreamPalette.peach}
-            emissiveIntensity={0.12}
+            emissiveIntensity={0.08}
+            roughness={0.56}
           />
+        </RoundedBox>
+        <mesh position={[0, 0.18, 0.26]}>
+          <boxGeometry args={[1.82, 0.14, 0.05]} />
+          <meshBasicMaterial color="#fff7c6" transparent opacity={0.72} />
+        </mesh>
+        <mesh position={[0, -0.16, 0.27]}>
+          <boxGeometry args={[1.16, 0.1, 0.05]} />
+          <meshBasicMaterial color={dreamPalette.lemon} transparent opacity={0.46} />
         </mesh>
       </group>
     )

@@ -279,8 +279,8 @@ export function GameOverlay() {
         <p className="overlay__eyebrow">Dreamcore night driving</p>
         <h1>Liminal Drift</h1>
         <p>
-          Follow the pastel highway through empty atriums, pool-blue tunnels, and checkpoints that
-          feel half remembered.
+          Follow the pastel highway through empty atriums, gray sinkholes, and checkpoints that feel
+          half remembered.
         </p>
         <div className="overlay__actions">
           <button type="button" className="ui-button" onClick={start}>

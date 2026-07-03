@@ -1,4 +1,11 @@
 import { readBestScore } from "../src/game/bestScoreStorage"
+import {
+  playerCollisionHalfWidth,
+  resolveObstacleCollisionHalfWidth,
+  resolveObstacleHalfWidth,
+  resolveObstacleNearMissHalfWidth,
+  wallObstacleWidth,
+} from "../src/game/collision"
 import { resolveRunDifficulty } from "../src/game/difficulty"
 import { trackConfig } from "../src/game/gameConfig"
 import { clamp, lerp, wrapDistance } from "../src/game/number"
@@ -33,6 +40,45 @@ assert(wrapDistance(-2, 10) === 8, "Expected wrapDistance to wrap negative dista
 assert(resolveRunDifficulty(0).maxSpeed === 58, "Expected base max speed at the run start")
 assert(resolveRunDifficulty(800).maxSpeed === 64, "Expected midpoint speed ramp")
 assert(resolveRunDifficulty(3200).maxSpeed === 70, "Expected capped max speed ramp")
+assert(
+  resolveObstacleHalfWidth({
+    id: "wall-check",
+    lane: 0,
+    distance: 1,
+    width: 1.55,
+    kind: "wall",
+  }) ===
+    wallObstacleWidth / 2,
+  "Expected wall collision half width to follow the rendered wall model",
+)
+assert(
+  resolveObstacleCollisionHalfWidth({
+    id: "pillar-check",
+    lane: 0,
+    distance: 1,
+    width: 1.8,
+    kind: "pillar",
+  }) ===
+    0.9 + playerCollisionHalfWidth,
+  "Expected pillar collision to fit the rendered obstacle plus car body",
+)
+assert(
+  resolveObstacleNearMissHalfWidth({
+    id: "hole-check",
+    lane: 0,
+    distance: 1,
+    width: 1.6,
+    kind: "hole",
+  }) >
+    resolveObstacleCollisionHalfWidth({
+      id: "hole-check",
+      lane: 0,
+      distance: 1,
+      width: 1.6,
+      kind: "hole",
+    }),
+  "Expected near-miss boundary to sit outside the collision boundary",
+)
 
 assert(
   resolveScoreFeedback({ label: "Boost copy can change", feedbackKind: "boost" }) === "boost",
