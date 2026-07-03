@@ -52,8 +52,6 @@ async function waitForProgressAboveZero(page, label, timeoutMs) {
 }
 
 const browser = await chromium.launch()
-let speed = 0
-let distance = 0
 let keyboardSceneDifference = 0
 
 try {
@@ -62,77 +60,10 @@ try {
     const page = await context.newPage()
 
     await page.goto(url, { waitUntil: "domcontentloaded" })
-    const hiddenGoButtonCount = await page.getByRole("button", { name: "Go" }).count()
+    await page.getByRole("heading", { name: "Desktop required" }).waitFor()
 
-    if (hiddenGoButtonCount > 0) {
-      throw new Error("Expected touch controls to stay hidden before the race starts")
-    }
-
-    await page.getByRole("button", { name: "Start driving" }).click()
-    await page.locator("canvas").waitFor()
-    await page.waitForTimeout(500)
-
-    const goButton = page.getByRole("button", { name: "Go" })
-    const box = await goButton.boundingBox()
-
-    if (!box) {
-      throw new Error("Expected Go button to be visible")
-    }
-
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.mouse.down()
-
-    const pressedClass = await goButton.evaluate((button) =>
-      button.classList.contains("touch-controls__button--pressed"),
-    )
-    const pressedAria = await goButton.getAttribute("aria-pressed")
-
-    if (!pressedClass || pressedAria !== "true") {
-      throw new Error("Expected Go button to remain visually pressed while held")
-    }
-
-    await page.mouse.move(box.x + box.width + 36, box.y + box.height + 36)
-
-    const heldOutsideClass = await goButton.evaluate((button) =>
-      button.classList.contains("touch-controls__button--pressed"),
-    )
-    const heldOutsideAria = await goButton.getAttribute("aria-pressed")
-
-    if (!heldOutsideClass || heldOutsideAria !== "true") {
-      throw new Error("Expected Go button to stay pressed after the pointer leaves its bounds")
-    }
-
-    await page.waitForTimeout(1600)
-
-    const text = await page.locator("body").innerText()
-    speed = readMetric(text, "SPEED")
-    distance = readMetric(text, "DISTANCE")
-
-    await page.keyboard.press("Escape")
-    const pausedDialog = page.getByRole("dialog", { name: "Paused" })
-    await pausedDialog.waitFor()
-    const pausedText = await pausedDialog.innerText()
-    const normalizedPausedText = pausedText.toLowerCase()
-
-    if (!normalizedPausedText.includes("top speed") || !normalizedPausedText.includes("exits")) {
-      throw new Error("Expected paused stats to include run highlights")
-    }
-
-    await page.getByRole("button", { name: "Resume" }).click()
-    await page.waitForTimeout(1000)
-
-    const resumedGoButton = page.getByRole("button", { name: "Go" })
-    const resumedPressedAria = await resumedGoButton.getAttribute("aria-pressed")
-
-    if (resumedPressedAria !== "false") {
-      throw new Error(`Expected Go button aria-pressed to reset, got ${resumedPressedAria}`)
-    }
-
-    const resumedText = await page.locator("body").innerText()
-    const resumedSpeed = readMetric(resumedText, "SPEED")
-
-    if (resumedSpeed > speed + 5) {
-      throw new Error(`Expected touch input to reset on pause, got ${speed} -> ${resumedSpeed}`)
+    if ((await page.locator("canvas").count()) > 0) {
+      throw new Error("Expected mobile view to avoid loading the 3D canvas")
     }
 
     await context.close()
@@ -191,8 +122,4 @@ try {
   await browser.close()
 }
 
-if (speed <= 0 || distance <= 0) {
-  throw new Error(`Expected touch driving to advance, got speed=${speed} distance=${distance}`)
-}
-
-console.log("interaction ok", { speed, distance, keyboardSceneDifference })
+console.log("interaction ok", { keyboardSceneDifference })

@@ -2,7 +2,9 @@ import { useMemo, useRef } from "react"
 import type { RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
+import { PlaneGeometry } from "three"
 
+import { desertTerrain, resolveDesertGroundHeight } from "@/game/desertTerrain"
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { wrapDistance } from "@/game/number"
 import { resolveRelativeTrackCenter, resolveTrackHeading } from "@/game/trackPath"
@@ -26,9 +28,39 @@ interface TrackProps {
 
 const alternateRoadColor = "#ece7e8"
 
+function createDesertTerrainGeometry(side: -1 | 1) {
+  const width = desertTerrain.sideHalfWidth
+  const geometry = new PlaneGeometry(width, desertTerrain.length, 22, 96)
+  const centerX = side * (trackConfig.roadHalfWidth + desertTerrain.sideGap + width / 2)
+  const positions = geometry.getAttribute("position")
+
+  if (!positions) {
+    throw new Error("Desert terrain geometry is missing position data")
+  }
+
+  for (let index = 0; index < positions.count; index += 1) {
+    const localX = positions.getX(index)
+    const localZAxis = positions.getY(index)
+    const worldX = centerX + localX
+    const worldZ = desertTerrain.centerZ - localZAxis
+
+    positions.setZ(index, resolveDesertGroundHeight(worldX, worldZ))
+  }
+
+  geometry.rotateX(-Math.PI / 2)
+  geometry.translate(centerX, 0, desertTerrain.centerZ)
+  geometry.computeVertexNormals()
+
+  return geometry
+}
+
 export function Track({ distanceRef }: TrackProps) {
   const segmentRefs = useRef<Array<TrackSegmentRef | null>>([])
   const roadSurfaceRefs = useRef<Array<RoadSurfaceRef | null>>([])
+  const terrainGeometries = useMemo(
+    () => [createDesertTerrainGeometry(-1), createDesertTerrainGeometry(1)],
+    [],
+  )
   const segmentIndexes = useMemo(
     () => Array.from({ length: trackConfig.visibleSegments }, (_, index) => index),
     [],
@@ -65,6 +97,33 @@ export function Track({ distanceRef }: TrackProps) {
 
   return (
     <group>
+      {terrainGeometries.map((geometry, index) => (
+        <mesh key={index} receiveShadow>
+          <primitive attach="geometry" object={geometry} />
+          <meshStandardMaterial
+            color={dreamPalette.sand}
+            emissive={dreamPalette.duneShadow}
+            emissiveIntensity={0.035}
+            roughness={0.94}
+          />
+        </mesh>
+      ))}
+      <mesh position={[0, desertTerrain.baseY - 0.035, desertTerrain.centerZ]}>
+        <boxGeometry
+          args={[
+            trackConfig.roadHalfWidth * 2 + desertTerrain.sideGap * 2,
+            0.05,
+            desertTerrain.length,
+          ]}
+        />
+        <meshStandardMaterial
+          color={dreamPalette.sand}
+          emissive={dreamPalette.duneShadow}
+          emissiveIntensity={0.035}
+          roughness={0.92}
+        />
+      </mesh>
+
       {segmentIndexes.map((index) => (
         <group
           key={index}

@@ -95,7 +95,11 @@ function RacerWorld() {
   const worldDistanceRef = useRef(0)
   const lastCollisionAtRef = useRef(Number.NEGATIVE_INFINITY)
   const lastTelemetryAtRef = useRef(0)
+  const elapsedTimeRef = useRef(0)
   const [worldDistance, setWorldDistance] = useState(0)
+  const [collectedMemoryShardIds, setCollectedMemoryShardIds] = useState<Set<string>>(
+    () => new Set(),
+  )
   const runId = useGameStore((state) => state.runId)
   const status = useGameStore((state) => state.status)
   const setTelemetry = useGameStore((state) => state.setTelemetry)
@@ -116,15 +120,18 @@ function RacerWorld() {
     wasDriftingRef.current = false
     worldDistanceRef.current = 0
     setWorldDistance(0)
+    setCollectedMemoryShardIds(new Set())
     lastCollisionAtRef.current = Number.NEGATIVE_INFINITY
     lastTelemetryAtRef.current = 0
+    elapsedTimeRef.current = 0
     setTelemetry({ speed: 0, distance: 0 })
   }, [runId, setTelemetry])
 
   useFrame((state, delta) => {
     const frameDelta = Math.min(delta, maxFrameDelta)
     const runtime = runtimeRef.current
-    const elapsedTime = state.clock.getElapsedTime()
+    elapsedTimeRef.current += frameDelta
+    const elapsedTime = elapsedTimeRef.current
     distanceRef.current = runtime.distance
 
     if (status !== "running") {
@@ -331,6 +338,15 @@ function RacerWorld() {
             label: "Memory shard",
             feedbackKind: "shard",
           })
+          setCollectedMemoryShardIds((ids) => {
+            if (ids.has(memoryShard.id)) {
+              return ids
+            }
+
+            const nextIds = new Set(ids)
+            nextIds.add(memoryShard.id)
+            return nextIds
+          })
         }
 
         runtime.handledMemoryShards.add(memoryShard.id)
@@ -372,8 +388,11 @@ function RacerWorld() {
   const visibleBoostGates = useMemo(() => createVisibleBoostGates(worldDistance), [worldDistance])
   const visibleCheckpoints = useMemo(() => createVisibleCheckpoints(worldDistance), [worldDistance])
   const visibleMemoryShards = useMemo(
-    () => createVisibleMemoryShards(worldDistance),
-    [worldDistance],
+    () =>
+      createVisibleMemoryShards(worldDistance).filter(
+        (memoryShard) => !collectedMemoryShardIds.has(memoryShard.id),
+      ),
+    [collectedMemoryShardIds, worldDistance],
   )
 
   return (
@@ -385,10 +404,38 @@ function RacerWorld() {
         fov={baseCameraFov}
       />
       <color attach="background" args={[dreamPalette.skyTop]} />
-      <fog attach="fog" args={[dreamPalette.fog, 42, 210]} />
-      <ambientLight intensity={0.82} />
-      <directionalLight position={[8, 11, 7]} intensity={2.4} />
+      <fog attach="fog" args={[dreamPalette.fog, 34, 190]} />
+      <ambientLight intensity={0.5} />
+      <hemisphereLight
+        color={dreamPalette.dreamPink}
+        groundColor={dreamPalette.dreamBlue}
+        intensity={0.42}
+      />
+      <directionalLight
+        castShadow
+        position={[-9, 14, 10]}
+        intensity={2.8}
+        shadow-camera-bottom={-42}
+        shadow-camera-far={120}
+        shadow-camera-left={-48}
+        shadow-camera-right={48}
+        shadow-camera-top={42}
+        shadow-mapSize-height={1024}
+        shadow-mapSize-width={1024}
+      />
       <pointLight position={[0, 5, 2]} color={dreamPalette.carGlow} intensity={10} distance={14} />
+      <pointLight
+        position={[-18, 8, -48]}
+        color={dreamPalette.dreamPink}
+        intensity={7}
+        distance={64}
+      />
+      <pointLight
+        position={[20, 7, -78]}
+        color={dreamPalette.dreamBlue}
+        intensity={5}
+        distance={72}
+      />
       <Stars
         radius={120}
         depth={42}
@@ -422,6 +469,7 @@ export function LiminalRacerScene() {
       aria-label="Liminal Drift 3D racing scene"
       dpr={1}
       gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
+      shadows="percentage"
     >
       <RacerWorld />
     </Canvas>

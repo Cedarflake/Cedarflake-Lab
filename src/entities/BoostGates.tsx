@@ -31,7 +31,7 @@ boostArrowHeadGeometry.computeVertexNormals()
 function BoostGateNode({ boostGate, nodeRef }: BoostGateNodeProps) {
   return (
     <group ref={nodeRef}>
-      <mesh>
+      <mesh castShadow receiveShadow>
         <boxGeometry args={[boostGate.width, 0.08, 2.6]} />
         <meshStandardMaterial
           color={dreamPalette.boost}

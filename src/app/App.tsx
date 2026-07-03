@@ -1,12 +1,16 @@
-import { Component, lazy, Suspense } from "react"
+import { Component, lazy, Suspense, useEffect, useState } from "react"
 import type { ReactNode } from "react"
 
+import {
+  disposeBackgroundMusic,
+  pauseBackgroundMusic,
+  resetBackgroundMusic,
+} from "@/app/backgroundMusic"
 import { useGameStore } from "@/game/useGameStore"
 import { useKeyboardInput } from "@/game/useInput"
 import { DrivingFeedback } from "@/ui/DrivingFeedback"
 import { GameOverlay } from "@/ui/GameOverlay"
 import { Hud } from "@/ui/Hud"
-import { TouchControls } from "@/ui/TouchControls"
 
 import "./App.css"
 
@@ -70,10 +74,71 @@ function SceneLoading() {
   )
 }
 
+function useRequiresDesktop() {
+  const [requiresDesktop, setRequiresDesktop] = useState(false)
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 900px), (pointer: coarse)")
+
+    function updateRequiresDesktop() {
+      setRequiresDesktop(query.matches)
+    }
+
+    updateRequiresDesktop()
+    query.addEventListener("change", updateRequiresDesktop)
+
+    return () => {
+      query.removeEventListener("change", updateRequiresDesktop)
+    }
+  }, [])
+
+  return requiresDesktop
+}
+
+function DesktopRequired() {
+  return (
+    <section className="desktop-required" aria-labelledby="desktop-required-title">
+      <div className="desktop-required__panel">
+        <span className="desktop-required__kicker">Liminal Drift</span>
+        <h1 id="desktop-required-title">Desktop required</h1>
+        <p>Open this game on a desktop browser with a keyboard.</p>
+      </div>
+    </section>
+  )
+}
+
+function useBackgroundMusic(status: string) {
+  useEffect(() => {
+    return disposeBackgroundMusic
+  }, [])
+
+  useEffect(() => {
+    if (status === "running") {
+      return
+    }
+
+    pauseBackgroundMusic()
+
+    if (status === "ready" || status === "ended") {
+      resetBackgroundMusic()
+    }
+  }, [status])
+}
+
 export function App() {
   const status = useGameStore((state) => state.status)
+  const requiresDesktop = useRequiresDesktop()
 
   useKeyboardInput()
+  useBackgroundMusic(status)
+
+  if (requiresDesktop) {
+    return (
+      <main className="game-shell" data-status="unsupported" tabIndex={-1}>
+        <DesktopRequired />
+      </main>
+    )
+  }
 
   return (
     <main className="game-shell" data-status={status} tabIndex={-1}>
@@ -86,7 +151,6 @@ export function App() {
       </div>
       <DrivingFeedback />
       <Hud />
-      <TouchControls />
       <GameOverlay />
     </main>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 
+import { playBackgroundMusic } from "@/app/backgroundMusic"
 import { formatNumber } from "@/game/format"
 import { useGameStore } from "@/game/useGameStore"
 import type { GameStatus } from "@/shared/types"
@@ -163,6 +164,25 @@ export function GameOverlay() {
   const restart = useGameStore((state) => state.restart)
   const dialogRef = useDialogFocusTrap(status)
 
+  function playMusicFromGesture() {
+    void playBackgroundMusic().catch(() => undefined)
+  }
+
+  function handleStart() {
+    playMusicFromGesture()
+    start()
+  }
+
+  function handleResume() {
+    playMusicFromGesture()
+    resume()
+  }
+
+  function handleRestart() {
+    playMusicFromGesture()
+    restart()
+  }
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.repeat) {
@@ -171,7 +191,10 @@ export function GameOverlay() {
 
       if (event.key === "Escape") {
         if (status === "running") pause()
-        if (status === "paused") resume()
+        if (status === "paused") {
+          playMusicFromGesture()
+          resume()
+        }
       }
     }
 
@@ -215,10 +238,14 @@ export function GameOverlay() {
             topSpeed={topSpeed}
           />
           <div className="overlay__actions">
-            <button type="button" className="ui-button" onClick={resume}>
+            <button type="button" className="ui-button" onClick={handleResume}>
               Resume
             </button>
-            <button type="button" className="ui-button ui-button--secondary" onClick={restart}>
+            <button
+              type="button"
+              className="ui-button ui-button--secondary"
+              onClick={handleRestart}
+            >
               Restart
             </button>
           </div>
@@ -258,7 +285,7 @@ export function GameOverlay() {
             topSpeed={topSpeed}
           />
           <div className="overlay__actions">
-            <button type="button" className="ui-button" onClick={restart}>
+            <button type="button" className="ui-button" onClick={handleRestart}>
               Drive again
             </button>
           </div>
@@ -283,7 +310,7 @@ export function GameOverlay() {
           half remembered.
         </p>
         <div className="overlay__actions">
-          <button type="button" className="ui-button" onClick={start}>
+          <button type="button" className="ui-button" onClick={handleStart}>
             Start driving
           </button>
         </div>

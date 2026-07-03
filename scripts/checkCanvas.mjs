@@ -113,22 +113,9 @@ async function assertDialogTabWrap(page, firstLabel, lastLabel) {
 
 /**
  * @param {import("playwright").Page} page
- * @param {"desktop" | "mobile"} viewportName
  */
-async function assertControlLegend(page, viewportName) {
+async function assertControlLegend(page) {
   const text = await page.getByRole("dialog", { name: "Start race" }).innerText()
-
-  if (viewportName === "mobile") {
-    if (!text.includes("Go / Brake") || !text.includes("Drift button")) {
-      throw new Error(`Expected mobile touch control legend, got "${text}"`)
-    }
-
-    if (text.includes("W / S / Up / Down") || text.includes("Space / Shift")) {
-      throw new Error(`Expected keyboard legend to stay hidden on mobile, got "${text}"`)
-    }
-
-    return
-  }
 
   if (!text.includes("W / S / Up / Down") || !text.includes("Space / Shift")) {
     throw new Error(`Expected desktop keyboard control legend, got "${text}"`)
@@ -136,6 +123,24 @@ async function assertControlLegend(page, viewportName) {
 
   if (text.includes("Go / Brake") || text.includes("Drift button")) {
     throw new Error(`Expected touch legend to stay hidden on desktop, got "${text}"`)
+  }
+}
+
+/**
+ * @param {import("playwright").Page} page
+ */
+async function assertDesktopRequired(page) {
+  const heading = page.getByRole("heading", { name: "Desktop required" })
+  await heading.waitFor()
+
+  const text = await page.locator(".desktop-required").innerText()
+
+  if (!text.includes("desktop browser") || !text.includes("keyboard")) {
+    throw new Error(`Expected mobile desktop-required message, got "${text}"`)
+  }
+
+  if ((await page.locator("canvas").count()) > 0) {
+    throw new Error("Expected mobile view to avoid loading the 3D canvas")
   }
 }
 
@@ -297,10 +302,25 @@ try {
     const page = await context.newPage()
 
     await page.goto(url, { waitUntil: "domcontentloaded" })
+
+    if (viewport.name === "mobile") {
+      await assertDesktopRequired(page)
+
+      await page.screenshot({
+        path: join(outputPath, `${viewport.name}.png`),
+        fullPage: true,
+      })
+
+      await context.close()
+
+      console.log("mobile desktop-required ok")
+      continue
+    }
+
     await assertModalDialog(page, "Start race")
     await assertActiveButton(page, "Start driving")
     await assertDialogTabWrap(page, "Start driving", "Start driving")
-    await assertControlLegend(page, viewport.name)
+    await assertControlLegend(page)
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
     await assertAmbientGameHidden(page, false)
@@ -308,19 +328,7 @@ try {
     await page.waitForTimeout(700)
     const beforeMotion = await screenshotCanvas(page)
 
-    if (viewport.name === "mobile") {
-      const goButton = page.getByRole("button", { name: "Go" })
-      const box = await goButton.boundingBox()
-
-      if (!box) {
-        throw new Error("Expected Go button to be visible")
-      }
-
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-      await page.mouse.down()
-    } else {
-      await page.keyboard.down("w")
-    }
+    await page.keyboard.down("w")
 
     await page.waitForTimeout(2600)
 
@@ -387,11 +395,7 @@ try {
       )
     }
 
-    if (viewport.name === "mobile") {
-      await page.mouse.up()
-    } else {
-      await page.keyboard.up("w")
-    }
+    await page.keyboard.up("w")
 
     await pressEscapeWithRepeat(page)
     await assertModalDialog(page, "Paused")

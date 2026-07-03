@@ -70,11 +70,20 @@ export function PlayerCar({ carRef, distanceRef, isDriftingRef, steeringRef }: P
 
   return (
     <group ref={carRef}>
-      <RoundedBox args={[1.9, 0.54, 3.05]} radius={0.18} smoothness={6} position={[0, 0.18, 0]}>
+      <RoundedBox
+        castShadow
+        receiveShadow
+        args={[1.9, 0.54, 3.05]}
+        radius={0.18}
+        smoothness={6}
+        position={[0, 0.18, 0]}
+      >
         <meshStandardMaterial color={dreamPalette.car} roughness={0.28} metalness={0.16} />
       </RoundedBox>
 
       <RoundedBox
+        castShadow
+        receiveShadow
         args={[1.22, 0.52, 1.25]}
         radius={0.18}
         smoothness={6}
@@ -111,7 +120,7 @@ export function PlayerCar({ carRef, distanceRef, isDriftingRef, steeringRef }: P
                 wheelRefs.current[index] = wheel
               }}
             >
-              <mesh>
+              <mesh castShadow receiveShadow>
                 <cylinderGeometry args={[0.31, 0.31, 0.25, 18]} />
                 <meshStandardMaterial color="#6d6070" roughness={0.55} />
               </mesh>

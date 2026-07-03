@@ -20,7 +20,7 @@ interface MemoryShardNodeProps {
 function MemoryShardNode({ nodeRef }: MemoryShardNodeProps) {
   return (
     <group ref={nodeRef}>
-      <mesh rotation={[0.62, 0.28, 0.72]}>
+      <mesh castShadow receiveShadow rotation={[0.62, 0.28, 0.72]}>
         <octahedronGeometry args={[0.42, 0]} />
         <meshStandardMaterial
           color="#fff0b8"

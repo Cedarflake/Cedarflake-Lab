@@ -39,4 +39,11 @@ export const dreamPalette = {
   peach: "#f0a58f",
   mint: "#9ad9bd",
   lemon: "#f4dc8c",
+  dreamBlue: "#b9d6ee",
+  dreamPink: "#f3b8d4",
+  dreamViolet: "#d7bfef",
+  sand: "#d9bea2",
+  duneShadow: "#b9977c",
+  ruin: "#b9a498",
+  ruinDark: "#8d7b78",
 } as const
