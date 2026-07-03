@@ -442,9 +442,14 @@ try {
       driftCharge: await readProgressValue(page, "Drift charge"),
       integrity: await readProgressValue(page, "Vehicle integrity"),
     }
+    const hudText = (await page.locator(".hud").innerText()).toLowerCase()
 
     if (telemetry.speed <= 0 || telemetry.distance <= 0) {
       throw new Error(`${viewport.name} telemetry did not advance: ${JSON.stringify(telemetry)}`)
+    }
+
+    if (!hudText.includes("integrity") || !hudText.includes("drift") || !hudText.includes("exit")) {
+      throw new Error(`${viewport.name} HUD meter labels were not visible: ${hudText}`)
     }
 
     if (

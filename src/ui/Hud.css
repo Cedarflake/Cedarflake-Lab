@@ -56,7 +56,36 @@
 .hud__meters {
   grid-column: 1 / -1;
   display: grid;
-  gap: 5px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hud__meter {
+  display: grid;
+  grid-template-columns: minmax(54px, auto) minmax(0, 1fr) minmax(48px, auto);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 8px;
+  color: rgba(47, 37, 53, 0.78);
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 8px;
+}
+
+.hud__meter-label,
+.hud__meter-value {
+  overflow: hidden;
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hud__meter-value {
+  text-align: end;
 }
 
 .hud__integrity,
@@ -128,6 +157,25 @@
   .hud small {
     margin-block-start: 3px;
     font-size: 0.66rem;
+  }
+
+  .hud__meters {
+    gap: 5px;
+  }
+
+  .hud__meter {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 5px 6px;
+  }
+
+  .hud__meter-label,
+  .hud__meter-value {
+    font-size: 0.56rem;
+  }
+
+  .hud__meter-value {
+    display: none;
   }
 
   .hud__integrity,

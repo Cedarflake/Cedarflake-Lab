@@ -48,35 +48,47 @@ export function Hud() {
       </div>
 
       <div className="hud__meters">
-        <div
-          className="hud__integrity"
-          role="progressbar"
-          aria-label="Vehicle integrity"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(integrity)}
-        >
-          <span style={{ inlineSize: `${integrity}%` }} />
+        <div className="hud__meter">
+          <span className="hud__meter-label">Integrity</span>
+          <div
+            className="hud__integrity"
+            role="progressbar"
+            aria-label="Vehicle integrity"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(integrity)}
+          >
+            <span style={{ inlineSize: `${integrity}%` }} />
+          </div>
+          <span className="hud__meter-value">{formatNumber(integrity)}%</span>
         </div>
-        <div
-          className={isDriftReady ? "hud__drift hud__drift--ready" : "hud__drift"}
-          role="progressbar"
-          aria-label="Drift charge"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(driftPercent)}
-        >
-          <span style={{ inlineSize: `${driftPercent}%` }} />
+        <div className="hud__meter">
+          <span className="hud__meter-label">Drift</span>
+          <div
+            className={isDriftReady ? "hud__drift hud__drift--ready" : "hud__drift"}
+            role="progressbar"
+            aria-label="Drift charge"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(driftPercent)}
+          >
+            <span style={{ inlineSize: `${driftPercent}%` }} />
+          </div>
+          <span className="hud__meter-value">{formatNumber(driftCharge)}</span>
         </div>
-        <div
-          className="hud__checkpoint"
-          role="progressbar"
-          aria-label="Checkpoint progress"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(checkpointPercent)}
-        >
-          <span style={{ inlineSize: `${checkpointPercent}%` }} />
+        <div className="hud__meter">
+          <span className="hud__meter-label">Exit</span>
+          <div
+            className="hud__checkpoint"
+            role="progressbar"
+            aria-label="Checkpoint progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(checkpointPercent)}
+          >
+            <span style={{ inlineSize: `${checkpointPercent}%` }} />
+          </div>
+          <span className="hud__meter-value">{formatNumber(nextCheckpointDistance)} m</span>
         </div>
       </div>
     </section>
