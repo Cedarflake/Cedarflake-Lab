@@ -2,7 +2,7 @@
   position: absolute;
   inset: auto calc(14px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom))
     calc(14px + env(safe-area-inset-left));
-  z-index: 3;
+  z-index: var(--z-hud);
   display: none;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
@@ -29,14 +29,14 @@
   touch-action: none;
   user-select: none;
   background: rgba(255, 247, 218, 0.76);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
+  border: var(--border-glass);
+  border-radius: var(--radius-control);
   box-shadow: 0 14px 34px rgba(80, 58, 78, 0.18);
   backdrop-filter: blur(16px);
   transition:
-    background-color 120ms ease,
-    box-shadow 120ms ease,
-    transform 120ms ease;
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 }
 
 .touch-controls button:active {

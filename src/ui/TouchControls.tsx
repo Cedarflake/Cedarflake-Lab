@@ -7,8 +7,6 @@ import type { TouchControlId } from "@/game/touchInput"
 import { useGameStore } from "@/game/useGameStore"
 import { useInputStore } from "@/game/useInputStore"
 
-import "./TouchControls.css"
-
 interface ControlButtonProps {
   label: string
   controlId: TouchControlId

@@ -1,7 +1,7 @@
 .overlay {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: var(--z-overlay);
   display: grid;
   place-items: center;
   padding: calc(24px + env(safe-area-inset-top)) calc(24px + env(safe-area-inset-right))
@@ -15,12 +15,12 @@
 .overlay__panel {
   width: min(560px, 100%);
   padding: clamp(24px, 5vw, 42px);
-  color: #352b3b;
-  background: rgba(255, 247, 226, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.68);
-  border-radius: 8px;
-  box-shadow: 0 28px 80px rgba(82, 58, 84, 0.24);
-  backdrop-filter: blur(24px) saturate(1.16);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-glass);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: var(--blur-panel);
 }
 
 .overlay__eyebrow {
@@ -33,7 +33,7 @@
 
 .overlay h1 {
   margin: 0;
-  color: #302738;
+  color: var(--color-text-strong);
   font-size: clamp(2.6rem, 9vw, 5.5rem);
   font-weight: 760;
   line-height: 0.92;
@@ -55,7 +55,7 @@
   line-height: 1;
   background: rgba(255, 240, 184, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   box-shadow: 0 14px 34px rgba(121, 84, 98, 0.14);
 }
 
@@ -71,7 +71,7 @@
   padding: 10px 11px;
   background: rgba(255, 255, 255, 0.34);
   border: 1px solid rgba(255, 255, 255, 0.42);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 
 .overlay__stats dt {
@@ -102,22 +102,22 @@
 .pause-button {
   min-height: 44px;
   padding: 0 18px;
-  color: #322738;
+  color: var(--color-text-strong);
   cursor: pointer;
-  background: #fff0b8;
-  border: 1px solid rgba(255, 255, 255, 0.74);
-  border-radius: 8px;
-  box-shadow: 0 12px 30px rgba(121, 84, 98, 0.16);
+  background: var(--color-accent);
+  border: var(--border-glass);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-control);
   transition:
-    background-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    background-color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard),
+    transform var(--duration-normal) var(--ease-standard);
 }
 
 .overlay button:hover,
 .pause-button:hover {
-  background: #fff7d4;
-  box-shadow: 0 16px 36px rgba(121, 84, 98, 0.22);
+  background: var(--color-accent-hover);
+  box-shadow: var(--shadow-control-hover);
   transform: translateY(-1px);
 }
 
@@ -135,7 +135,7 @@
   position: absolute;
   right: calc(24px + env(safe-area-inset-right));
   bottom: calc(24px + env(safe-area-inset-bottom));
-  z-index: 3;
+  z-index: var(--z-hud);
 }
 
 .controls {
@@ -149,7 +149,7 @@
   min-width: 0;
   padding: 12px;
   background: rgba(255, 255, 255, 0.42);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 
 .controls dt {

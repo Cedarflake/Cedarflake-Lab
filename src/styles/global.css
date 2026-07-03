@@ -7,9 +7,9 @@
 }
 
 :root {
-  color: #2d2633;
-  background: #f5d9d1;
-  font-family: Liminal-Drift-UI, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg-start);
+  font-family: var(--font-ui);
   font-synthesis: none;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;

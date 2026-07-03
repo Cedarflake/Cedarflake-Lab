@@ -4,8 +4,6 @@ import { formatNumber } from "@/game/format"
 import { useGameStore } from "@/game/useGameStore"
 import type { GameStatus } from "@/shared/types"
 
-import "./GameOverlay.css"
-
 interface RunStatsProps {
   bestDriftScore: number
   bestScore: number

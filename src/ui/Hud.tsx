@@ -2,8 +2,6 @@ import { formatNumber } from "@/game/format"
 import { trackConfig } from "@/game/gameConfig"
 import { useGameStore } from "@/game/useGameStore"
 
-import "./Hud.css"
-
 export function Hud() {
   const status = useGameStore((state) => state.status)
   const score = useGameStore((state) => state.score)
@@ -22,7 +20,13 @@ export function Hud() {
     trackConfig.checkpointSpacing - (distance % trackConfig.checkpointSpacing)
 
   return (
-    <section className="hud" aria-label="Race telemetry" aria-hidden={status !== "running"}>
+    <section
+      className="hud"
+      data-drift-ready={isDriftReady ? "true" : undefined}
+      data-low-integrity={integrity <= 32 ? "true" : undefined}
+      aria-label="Race telemetry"
+      aria-hidden={status !== "running"}
+    >
       <div className="hud__cluster hud__cluster--primary">
         <span className="hud__label">Score</span>
         <strong>{formatNumber(score)}</strong>
@@ -65,7 +69,7 @@ export function Hud() {
         <div className="hud__meter">
           <span className="hud__meter-label">Drift</span>
           <div
-            className={isDriftReady ? "hud__drift hud__drift--ready" : "hud__drift"}
+            className="hud__drift"
             role="progressbar"
             aria-label="Drift charge"
             aria-valuemin={0}

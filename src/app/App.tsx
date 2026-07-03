@@ -9,7 +9,6 @@ import { Hud } from "@/ui/Hud"
 import { TouchControls } from "@/ui/TouchControls"
 
 import "./App.css"
-import "./SceneFrame.css"
 
 const LiminalRacerScene = lazy(() =>
   import("@/scenes/LiminalRacerScene").then((module) => ({
@@ -60,7 +59,7 @@ export function App() {
   useKeyboardInput()
 
   return (
-    <main className="game-shell" tabIndex={-1}>
+    <main className="game-shell" data-status={status} tabIndex={-1}>
       <div className="scene-layer" aria-hidden={status !== "running"}>
         <SceneErrorBoundary>
           <Suspense
