@@ -1,0 +1,73 @@
+.touch-controls {
+  position: absolute;
+  inset: auto calc(14px + env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom))
+    calc(14px + env(safe-area-inset-left));
+  z-index: 3;
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  pointer-events: none;
+}
+
+.touch-controls__steer,
+.touch-controls__drive {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+}
+
+.touch-controls__drive {
+  justify-content: end;
+}
+
+.touch-controls button {
+  min-width: 64px;
+  min-height: 58px;
+  padding: 0 14px;
+  color: rgba(49, 39, 56, 0.86);
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  background: rgba(255, 247, 218, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(80, 58, 78, 0.18);
+  backdrop-filter: blur(16px);
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.touch-controls button:active {
+  background: rgba(255, 242, 186, 0.9);
+  box-shadow: 0 8px 22px rgba(80, 58, 78, 0.2);
+  transform: translateY(2px) scale(0.98);
+}
+
+.touch-controls button:focus-visible {
+  outline: 3px solid rgba(70, 190, 184, 0.9);
+  outline-offset: 3px;
+}
+
+.touch-controls__go {
+  min-width: 82px;
+  min-height: 76px;
+  background: rgba(255, 235, 154, 0.84);
+}
+
+.touch-controls__drift {
+  background: rgba(211, 244, 237, 0.76);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .touch-controls button {
+    transition: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .touch-controls {
+    display: grid;
+  }
+}

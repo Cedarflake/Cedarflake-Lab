@@ -54,12 +54,12 @@ pnpm check:rules
 
 ```txt
 src/
-  app/       React app shell and global game UI styling
+  app/       React app shell, scene frame, and app-level styling
   entities/ 3D game entities such as the car, track, obstacles, and checkpoints
   game/     Input handling, state store, generation rules, and numeric helpers
   scenes/   React Three Fiber scene composition and frame loop
   shared/   Shared TypeScript types
-  ui/       HUD and menu overlays
+  ui/       HUD, menu overlays, touch controls, and component-level styles
 scripts/
   checkBundleBudget.mjs  Production bundle size budget check
   checkCanvas.mjs       Playwright screenshot and canvas pixel verification

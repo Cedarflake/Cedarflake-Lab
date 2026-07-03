@@ -1,5 +1,7 @@
 import { useGameStore } from "@/game/useGameStore"
 
+import "./DrivingFeedback.css"
+
 export function DrivingFeedback() {
   const speed = useGameStore((state) => state.speed)
   const status = useGameStore((state) => state.status)

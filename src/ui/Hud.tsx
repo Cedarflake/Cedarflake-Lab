@@ -1,6 +1,8 @@
 import { formatNumber } from "@/game/format"
 import { useGameStore } from "@/game/useGameStore"
 
+import "./Hud.css"
+
 export function Hud() {
   const status = useGameStore((state) => state.status)
   const score = useGameStore((state) => state.score)

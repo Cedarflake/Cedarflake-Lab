@@ -1,0 +1,74 @@
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.scene-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 244, 200, 0.8), transparent 28%),
+    linear-gradient(180deg, #f7d6cb, #9ecfd1);
+}
+
+.scene-error {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  gap: 18px;
+  place-content: center;
+  padding: 24px;
+  color: #352b3b;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 240, 184, 0.48), transparent 36%),
+    linear-gradient(180deg, #f7d6cb, #9ecfd1);
+}
+
+.scene-error strong {
+  font-size: clamp(1.5rem, 5vw, 3rem);
+}
+
+.scene-error button {
+  min-height: 44px;
+  padding: 0 18px;
+  color: #322738;
+  cursor: pointer;
+  background: #fff0b8;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 8px;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.scene-error button:hover {
+  background: #fff7d4;
+  box-shadow: 0 16px 36px rgba(121, 84, 98, 0.22);
+  transform: translateY(-1px);
+}
+
+.scene-error button:focus-visible {
+  outline: 3px solid rgba(70, 190, 184, 0.9);
+  outline-offset: 3px;
+}
+
+.scene-layer canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-error button {
+    transition: none;
+  }
+
+  .scene-error button:hover {
+    transform: none;
+  }
+}

@@ -5,6 +5,8 @@ import { useGameStore } from "@/game/useGameStore"
 import { useInputStore } from "@/game/useInputStore"
 import type { PlayerInput } from "@/shared/types"
 
+import "./TouchControls.css"
+
 type InputPatch = Partial<PlayerInput>
 
 interface ControlButtonProps {

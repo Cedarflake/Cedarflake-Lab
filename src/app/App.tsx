@@ -9,6 +9,7 @@ import { Hud } from "@/ui/Hud"
 import { TouchControls } from "@/ui/TouchControls"
 
 import "./App.css"
+import "./SceneFrame.css"
 
 const LiminalRacerScene = lazy(() =>
   import("@/scenes/LiminalRacerScene").then((module) => ({
