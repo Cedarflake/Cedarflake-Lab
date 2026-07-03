@@ -40,6 +40,15 @@ try {
 
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
     await page.mouse.down()
+
+    const pressedClass = await goButton.evaluate((button) =>
+      button.classList.contains("touch-controls__button--pressed"),
+    )
+
+    if (!pressedClass) {
+      throw new Error("Expected Go button to remain visually pressed while held")
+    }
+
     await page.waitForTimeout(1600)
 
     const text = await page.locator("body").innerText()
