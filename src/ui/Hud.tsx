@@ -1,4 +1,5 @@
 import { formatNumber } from "@/game/format"
+import { trackConfig } from "@/game/gameConfig"
 import { useGameStore } from "@/game/useGameStore"
 
 import "./Hud.css"
@@ -14,6 +15,8 @@ export function Hud() {
   const driftCharge = useGameStore((state) => state.driftCharge)
   const lastEvent = useGameStore((state) => state.lastEvent)
   const driftPercent = Math.min((driftCharge / 1600) * 100, 100)
+  const nextCheckpointDistance =
+    trackConfig.checkpointSpacing - (distance % trackConfig.checkpointSpacing)
 
   return (
     <section className="hud" aria-label="Race telemetry" aria-hidden={status !== "running"}>
@@ -32,7 +35,7 @@ export function Hud() {
       <div className="hud__cluster">
         <span className="hud__label">Distance</span>
         <strong>{formatNumber(distance)}</strong>
-        <small>meters</small>
+        <small>Next exit {formatNumber(nextCheckpointDistance)} m</small>
       </div>
 
       <div className="hud__cluster">
