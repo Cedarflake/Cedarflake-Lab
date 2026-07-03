@@ -6,7 +6,7 @@ import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { dreamPalette } from "@/game/gameConfig"
-import { resolveRelativeTrackCenter } from "@/game/trackPath"
+import { resolveRelativeTrackPose } from "@/game/trackPath"
 import type { Checkpoint } from "@/shared/types"
 
 interface CheckpointsProps {
@@ -39,11 +39,11 @@ export function Checkpoints({ checkpoints, distanceRef }: CheckpointsProps) {
       const checkpointGroup = checkpointRefs.current[index]
       if (!checkpointGroup) return
 
-      const z = -(checkpoint.distance - distance) + 2
-      const x = resolveRelativeTrackCenter(checkpoint.distance, distance)
+      const pose = resolveRelativeTrackPose(checkpoint.distance, distance, 2)
 
-      checkpointGroup.position.set(x, 2.8, z)
-      checkpointGroup.visible = z <= 20 && z >= -260
+      checkpointGroup.position.set(pose.x, 2.8, pose.z)
+      checkpointGroup.rotation.set(0, pose.heading, Math.PI / 2)
+      checkpointGroup.visible = pose.z <= 20 && pose.z >= -260
     })
   })
 

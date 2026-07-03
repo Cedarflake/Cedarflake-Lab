@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
-import { resolveRelativeTrackCenter } from "@/game/trackPath"
+import { resolveRelativeTrackPose, resolveTrackLaneOffset } from "@/game/trackPath"
 import type { MemoryShard } from "@/shared/types"
 
 interface MemoryShardsProps {
@@ -47,15 +47,21 @@ export function MemoryShards({ distanceRef, memoryShards }: MemoryShardsProps) {
       const shard = shardRefs.current[index]
       if (!shard) return
 
-      const z = -(memoryShard.distance - distance) + 2
-      const x =
-        resolveRelativeTrackCenter(memoryShard.distance, distance) +
-        memoryShard.lane * trackConfig.laneWidth
+      const pose = resolveRelativeTrackPose(memoryShard.distance, distance, 2)
+      const laneOffset = resolveTrackLaneOffset(
+        memoryShard.lane,
+        pose.heading,
+        trackConfig.laneWidth,
+      )
       const phase = distance * 0.035 + index * 0.9
 
-      shard.position.set(x, 1.1 + Math.sin(phase) * 0.24, z)
-      shard.rotation.set(Math.sin(phase) * 0.08, phase * 0.22, Math.cos(phase) * 0.08)
-      shard.visible = z <= 18 && z >= -260
+      shard.position.set(pose.x + laneOffset.x, 1.1 + Math.sin(phase) * 0.24, pose.z + laneOffset.z)
+      shard.rotation.set(
+        Math.sin(phase) * 0.08,
+        pose.heading + phase * 0.22,
+        Math.cos(phase) * 0.08,
+      )
+      shard.visible = pose.z <= 18 && pose.z >= -260
     })
   })
 

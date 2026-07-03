@@ -6,7 +6,7 @@ import { BufferGeometry, DoubleSide, Float32BufferAttribute } from "three"
 import type { Group } from "three"
 
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
-import { resolveRelativeTrackCenter } from "@/game/trackPath"
+import { resolveRelativeTrackPose, resolveTrackLaneOffset } from "@/game/trackPath"
 import type { BoostGate } from "@/shared/types"
 
 interface BoostGatesProps {
@@ -69,13 +69,12 @@ export function BoostGates({ boostGates, distanceRef }: BoostGatesProps) {
       const gate = gateRefs.current[index]
       if (!gate) return
 
-      const z = -(boostGate.distance - distance) + 2
-      const x =
-        resolveRelativeTrackCenter(boostGate.distance, distance) +
-        boostGate.lane * trackConfig.laneWidth
+      const pose = resolveRelativeTrackPose(boostGate.distance, distance, 2)
+      const laneOffset = resolveTrackLaneOffset(boostGate.lane, pose.heading, trackConfig.laneWidth)
 
-      gate.position.set(x, 0.08, z)
-      gate.visible = z <= 18 && z >= -260
+      gate.position.set(pose.x + laneOffset.x, 0.08, pose.z + laneOffset.z)
+      gate.rotation.set(0, pose.heading, 0)
+      gate.visible = pose.z <= 18 && pose.z >= -260
     })
   })
 

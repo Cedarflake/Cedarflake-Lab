@@ -8,7 +8,7 @@ import { wallObstacleWidth } from "@/game/collision"
 import { resolveDesertGroundHeight } from "@/game/desertTerrain"
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { wrapDistance } from "@/game/number"
-import { resolveRelativeTrackCenter } from "@/game/trackPath"
+import { resolveRelativeTrackPose, resolveTrackLaneOffset } from "@/game/trackPath"
 import type { Obstacle } from "@/shared/types"
 
 interface DreamObjectsProps {
@@ -469,14 +469,13 @@ export function DreamObjects({ distanceRef, obstacles }: DreamObjectsProps) {
       const obstacleGroup = obstacleRefs.current[index]
       if (!obstacleGroup) return
 
-      const z = -(obstacle.distance - distance) + 2
-      const x =
-        resolveRelativeTrackCenter(obstacle.distance, distance) +
-        obstacle.lane * trackConfig.laneWidth
+      const pose = resolveRelativeTrackPose(obstacle.distance, distance, 2)
+      const laneOffset = resolveTrackLaneOffset(obstacle.lane, pose.heading, trackConfig.laneWidth)
       const y = obstacle.kind === "hole" ? 0.01 : obstacle.kind === "wall" ? 0.78 : 0.82
 
-      obstacleGroup.position.set(x, y, z)
-      obstacleGroup.visible = z <= 16 && z >= -260
+      obstacleGroup.position.set(pose.x + laneOffset.x, y, pose.z + laneOffset.z)
+      obstacleGroup.rotation.set(0, pose.heading, 0)
+      obstacleGroup.visible = pose.z <= 16 && pose.z >= -260
     })
   })
 
