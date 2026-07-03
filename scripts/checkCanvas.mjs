@@ -117,6 +117,19 @@ async function readProgressValue(page, label) {
 
 /**
  * @param {import("playwright").Page} page
+ */
+async function screenshotCanvas(page) {
+  const box = await page.locator("canvas").boundingBox()
+
+  if (!box) {
+    throw new Error("Expected canvas bounds to be available")
+  }
+
+  return page.screenshot({ clip: box })
+}
+
+/**
+ * @param {import("playwright").Page} page
  * @param {string} label
  */
 async function assertModalDialog(page, label) {
@@ -282,6 +295,46 @@ function measureSceneDifference(beforeBuffer, afterBuffer) {
   return sampleCount > 0 ? totalDifference / sampleCount : 0
 }
 
+/**
+ * @param {Buffer | Uint8Array} beforeBuffer
+ * @param {Buffer | Uint8Array} afterBuffer
+ */
+function measurePeripheralDifference(beforeBuffer, afterBuffer) {
+  const before = PNG.sync.read(beforeBuffer)
+  const after = PNG.sync.read(afterBuffer)
+
+  if (before.width !== after.width || before.height !== after.height) {
+    throw new Error("Cannot compare screenshots with different dimensions")
+  }
+
+  const regions = [
+    { xStart: 0.04, xEnd: 0.28, yStart: 0.34, yEnd: 0.82 },
+    { xStart: 0.72, xEnd: 0.96, yStart: 0.34, yEnd: 0.82 },
+  ]
+  let totalDifference = 0
+  let sampleCount = 0
+
+  for (const region of regions) {
+    const xStart = Math.floor(before.width * region.xStart)
+    const xEnd = Math.floor(before.width * region.xEnd)
+    const yStart = Math.floor(before.height * region.yStart)
+    const yEnd = Math.floor(before.height * region.yEnd)
+
+    for (let y = yStart; y < yEnd; y += 8) {
+      for (let x = xStart; x < xEnd; x += 8) {
+        const index = (before.width * y + x) * 4
+        totalDifference +=
+          Math.abs((before.data[index] ?? 0) - (after.data[index] ?? 0)) +
+          Math.abs((before.data[index + 1] ?? 0) - (after.data[index + 1] ?? 0)) +
+          Math.abs((before.data[index + 2] ?? 0) - (after.data[index + 2] ?? 0))
+        sampleCount += 1
+      }
+    }
+  }
+
+  return sampleCount > 0 ? totalDifference / sampleCount : 0
+}
+
 const browser = await chromium.launch()
 
 try {
@@ -358,7 +411,7 @@ try {
     await assertAmbientGameHidden(page, false)
     await page.getByRole("button", { name: "Pause" }).waitFor()
     await page.waitForTimeout(700)
-    const beforeMotion = await page.locator("canvas").screenshot()
+    const beforeMotion = await screenshotCanvas(page)
 
     if (viewport.name === "mobile") {
       const goButton = page.getByRole("button", { name: "Go" })
@@ -413,9 +466,10 @@ try {
     })
 
     const screenshot = await page.screenshot()
-    const afterMotion = await page.locator("canvas").screenshot()
+    const afterMotion = await screenshotCanvas(page)
     const sample = samplePng(screenshot)
     const sceneDifference = measureSceneDifference(beforeMotion, afterMotion)
+    const peripheralDifference = measurePeripheralDifference(beforeMotion, afterMotion)
 
     if (!sample.ok) {
       throw new Error(`${viewport.name} canvas check failed: ${JSON.stringify(sample)}`)
@@ -423,6 +477,14 @@ try {
 
     if (sceneDifference < 2) {
       throw new Error(`${viewport.name} scene did not visibly move: ${sceneDifference.toFixed(2)}`)
+    }
+
+    if (peripheralDifference < 1.6) {
+      throw new Error(
+        `${viewport.name} peripheral scenery did not visibly move: ${peripheralDifference.toFixed(
+          2,
+        )}`,
+      )
     }
 
     if (viewport.name === "mobile") {
@@ -442,6 +504,7 @@ try {
     console.log(`${viewport.name} canvas ok`, {
       ...sample,
       progressValues,
+      peripheralDifference,
       sceneDifference,
       telemetry,
     })
