@@ -36,6 +36,18 @@
   animation: impact-flash 520ms ease-out both;
 }
 
+.integrity-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 55%, transparent 0 50%, rgba(239, 133, 146, 0.42) 100%),
+    linear-gradient(180deg, rgba(239, 133, 146, 0.08), rgba(92, 61, 82, 0.18));
+  mix-blend-mode: multiply;
+  animation: integrity-veil 980ms ease-in-out infinite alternate;
+}
+
 .feedback-ripple {
   position: absolute;
   inset: 12% 18% 18%;
@@ -160,6 +172,16 @@
   }
 }
 
+@keyframes integrity-veil {
+  from {
+    filter: saturate(1);
+  }
+
+  to {
+    filter: saturate(1.28);
+  }
+}
+
 @keyframes feedback-toast {
   0% {
     opacity: 0;
@@ -187,5 +209,9 @@
   .impact-flash,
   .feedback-toast {
     display: none;
+  }
+
+  .integrity-veil {
+    animation: none;
   }
 }
