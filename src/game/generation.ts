@@ -107,7 +107,7 @@ export function createBoostGateAt(index: number): BoostGate {
     id: `boost-${index}`,
     lane: placement.lane,
     distance: placement.distance,
-    width: 1.8,
+    width: 2.35,
   }
 }
 

@@ -22,29 +22,43 @@ interface PlayerCarProps {
   carRef: RefObject<Group | null>
   distanceRef: RefObject<number>
   isDriftingRef: RefObject<boolean>
+  steeringRef: RefObject<number>
 }
 
-export function PlayerCar({ carRef, distanceRef, isDriftingRef }: PlayerCarProps) {
+interface WheelPlacement {
+  position: [number, number, number]
+  canSteer: boolean
+}
+
+export function PlayerCar({ carRef, distanceRef, isDriftingRef, steeringRef }: PlayerCarProps) {
   const wheelRefs = useRef<Array<WheelRef | null>>([])
+  const wheelSteeringRefs = useRef<Array<WheelRef | null>>([])
   const skidMaterialRefs = useRef<Array<SkidMaterialRef | null>>([])
-  const wheelPositions = useMemo(
-    (): Array<[number, number, number]> => [
-      [-0.86, -0.28, 1.16],
-      [0.86, -0.28, 1.16],
-      [-0.86, -0.28, -1.12],
-      [0.86, -0.28, -1.12],
+  const wheelPlacements = useMemo(
+    (): WheelPlacement[] => [
+      { position: [-0.86, -0.28, 1.16], canSteer: false },
+      { position: [0.86, -0.28, 1.16], canSteer: false },
+      { position: [-0.86, -0.28, -1.12], canSteer: true },
+      { position: [0.86, -0.28, -1.12], canSteer: true },
     ],
     [],
   )
 
   useFrame(() => {
-    const wheelRotation = distanceRef.current * 0.24
+    const wheelRotation = -distanceRef.current * 0.24
+    const steeringAngle = -steeringRef.current * 0.26
     const skidOpacity = isDriftingRef.current ? 0.34 : 0
 
     wheelRefs.current.forEach((wheel) => {
       if (!wheel) return
 
       wheel.rotation.set(wheelRotation, 0, Math.PI / 2)
+    })
+
+    wheelSteeringRefs.current.forEach((wheelSteering) => {
+      if (!wheelSteering) return
+
+      wheelSteering.rotation.set(0, steeringAngle, 0)
     })
 
     skidMaterialRefs.current.forEach((material) => {
@@ -85,22 +99,28 @@ export function PlayerCar({ carRef, distanceRef, isDriftingRef }: PlayerCarProps
         <meshBasicMaterial color="#fff1b8" />
       </mesh>
 
-      {wheelPositions.map(([x, y, z], index) => (
-        <group
-          key={index}
-          position={[x, y, z]}
-          ref={(wheel) => {
-            wheelRefs.current[index] = wheel
-          }}
-        >
-          <mesh>
-            <cylinderGeometry args={[0.31, 0.31, 0.25, 18]} />
-            <meshStandardMaterial color="#6d6070" roughness={0.55} />
-          </mesh>
-          <mesh position={[0, 0.2, 0.13]}>
-            <boxGeometry args={[0.27, 0.08, 0.025]} />
-            <meshBasicMaterial color={dreamPalette.carGlow} transparent opacity={0.72} />
-          </mesh>
+      {wheelPlacements.map(({ position: [x, y, z], canSteer }, index) => (
+        <group key={index} position={[x, y, z]}>
+          <group
+            ref={(wheelSteering) => {
+              wheelSteeringRefs.current[index] = canSteer ? wheelSteering : null
+            }}
+          >
+            <group
+              ref={(wheel) => {
+                wheelRefs.current[index] = wheel
+              }}
+            >
+              <mesh>
+                <cylinderGeometry args={[0.31, 0.31, 0.25, 18]} />
+                <meshStandardMaterial color="#6d6070" roughness={0.55} />
+              </mesh>
+              <mesh position={[0, x > 0 ? -0.14 : 0.14, 0]}>
+                <boxGeometry args={[0.18, 0.025, 0.18]} />
+                <meshBasicMaterial color={dreamPalette.carGlow} transparent opacity={0.72} />
+              </mesh>
+            </group>
+          </group>
         </group>
       ))}
 

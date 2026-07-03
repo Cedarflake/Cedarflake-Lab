@@ -11,6 +11,7 @@ import { trackConfig } from "../src/game/gameConfig"
 import { clamp, lerp, wrapDistance } from "../src/game/number"
 import { isCollisionRecovering, willEndRunAfterDamage } from "../src/game/runState"
 import { resolveScoreFeedback } from "../src/game/scoring"
+import { resolveSteeringVelocity } from "../src/game/steering"
 import { resolveTouchInput } from "../src/game/touchInput"
 
 function assert(condition: boolean, message: string) {
@@ -40,6 +41,14 @@ assert(wrapDistance(-2, 10) === 8, "Expected wrapDistance to wrap negative dista
 assert(resolveRunDifficulty(0).maxSpeed === 58, "Expected base max speed at the run start")
 assert(resolveRunDifficulty(800).maxSpeed === 64, "Expected midpoint speed ramp")
 assert(resolveRunDifficulty(3200).maxSpeed === 70, "Expected capped max speed ramp")
+assert(
+  resolveSteeringVelocity(1, 0, trackConfig.maxSpeed) === 0,
+  "Expected steering input to avoid moving a stationary car sideways",
+)
+assert(
+  resolveSteeringVelocity(1, 12, trackConfig.maxSpeed) > 0,
+  "Expected steering input to engage after the car starts moving",
+)
 assert(
   resolveObstacleHalfWidth({
     id: "wall-check",

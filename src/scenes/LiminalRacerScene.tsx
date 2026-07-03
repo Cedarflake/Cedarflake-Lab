@@ -30,6 +30,7 @@ import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { clamp, lerp } from "@/game/number"
 import { isCollisionRecovering, willEndRunAfterDamage } from "@/game/runState"
 import { resolveRelativeTrackCenter } from "@/game/trackPath"
+import { resolveSteeringVelocity } from "@/game/steering"
 import { useGameStore } from "@/game/useGameStore"
 import { useInputStore } from "@/game/useInputStore"
 
@@ -89,6 +90,7 @@ function RacerWorld() {
   const distanceRef = useRef(0)
   const isDriftingRef = useRef(false)
   const speedRef = useRef(0)
+  const steeringRef = useRef(0)
   const wasDriftingRef = useRef(false)
   const worldDistanceRef = useRef(0)
   const lastCollisionAtRef = useRef(Number.NEGATIVE_INFINITY)
@@ -110,6 +112,7 @@ function RacerWorld() {
     distanceRef.current = 0
     isDriftingRef.current = false
     speedRef.current = 0
+    steeringRef.current = 0
     wasDriftingRef.current = false
     worldDistanceRef.current = 0
     setWorldDistance(0)
@@ -127,6 +130,7 @@ function RacerWorld() {
     if (status !== "running") {
       isDriftingRef.current = false
       speedRef.current = runtime.speed
+      steeringRef.current = runtime.steering
       runtime.speed = lerp(runtime.speed, 0, Math.min(frameDelta * 2.2, 1))
       distanceRef.current = runtime.distance
       if (elapsedTime - lastTelemetryAtRef.current > telemetryIntervalSeconds) {
@@ -153,9 +157,10 @@ function RacerWorld() {
       input.throttle > 0 ? 12 : 0,
       difficulty.maxSpeed,
     )
+    const targetVelocityX = resolveSteeringVelocity(input.steer, runtime.speed, difficulty.maxSpeed)
     runtime.velocityX = lerp(
       runtime.velocityX,
-      input.steer * trackConfig.steering * (0.55 + runtime.speed / difficulty.maxSpeed),
+      targetVelocityX,
       Math.min(frameDelta * 4.6 * grip, 1),
     )
     runtime.x = clamp(
@@ -166,6 +171,7 @@ function RacerWorld() {
     runtime.distance += runtime.speed * frameDelta
     distanceRef.current = runtime.distance
     runtime.steering = lerp(runtime.steering, input.steer, Math.min(frameDelta * 7, 1))
+    steeringRef.current = runtime.steering
     speedRef.current = runtime.speed
 
     if (runtime.distance - worldDistanceRef.current >= worldWindowUpdateDistance) {
@@ -399,7 +405,12 @@ function RacerWorld() {
         <DreamObjects distanceRef={distanceRef} obstacles={visibleObstacles} />
         <Checkpoints distanceRef={distanceRef} checkpoints={visibleCheckpoints} />
         <CarMotionTrail carXRef={carXRef} distanceRef={distanceRef} speedRef={speedRef} />
-        <PlayerCar carRef={carRef} distanceRef={distanceRef} isDriftingRef={isDriftingRef} />
+        <PlayerCar
+          carRef={carRef}
+          distanceRef={distanceRef}
+          isDriftingRef={isDriftingRef}
+          steeringRef={steeringRef}
+        />
       </group>
     </>
   )

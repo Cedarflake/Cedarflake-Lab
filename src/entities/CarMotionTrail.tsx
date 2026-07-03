@@ -28,10 +28,10 @@ interface CarMotionTrailProps {
   speedRef: RefObject<number>
 }
 
-const maxControlSamples = 22
+const maxControlSamples = 20
 const trailSegmentCount = 44
-const minDistanceSpacing = 0.5
-const minLateralSpacing = 0.08
+const minDistanceSpacing = 0.62
+const minLateralSpacing = 0.14
 const trailOffsets = [0] as const
 
 function createTrailSurface(offsetX: number) {
@@ -112,7 +112,7 @@ function sampleTrailPoint(samples: TrailSample[], progress: number) {
 function smoothTrailSamples(samples: TrailSample[]) {
   let smoothedSamples = samples.map((sample) => ({ ...sample }))
 
-  for (let pass = 0; pass < 2; pass += 1) {
+  for (let pass = 0; pass < 3; pass += 1) {
     smoothedSamples = smoothedSamples.map((sample, index) => {
       if (index === 0 || index === smoothedSamples.length - 1) {
         return sample
@@ -123,7 +123,7 @@ function smoothTrailSamples(samples: TrailSample[]) {
 
       return {
         distance: sample.distance,
-        x: previous.x * 0.22 + sample.x * 0.56 + next.x * 0.22,
+        x: previous.x * 0.26 + sample.x * 0.48 + next.x * 0.26,
       }
     })
   }
@@ -201,7 +201,7 @@ export function CarMotionTrail({ carXRef, distanceRef, speedRef }: CarMotionTrai
     ) {
       samplesRef.current.push({
         distance: currentDistance,
-        x: newestSample ? lerp(newestSample.x, currentX, 0.58) : currentX,
+        x: newestSample ? lerp(newestSample.x, currentX, 0.38) : currentX,
       })
 
       while (samplesRef.current.length > maxControlSamples) {
@@ -209,7 +209,7 @@ export function CarMotionTrail({ carXRef, distanceRef, speedRef }: CarMotionTrai
       }
     }
 
-    const opacity = clamp((speedRef.current - 5) / 42, 0, 0.68)
+    const opacity = clamp((speedRef.current - 7) / 48, 0, 0.46)
 
     surfaces.forEach((surface) => {
       updateTrailSurface(surface, samplesRef.current, currentX, currentDistance)
@@ -231,7 +231,7 @@ export function CarMotionTrail({ carXRef, distanceRef, speedRef }: CarMotionTrai
             ref={(material) => {
               materialRefs.current[index] = material
             }}
-            color="#7f1735"
+            color="#b06a7f"
             side={DoubleSide}
             toneMapped={false}
             transparent
