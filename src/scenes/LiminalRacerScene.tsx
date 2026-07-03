@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react"
 
-import { PerspectiveCamera, Stars } from "@react-three/drei"
+import { PerspectiveCamera as DreiPerspectiveCamera, Stars } from "@react-three/drei"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
+import { PerspectiveCamera as ThreePerspectiveCamera } from "three"
 import type { Group } from "three"
 
 import { BoostGates } from "@/entities/BoostGates"
@@ -50,6 +51,8 @@ const initialRuntime: RuntimeState = {
   handledMemoryShards: new Set(),
 }
 const maxFrameDelta = 0.1
+const baseCameraFov = 50
+const maxCameraFov = 58
 
 function createRuntimeState(): RuntimeState {
   return {
@@ -157,7 +160,12 @@ function RacerWorld() {
       car.position.x = lerp(car.position.x, runtime.x, Math.min(frameDelta * 11, 1))
       car.position.y = 0.62 + Math.sin(runtime.distance * 0.12) * 0.035
       car.rotation.y = -runtime.velocityX * 0.018
-      car.rotation.z = input.isDrifting ? -runtime.steering * 0.08 : 0
+      car.rotation.x = lerp(car.rotation.x, input.brake > 0 ? -0.035 : 0.018, frameDelta * 6)
+      car.rotation.z = lerp(
+        car.rotation.z,
+        input.isDrifting ? -runtime.steering * 0.12 : -runtime.velocityX * 0.008,
+        frameDelta * 8,
+      )
     }
 
     const cameraX = runtime.x * (isPortrait ? 0.28 : 0.18)
@@ -170,6 +178,13 @@ function RacerWorld() {
     state.camera.position.y = lerp(state.camera.position.y, cameraY, Math.min(frameDelta * 2.4, 1))
     state.camera.position.z = lerp(state.camera.position.z, cameraZ, Math.min(frameDelta * 2.4, 1))
     state.camera.lookAt(runtime.x * 0.2, lookAtY, lookAtZ)
+
+    if (state.camera instanceof ThreePerspectiveCamera) {
+      const speedRatio = runtime.speed / trackConfig.maxSpeed
+      const targetFov = baseCameraFov + (maxCameraFov - baseCameraFov) * speedRatio
+      state.camera.fov = lerp(state.camera.fov, targetFov, Math.min(frameDelta * 2.8, 1))
+      state.camera.updateProjectionMatrix()
+    }
 
     const obstacleIndex = Math.max(0, Math.floor((runtime.distance - 90) / 46))
     pruneHandledEvents(runtime.handledObstacles, obstacleIndex)
@@ -194,6 +209,8 @@ function RacerWorld() {
             trackConfig.collisionDamage,
           )
 
+          runtime.speed *= 0.58
+          runtime.velocityX *= -0.28
           damage(trackConfig.collisionDamage)
 
           if (willEndRun) {
@@ -296,7 +313,12 @@ function RacerWorld() {
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 5.2, 11.2]} rotation={[-0.24, 0, 0]} fov={50} />
+      <DreiPerspectiveCamera
+        makeDefault
+        position={[0, 5.2, 11.2]}
+        rotation={[-0.24, 0, 0]}
+        fov={baseCameraFov}
+      />
       <color attach="background" args={[dreamPalette.skyTop]} />
       <fog attach="fog" args={[dreamPalette.fog, 42, 210]} />
       <ambientLight intensity={0.82} />
