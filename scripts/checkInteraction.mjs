@@ -1,5 +1,6 @@
 import { chromium, devices } from "playwright"
-import { PNG } from "pngjs"
+
+import { measureSceneDifference, screenshotCanvas } from "./browserVisualChecks.mjs"
 
 const url = process.argv.find((value) => value.startsWith("http")) ?? "http://localhost:5173/"
 
@@ -48,52 +49,6 @@ async function waitForProgressAboveZero(page, label, timeoutMs) {
   }
 
   return value
-}
-
-/**
- * @param {import("playwright").Page} page
- */
-async function screenshotCanvas(page) {
-  const box = await page.locator("canvas").boundingBox()
-
-  if (!box) {
-    throw new Error("Expected canvas bounds to be available")
-  }
-
-  return page.screenshot({ clip: box })
-}
-
-/**
- * @param {Buffer | Uint8Array} beforeBuffer
- * @param {Buffer | Uint8Array} afterBuffer
- */
-function measureSceneDifference(beforeBuffer, afterBuffer) {
-  const before = PNG.sync.read(beforeBuffer)
-  const after = PNG.sync.read(afterBuffer)
-
-  if (before.width !== after.width || before.height !== after.height) {
-    throw new Error("Cannot compare screenshots with different dimensions")
-  }
-
-  const xStart = Math.floor(before.width * 0.16)
-  const xEnd = Math.floor(before.width * 0.84)
-  const yStart = Math.floor(before.height * 0.32)
-  const yEnd = Math.floor(before.height * 0.86)
-  let totalDifference = 0
-  let sampleCount = 0
-
-  for (let y = yStart; y < yEnd; y += 8) {
-    for (let x = xStart; x < xEnd; x += 8) {
-      const index = (before.width * y + x) * 4
-      totalDifference +=
-        Math.abs((before.data[index] ?? 0) - (after.data[index] ?? 0)) +
-        Math.abs((before.data[index + 1] ?? 0) - (after.data[index + 1] ?? 0)) +
-        Math.abs((before.data[index + 2] ?? 0) - (after.data[index + 2] ?? 0))
-      sampleCount += 1
-    }
-  }
-
-  return sampleCount > 0 ? totalDifference / sampleCount : 0
 }
 
 const browser = await chromium.launch()
