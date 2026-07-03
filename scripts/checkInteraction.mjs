@@ -27,6 +27,28 @@ async function readProgressValue(page, label) {
   return value
 }
 
+/**
+ * @param {import("playwright").Page} page
+ * @param {string} label
+ * @param {number} timeoutMs
+ */
+async function waitForProgressAboveZero(page, label, timeoutMs) {
+  const startedAt = Date.now()
+  let value = 0
+
+  while (Date.now() - startedAt < timeoutMs) {
+    value = await readProgressValue(page, label)
+
+    if (value > 0) {
+      return value
+    }
+
+    await page.waitForTimeout(120)
+  }
+
+  return value
+}
+
 const browser = await chromium.launch()
 let speed = 0
 let distance = 0
@@ -105,11 +127,10 @@ try {
     await page.waitForTimeout(700)
     await page.keyboard.down("d")
     await page.keyboard.down("Space")
-    await page.waitForTimeout(2200)
+    const driftCharge = await waitForProgressAboveZero(page, "Drift charge", 4200)
 
     const text = await page.locator("body").innerText()
     const keyboardSpeed = readMetric(text, "SPEED")
-    const driftCharge = await readProgressValue(page, "Drift charge")
 
     if (driftCharge <= 0) {
       throw new Error(`Expected keyboard drifting to build charge, got ${driftCharge}`)

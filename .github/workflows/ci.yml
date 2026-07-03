@@ -46,12 +46,13 @@ jobs:
 
       - name: Browser smoke checks
         run: |
+          mkdir -p artifacts
           pnpm exec vite preview --host 127.0.0.1 --port 4173 > /tmp/liminal-drift-vite.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
 
           for attempt in {1..30}; do
-            if curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null; then
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
               break
             fi
             if [ "$attempt" -eq 30 ]; then
@@ -62,8 +63,28 @@ jobs:
             sleep 1
           done
 
-          node scripts/checkCanvas.mjs http://127.0.0.1:4173/
-          node scripts/checkInteraction.mjs http://127.0.0.1:4173/
+          cp /tmp/liminal-drift-vite.log artifacts/vite-preview.log
+
+          set +e
+          node scripts/checkCanvas.mjs http://127.0.0.1:4173/ 2>&1 | tee artifacts/check-canvas.log
+          canvas_status=${PIPESTATUS[0]}
+          node scripts/checkInteraction.mjs http://127.0.0.1:4173/ 2>&1 | tee artifacts/check-interaction.log
+          interaction_status=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$canvas_status" -ne 0 ] || [ "$interaction_status" -ne 0 ]; then
+            echo "Browser smoke failed" >&2
+            echo "::group::vite preview log"
+            cat artifacts/vite-preview.log
+            echo "::endgroup::"
+            echo "::group::canvas smoke log"
+            cat artifacts/check-canvas.log
+            echo "::endgroup::"
+            echo "::group::interaction smoke log"
+            cat artifacts/check-interaction.log
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Upload browser artifacts
         if: ${{ !cancelled() }}
