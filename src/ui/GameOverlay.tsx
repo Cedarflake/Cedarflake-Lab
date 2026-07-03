@@ -223,9 +223,9 @@ export function GameOverlay() {
     return (
       <div ref={dialogRef} className="overlay" role="dialog" aria-modal="true" aria-label="Paused">
         <div className="glass-panel overlay__panel">
-          <p className="overlay__eyebrow">A quiet exit sign hums overhead</p>
+          <p className="overlay__eyebrow">The exit sign is still humming</p>
           <h1>Liminal Drift</h1>
-          <p>Resume before the road forgets where it was going.</p>
+          <p>Resume before the road decides you were never here.</p>
           <RunStats
             bestDriftScore={bestDriftScore}
             bestScore={bestScore}
@@ -265,13 +265,15 @@ export function GameOverlay() {
       >
         <div className="glass-panel overlay__panel">
           <p className="overlay__eyebrow">
-            {hasNewBest ? "New best signal recorded" : `Signal lost at ${Math.round(score)} points`}
+            {hasNewBest
+              ? "A stronger trace was left behind"
+              : `The trace faded at ${Math.round(score)} points`}
           </p>
           <h1>The mall closes itself</h1>
           {hasNewBest ? (
             <p className="overlay__best-badge">Best {formatNumber(bestScore)}</p>
           ) : null}
-          <p>The car is still warm. The corridor is longer than before.</p>
+          <p>The car is still warm. The corridor has learned your route.</p>
           <RunStats
             bestDriftScore={bestDriftScore}
             bestScore={bestScore}
@@ -303,11 +305,11 @@ export function GameOverlay() {
       aria-label="Start race"
     >
       <div className="glass-panel overlay__panel">
-        <p className="overlay__eyebrow">Dreamcore night driving</p>
+        <p className="overlay__eyebrow">A road remembered by nobody</p>
         <h1>Liminal Drift</h1>
         <p>
-          Follow the pastel highway through empty atriums, gray sinkholes, and checkpoints that feel
-          half remembered.
+          Follow the faded highway through empty atriums, gray sinkholes, and exits that keep
+          changing their mind.
         </p>
         <div className="overlay__actions">
           <button type="button" className="ui-button" onClick={handleStart}>

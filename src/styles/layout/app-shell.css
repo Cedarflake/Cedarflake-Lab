@@ -5,8 +5,8 @@
   height: 100dvh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 18% 12%, rgba(255, 249, 202, 0.94), transparent 26%),
-    radial-gradient(circle at 86% 18%, rgba(137, 218, 213, 0.74), transparent 30%),
+    radial-gradient(circle at 18% 12%, rgba(226, 213, 176, 0.54), transparent 26%),
+    radial-gradient(circle at 86% 18%, rgba(113, 154, 154, 0.5), transparent 30%),
     linear-gradient(
       180deg,
       var(--color-bg-start) 0%,
@@ -40,8 +40,8 @@
   pointer-events: none;
   content: "";
   background:
-    radial-gradient(circle at center, transparent 0 48%, rgba(92, 61, 82, 0.2) 100%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(110, 170, 178, 0.18));
+    radial-gradient(circle at center, transparent 0 48%, rgba(44, 35, 48, 0.28) 100%),
+    linear-gradient(180deg, rgba(220, 213, 204, 0.06), rgba(72, 94, 98, 0.22));
   mix-blend-mode: multiply;
 }
 

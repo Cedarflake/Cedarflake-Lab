@@ -5,8 +5,8 @@
   pointer-events: none;
   background: radial-gradient(
     circle at 50% 58%,
-    rgba(255, 238, 173, 0.48),
-    rgba(239, 133, 146, 0.18),
+    rgba(221, 204, 160, 0.38),
+    rgba(126, 92, 104, 0.22),
     transparent 62%
   );
   animation: impact-flash 520ms ease-out both;
@@ -52,38 +52,38 @@
 }
 
 .feedback-ripple--boost {
-  background: radial-gradient(circle, rgba(183, 241, 221, 0.24), transparent 66%);
+  background: radial-gradient(circle, rgba(130, 172, 164, 0.28), transparent 66%);
   box-shadow:
-    0 0 36px rgba(183, 241, 221, 0.3),
-    inset 0 0 44px rgba(255, 255, 255, 0.26);
+    0 0 36px rgba(111, 151, 148, 0.3),
+    inset 0 0 44px rgba(224, 218, 205, 0.18);
 }
 
 .feedback-ripple--checkpoint {
-  background: radial-gradient(circle, rgba(255, 240, 184, 0.28), transparent 66%);
+  background: radial-gradient(circle, rgba(195, 180, 130, 0.3), transparent 66%);
   box-shadow:
-    0 0 38px rgba(244, 220, 140, 0.32),
-    inset 0 0 44px rgba(255, 255, 255, 0.28);
+    0 0 38px rgba(155, 132, 101, 0.32),
+    inset 0 0 44px rgba(224, 218, 205, 0.18);
 }
 
 .feedback-ripple--drift {
-  background: radial-gradient(circle, rgba(247, 168, 184, 0.24), transparent 66%);
+  background: radial-gradient(circle, rgba(161, 124, 139, 0.28), transparent 66%);
   box-shadow:
-    0 0 40px rgba(247, 168, 184, 0.32),
-    inset 0 0 44px rgba(255, 255, 255, 0.26);
+    0 0 40px rgba(121, 91, 108, 0.34),
+    inset 0 0 44px rgba(224, 218, 205, 0.16);
 }
 
 .feedback-ripple--near-miss {
-  background: radial-gradient(circle, rgba(240, 165, 143, 0.22), transparent 66%);
+  background: radial-gradient(circle, rgba(154, 113, 108, 0.28), transparent 66%);
   box-shadow:
-    0 0 42px rgba(240, 165, 143, 0.3),
-    inset 0 0 44px rgba(183, 241, 221, 0.2);
+    0 0 42px rgba(100, 78, 84, 0.34),
+    inset 0 0 44px rgba(130, 172, 164, 0.14);
 }
 
 .feedback-ripple--shard {
-  background: radial-gradient(circle, rgba(255, 240, 184, 0.26), transparent 66%);
+  background: radial-gradient(circle, rgba(198, 183, 138, 0.28), transparent 66%);
   box-shadow:
-    0 0 42px rgba(255, 240, 184, 0.34),
-    inset 0 0 44px rgba(247, 168, 184, 0.24);
+    0 0 42px rgba(158, 133, 104, 0.32),
+    inset 0 0 44px rgba(161, 124, 139, 0.18);
 }
 
 .feedback-toast {
@@ -121,17 +121,17 @@
 }
 
 .feedback-toast--boost {
-  background: rgba(211, 244, 237, 0.78);
+  background: rgba(184, 205, 199, 0.78);
 }
 
 .feedback-toast--checkpoint,
 .feedback-toast--shard {
-  background: rgba(255, 247, 218, 0.82);
+  background: rgba(218, 209, 184, 0.82);
 }
 
 .feedback-toast--drift,
 .feedback-toast--near-miss {
-  background: rgba(255, 235, 224, 0.8);
+  background: rgba(205, 188, 183, 0.8);
 }
 
 @keyframes impact-flash {

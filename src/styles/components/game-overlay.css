@@ -47,10 +47,10 @@
   color: rgba(47, 37, 53, 0.9);
   font-weight: 740;
   line-height: 1;
-  background: rgba(255, 240, 184, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(205, 190, 145, 0.72);
+  border: 1px solid rgba(232, 226, 211, 0.62);
   border-radius: var(--radius-control);
-  box-shadow: 0 14px 34px rgba(121, 84, 98, 0.14);
+  box-shadow: 0 14px 34px rgba(48, 43, 52, 0.18);
 }
 
 .overlay__stats {

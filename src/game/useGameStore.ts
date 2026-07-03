@@ -54,7 +54,7 @@ const initialRunState = {
   bestDriftScore: 0,
   hasNewBest: false,
   driftCharge: 0,
-  lastEvent: "Find the exit ramp",
+  lastEvent: "The exit is not where it was",
   impactId: 0,
   feedbackId: 0,
   feedbackKind: null,
@@ -113,7 +113,7 @@ export const useGameStore = create<GameState>((set) => ({
 
       return {
         driftCharge,
-        lastEvent: driftCharge > 180 ? "Liminal drift" : state.lastEvent,
+        lastEvent: driftCharge > 180 ? "The tires remember water" : state.lastEvent,
       }
     }),
   cashOutDrift: () =>
@@ -135,7 +135,7 @@ export const useGameStore = create<GameState>((set) => ({
         combo: Math.min(state.combo + 0.35, 5),
         bestDriftScore: Math.max(state.bestDriftScore, driftScore),
         driftCharge: 0,
-        lastEvent: `Drift cashed +${driftScore}`,
+        lastEvent: `The road paid back +${driftScore}`,
         feedbackId: state.feedbackId + 1,
         feedbackKind: "drift",
         feedbackPoints: driftScore,

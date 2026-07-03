@@ -30,7 +30,7 @@ export function Hud() {
       <div className="glass-card hud__cluster hud__cluster--primary">
         <span className="hud__label">Score</span>
         <strong>{formatNumber(score)}</strong>
-        <small>Best {formatNumber(bestScore)}</small>
+        <small>Recorded {formatNumber(bestScore)}</small>
       </div>
 
       <div className="glass-card hud__cluster">
@@ -42,7 +42,7 @@ export function Hud() {
       <div className="glass-card hud__cluster">
         <span className="hud__label">Distance</span>
         <strong>{formatNumber(distance)}</strong>
-        <small>Next exit {formatNumber(nextCheckpointDistance)} m</small>
+        <small>Exit drift {formatNumber(nextCheckpointDistance)} m</small>
       </div>
 
       <div className="glass-card hud__cluster">

@@ -277,7 +277,7 @@ try {
 
     const bestText = await page.locator(".hud__cluster--primary small").innerText()
 
-    if (bestText !== "Best 0") {
+    if (bestText !== "Recorded 0") {
       throw new Error(`Expected invalid negative best score to clamp to 0, got "${bestText}"`)
     }
 
