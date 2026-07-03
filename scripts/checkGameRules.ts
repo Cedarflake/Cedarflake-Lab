@@ -1,4 +1,5 @@
 import { readBestScore } from "../src/game/bestScoreStorage"
+import { resolveRunDifficulty } from "../src/game/difficulty"
 import { clamp, lerp, wrapDistance } from "../src/game/number"
 import { willEndRunAfterDamage } from "../src/game/runState"
 
@@ -18,5 +19,8 @@ assert(clamp(0.4, 0, 1) === 0.4, "Expected clamp to preserve in-range values")
 assert(lerp(10, 20, 0.25) === 12.5, "Expected lerp to interpolate linearly")
 assert(wrapDistance(23, 10) === 3, "Expected wrapDistance to wrap positive distances")
 assert(wrapDistance(-2, 10) === 8, "Expected wrapDistance to wrap negative distances")
+assert(resolveRunDifficulty(0).maxSpeed === 58, "Expected base max speed at the run start")
+assert(resolveRunDifficulty(800).maxSpeed === 64, "Expected midpoint speed ramp")
+assert(resolveRunDifficulty(3200).maxSpeed === 70, "Expected capped max speed ramp")
 
 console.log("game rules ok")

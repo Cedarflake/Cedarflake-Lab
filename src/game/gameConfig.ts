@@ -5,6 +5,8 @@ export const trackConfig = {
   visibleSegments: 34,
   checkpointSpacing: 180,
   maxSpeed: 58,
+  maxSpeedBonus: 12,
+  speedRampDistance: 1600,
   baseAcceleration: 34,
   braking: 52,
   drag: 14,

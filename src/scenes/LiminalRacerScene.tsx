@@ -11,6 +11,7 @@ import { DreamObjects } from "@/entities/DreamObjects"
 import { MemoryShards } from "@/entities/MemoryShards"
 import { PlayerCar } from "@/entities/PlayerCar"
 import { Track } from "@/entities/Track"
+import { resolveRunDifficulty } from "@/game/difficulty"
 import {
   createBoostGateAt,
   createMemoryShardAt,
@@ -127,16 +128,17 @@ function RacerWorld() {
     }
     isDriftingRef.current = input.isDrifting
     const grip = input.isDrifting ? trackConfig.driftGrip : trackConfig.normalGrip
+    const difficulty = resolveRunDifficulty(runtime.distance)
     const acceleration =
       input.throttle * trackConfig.baseAcceleration - input.brake * trackConfig.braking
     runtime.speed = clamp(
       runtime.speed + acceleration * frameDelta - trackConfig.drag * frameDelta,
       input.throttle > 0 ? 12 : 0,
-      trackConfig.maxSpeed,
+      difficulty.maxSpeed,
     )
     runtime.velocityX = lerp(
       runtime.velocityX,
-      input.steer * trackConfig.steering * (0.55 + runtime.speed / trackConfig.maxSpeed),
+      input.steer * trackConfig.steering * (0.55 + runtime.speed / difficulty.maxSpeed),
       Math.min(frameDelta * 4.6 * grip, 1),
     )
     runtime.x = clamp(
@@ -184,7 +186,7 @@ function RacerWorld() {
     state.camera.lookAt(runtime.x * 0.2, lookAtY, lookAtZ)
 
     if (state.camera instanceof ThreePerspectiveCamera) {
-      const speedRatio = runtime.speed / trackConfig.maxSpeed
+      const speedRatio = runtime.speed / difficulty.maxSpeed
       const targetFov = baseCameraFov + (maxCameraFov - baseCameraFov) * speedRatio
       state.camera.fov = lerp(state.camera.fov, targetFov, Math.min(frameDelta * 2.8, 1))
       state.camera.updateProjectionMatrix()
@@ -249,7 +251,7 @@ function RacerWorld() {
         const caughtBoost = Math.abs(runtime.x - boostX) < boostGate.width + 0.55
 
         if (caughtBoost) {
-          runtime.speed = Math.min(runtime.speed + trackConfig.boostSpeed, trackConfig.maxSpeed)
+          runtime.speed = Math.min(runtime.speed + trackConfig.boostSpeed, difficulty.maxSpeed)
           addScore(trackConfig.boostScore + runtime.speed * 3, "Signal boost")
         }
 
