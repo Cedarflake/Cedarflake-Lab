@@ -1,12 +1,12 @@
 export function resolveTrackCenter(distance: number) {
-  return Math.sin(distance * 0.0135) * 3.15 + Math.sin(distance * 0.0056 + 1.2) * 1.55
+  return Math.sin(distance * 0.0148) * 4.2 + Math.sin(distance * 0.0062 + 1.2) * 2
 }
 
 export function resolveTrackHeading(distance: number) {
-  const lookBehind = resolveTrackCenter(distance - 10)
-  const lookAhead = resolveTrackCenter(distance + 10)
+  const lookBehind = resolveTrackCenter(distance - 12)
+  const lookAhead = resolveTrackCenter(distance + 12)
 
-  return Math.atan2(lookAhead - lookBehind, 20)
+  return Math.atan2(lookAhead - lookBehind, 24)
 }
 
 export function resolveRelativeTrackCenter(distance: number, originDistance: number) {
