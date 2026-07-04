@@ -150,8 +150,20 @@ try {
     const page = await context.newPage()
 
     await page.goto(url, { waitUntil: "domcontentloaded" })
-    await page.getByRole("button", { name: "Start driving" }).click()
+    const startButton = page.getByRole("button", { name: "Start driving" })
+    await startButton.waitFor()
+    await Promise.all([startButton.click(), page.keyboard.down("w")])
     await page.locator("canvas").waitFor()
+    await page.waitForTimeout(900)
+
+    const startupText = await page.locator("body").innerText()
+    const startupSpeed = readMetric(startupText, "SPEED")
+
+    if (startupSpeed <= 0) {
+      throw new Error(`Expected immediate W input after start to drive, got ${startupSpeed}`)
+    }
+
+    await page.keyboard.up("w")
     await page.waitForTimeout(500)
     await page.evaluate(() => {
       window.dispatchEvent(new Event("blur"))

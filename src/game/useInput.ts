@@ -76,11 +76,10 @@ export function useKeyboardInput() {
         return
       }
 
-      if (useGameStore.getState().status !== "running") {
-        return
+      if (useGameStore.getState().status === "running") {
+        event.preventDefault()
       }
 
-      event.preventDefault()
       keysRef.current.add(key)
       updateInput()
     }

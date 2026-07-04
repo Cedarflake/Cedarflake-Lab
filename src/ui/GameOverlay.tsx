@@ -67,25 +67,25 @@ export function GameOverlay() {
     void playBackgroundMusic().catch(() => undefined)
   }, [])
 
-  const runAfterDialogExitFrame = useCallback((action: () => void) => {
+  const runWithDialogExit = useCallback((action: () => void) => {
     setIsDialogExiting(true)
-    window.requestAnimationFrame(action)
+    action()
   }, [])
 
   const handleStart = useCallback(() => {
     playMusicFromGesture()
-    runAfterDialogExitFrame(start)
-  }, [playMusicFromGesture, runAfterDialogExitFrame, start])
+    runWithDialogExit(start)
+  }, [playMusicFromGesture, runWithDialogExit, start])
 
   const handleResume = useCallback(() => {
     playMusicFromGesture()
-    runAfterDialogExitFrame(resume)
-  }, [playMusicFromGesture, resume, runAfterDialogExitFrame])
+    runWithDialogExit(resume)
+  }, [playMusicFromGesture, resume, runWithDialogExit])
 
   const handleRestart = useCallback(() => {
     playMusicFromGesture()
-    runAfterDialogExitFrame(restart)
-  }, [playMusicFromGesture, restart, runAfterDialogExitFrame])
+    runWithDialogExit(restart)
+  }, [playMusicFromGesture, restart, runWithDialogExit])
 
   const gamepadStatus = useGamepadOverlayControls({
     onPause: pause,
