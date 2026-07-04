@@ -101,11 +101,12 @@ async function delaySceneChunk(page, delayMs = 350) {
 async function assertStartupLoadingSequence(page) {
   await page.locator(".scene-loading").waitFor({ state: "visible" })
 
-  if (await page.getByRole("dialog", { name: "Start race" }).isVisible()) {
+  if (await page.getByRole("button", { name: "Start driving" }).isVisible()) {
     throw new Error("Expected start dialog to stay hidden while scene loading is visible")
   }
 
   await page.getByRole("dialog", { name: "Start race" }).waitFor()
+  await page.getByRole("button", { name: "Start driving" }).waitFor()
 
   if (await page.locator(".scene-loading").isVisible()) {
     throw new Error("Expected scene loading to be removed before showing the start dialog")
@@ -139,6 +140,41 @@ async function assertDialogTabWrap(page, firstLabel, lastLabel) {
   await assertActiveButton(page, lastLabel)
   await page.keyboard.press("Tab")
   await assertActiveButton(page, firstLabel)
+}
+
+/**
+ * @param {import("playwright").Page} page
+ */
+async function assertDialogExitAnimation(page) {
+  const exitingState = await page
+    .waitForFunction(() => {
+      const element = document.querySelector('.overlay[data-exiting="true"]')
+
+      if (!(element instanceof HTMLElement)) {
+        return null
+      }
+
+      return {
+        ariaHidden: element.getAttribute("aria-hidden"),
+        ariaModal: element.getAttribute("aria-modal"),
+        pointerEvents: getComputedStyle(element).pointerEvents,
+      }
+    })
+    .then((handle) => handle.jsonValue())
+
+  if (!exitingState) {
+    throw new Error("Expected exiting dialog state to be captured")
+  }
+
+  if (
+    exitingState.ariaHidden !== "true" ||
+    exitingState.ariaModal !== null ||
+    exitingState.pointerEvents !== "none"
+  ) {
+    throw new Error(`Expected exiting dialog to be inert: ${JSON.stringify(exitingState)}`)
+  }
+
+  await page.locator(".overlay").waitFor({ state: "detached" })
 }
 
 /**
@@ -207,17 +243,20 @@ async function pressEscapeWithRepeat(page) {
  * @param {import("playwright").Page} page
  */
 async function assertReducedMotionStyles(page) {
+  await page.getByRole("dialog", { name: "Start race" }).waitFor()
   await page.getByRole("button", { name: "Start driving" }).waitFor()
 
   const styles = await page.evaluate(() => {
-    const startButton = document.querySelector(".overlay button")
+    const overlay = document.querySelector(".overlay")
+    const panel = document.querySelector(".overlay__panel")
 
-    if (!(startButton instanceof HTMLElement)) {
+    if (!(overlay instanceof HTMLElement) || !(panel instanceof HTMLElement)) {
       return null
     }
 
     return {
-      startButtonTransition: getComputedStyle(startButton).transitionDuration,
+      overlayAnimation: getComputedStyle(overlay).animationDuration,
+      panelAnimation: getComputedStyle(panel).animationDuration,
     }
   })
 
@@ -225,7 +264,7 @@ async function assertReducedMotionStyles(page) {
     throw new Error("Expected reduced-motion style targets to exist")
   }
 
-  if (styles.startButtonTransition !== "0s") {
+  if (styles.overlayAnimation !== "0s" || styles.panelAnimation !== "0s") {
     throw new Error(`Reduced-motion styles were not applied: ${JSON.stringify(styles)}`)
   }
 }
@@ -286,13 +325,14 @@ try {
     await assertFontPreload(page)
     await assertDocumentMetadata(page)
     await assertStartupLoadingSequence(page)
-    await assertModalDialog(page, "Start race")
     await assertActiveButton(page, "Start driving")
     await assertDialogTabWrap(page, "Start driving", "Start driving")
     await page.locator("canvas").waitFor()
     await assertAmbientGameHidden(page, true)
+    const dialogExitAnimation = assertDialogExitAnimation(page)
     await page.getByRole("button", { name: "Start driving" }).click()
     await assertAmbientGameHidden(page, false)
+    await dialogExitAnimation
     await context.close()
 
     console.log("blocked storage ok")
@@ -306,12 +346,16 @@ try {
       window.localStorage.setItem("liminal-drift:best-score", "-12")
     })
     await page.goto(url, { waitUntil: "domcontentloaded" })
+    await page.getByRole("dialog", { name: "Start race" }).waitFor()
+    await assertActiveButton(page, "Start driving")
+    await assertDialogTabWrap(page, "Start driving", "Start driving")
+    await assertControlLegend(page)
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
 
-    const bestText = await page.locator(".hud__cluster--primary small").innerText()
+    const bestText = await page.locator(".hud__dial--score small").innerText()
 
-    if (bestText !== "Recorded 0") {
+    if (bestText !== "Best 0") {
       throw new Error(`Expected invalid negative best score to clamp to 0, got "${bestText}"`)
     }
 
@@ -351,7 +395,7 @@ try {
       continue
     }
 
-    await assertModalDialog(page, "Start race")
+    await page.getByRole("dialog", { name: "Start race" }).waitFor()
     await assertActiveButton(page, "Start driving")
     await assertDialogTabWrap(page, "Start driving", "Start driving")
     await assertControlLegend(page)

@@ -20,8 +20,13 @@ import {
 } from "../src/game/gamepadInput"
 import { trackConfig } from "../src/game/gameConfig"
 import { clamp, lerp, wrapDistance } from "../src/game/number"
-import { isCollisionRecovering, willEndRunAfterDamage } from "../src/game/runState"
+import {
+  isCollisionRecovering,
+  resolveCollisionDamage,
+  willEndRunAfterDamage,
+} from "../src/game/runState"
 import { resolveScoreFeedback } from "../src/game/scoring"
+import { resolveBoostedSpeed } from "../src/game/speed"
 import { resolveSteeringVelocity } from "../src/game/steering"
 import { resolveTouchInput } from "../src/game/touchInput"
 
@@ -68,6 +73,56 @@ assert(
   !isCollisionRecovering(12, 10, trackConfig.collisionRecoverySeconds),
   "Expected recovery to expire after the configured window",
 )
+assert(
+  resolveCollisionDamage({
+    baseDamage: trackConfig.collisionDamage,
+    speed: 0,
+    speedReference: trackConfig.maxSpeed,
+    minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
+    maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
+    isDrifting: false,
+    driftDamageMultiplier: trackConfig.driftCollisionDamageMultiplier,
+  }) < trackConfig.collisionDamage,
+  "Expected very low speed collisions to be lighter than base damage",
+)
+assert(
+  resolveCollisionDamage({
+    baseDamage: trackConfig.collisionDamage,
+    speed: trackConfig.maxSpeed,
+    speedReference: trackConfig.maxSpeed,
+    minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
+    maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
+    isDrifting: false,
+    driftDamageMultiplier: trackConfig.driftCollisionDamageMultiplier,
+  }) === trackConfig.collisionDamage,
+  "Expected reference-speed collisions to use base damage",
+)
+const fastCollisionDamage = resolveCollisionDamage({
+  baseDamage: trackConfig.collisionDamage,
+  speed: trackConfig.maxSpeed + trackConfig.maxSpeedBonus + trackConfig.driftMaxSpeedBonus,
+  speedReference: trackConfig.maxSpeed,
+  minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
+  maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
+  isDrifting: false,
+  driftDamageMultiplier: trackConfig.driftCollisionDamageMultiplier,
+})
+const fastDriftCollisionDamage = resolveCollisionDamage({
+  baseDamage: trackConfig.collisionDamage,
+  speed: trackConfig.maxSpeed + trackConfig.maxSpeedBonus + trackConfig.driftMaxSpeedBonus,
+  speedReference: trackConfig.maxSpeed,
+  minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
+  maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
+  isDrifting: true,
+  driftDamageMultiplier: trackConfig.driftCollisionDamageMultiplier,
+})
+assert(
+  fastCollisionDamage > trackConfig.collisionDamage,
+  "Expected high speed crashes to hurt more",
+)
+assert(
+  fastDriftCollisionDamage > fastCollisionDamage,
+  "Expected high speed drift crashes to punish harder than straight crashes",
+)
 assert(readBestScore() === 0, "Expected best score storage to initialize outside the browser")
 assert(clamp(-2, 0, 1) === 0, "Expected clamp to honor the lower bound")
 assert(clamp(3, 0, 1) === 1, "Expected clamp to honor the upper bound")
@@ -85,6 +140,18 @@ assert(
 assert(
   resolveSteeringVelocity(1, 12, trackConfig.maxSpeed) > 0,
   "Expected steering input to engage after the car starts moving",
+)
+assert(
+  resolveBoostedSpeed(40, trackConfig.boostSpeed, 70) === 56,
+  "Expected boost gates to add speed below the current cap",
+)
+assert(
+  resolveBoostedSpeed(84, trackConfig.boostSpeed, 96.8) === 96.8,
+  "Expected boost gates to clamp to the drift speed cap",
+)
+assert(
+  resolveBoostedSpeed(96.8, trackConfig.boostSpeed, 96.8) === 96.8,
+  "Expected boost gates to avoid slowing the car at the drift speed cap",
 )
 assert(
   resolveObstacleHalfWidth({

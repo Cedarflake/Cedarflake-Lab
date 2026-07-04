@@ -1,4 +1,4 @@
-import { formatNumber } from "@/game/format"
+import { formatNumber, formatRacerNumber, formatScoreNumber } from "@/game/format"
 import { trackConfig } from "@/game/gameConfig"
 import { useGameStore } from "@/game/useGameStore"
 
@@ -24,38 +24,15 @@ export function Hud() {
       className="hud"
       data-drift-ready={isDriftReady ? "true" : undefined}
       data-low-integrity={integrity <= 32 ? "true" : undefined}
+      data-status={status}
       aria-label="Race telemetry"
       aria-hidden={status !== "running"}
     >
-      <div className="glass-card hud__cluster hud__cluster--primary">
-        <span className="hud__label">Score</span>
-        <strong>{formatNumber(score)}</strong>
-        <small>Recorded {formatNumber(bestScore)}</small>
-      </div>
-
-      <div className="glass-card hud__cluster">
-        <span className="hud__label">Speed</span>
-        <strong>{formatNumber(speed * 3.1)}</strong>
-        <small>km/h</small>
-      </div>
-
-      <div className="glass-card hud__cluster">
-        <span className="hud__label">Distance</span>
-        <strong>{formatNumber(distance)}</strong>
-        <small>Exit drift {formatNumber(nextCheckpointDistance)} m</small>
-      </div>
-
-      <div className="glass-card hud__cluster">
-        <span className="hud__label">Combo</span>
-        <strong>{combo.toFixed(1)}x</strong>
-        <small>{lastEvent}</small>
-      </div>
-
-      <div className="hud__meters">
-        <div className="glass-card hud__meter">
-          <span className="hud__meter-label">Integrity</span>
+      <div className="hud__bar-parameters" aria-label="Bar parameters">
+        <div className="hud__bar-row">
+          <span className="hud__bar-label">Integrity</span>
           <div
-            className="hud__integrity"
+            className="hud__bar hud__bar--integrity"
             role="progressbar"
             aria-label="Vehicle integrity"
             aria-valuemin={0}
@@ -64,12 +41,12 @@ export function Hud() {
           >
             <span style={{ inlineSize: `${integrity}%` }} />
           </div>
-          <span className="hud__meter-value">{formatNumber(integrity)}%</span>
+          <span className="hud__bar-value">{formatNumber(integrity)}%</span>
         </div>
-        <div className="glass-card hud__meter">
-          <span className="hud__meter-label">Drift</span>
+        <div className="hud__bar-row">
+          <span className="hud__bar-label">Drift</span>
           <div
-            className="hud__drift"
+            className="hud__bar hud__bar--drift"
             role="progressbar"
             aria-label="Drift charge"
             aria-valuemin={0}
@@ -78,12 +55,12 @@ export function Hud() {
           >
             <span style={{ inlineSize: `${driftPercent}%` }} />
           </div>
-          <span className="hud__meter-value">{formatNumber(driftCharge)}</span>
+          <span className="hud__bar-value">{formatRacerNumber(driftCharge)}</span>
         </div>
-        <div className="glass-card hud__meter">
-          <span className="hud__meter-label">Exit</span>
+        <div className="hud__bar-row">
+          <span className="hud__bar-label">Exit</span>
           <div
-            className="hud__checkpoint"
+            className="hud__bar hud__bar--checkpoint"
             role="progressbar"
             aria-label="Checkpoint progress"
             aria-valuemin={0}
@@ -92,7 +69,30 @@ export function Hud() {
           >
             <span style={{ inlineSize: `${checkpointPercent}%` }} />
           </div>
-          <span className="hud__meter-value">{formatNumber(nextCheckpointDistance)} m</span>
+          <span className="hud__bar-value">{formatRacerNumber(nextCheckpointDistance)} m</span>
+        </div>
+      </div>
+
+      <div className="hud__racer-parameters" aria-label="Racer parameters">
+        <div className="hud__dial hud__dial--score">
+          <span className="hud__dial-label">Score</span>
+          <strong>{formatScoreNumber(score)}</strong>
+          <small>Best {formatScoreNumber(bestScore)}</small>
+        </div>
+        <div className="hud__dial">
+          <span className="hud__dial-label">Speed</span>
+          <strong>{formatRacerNumber(speed * 3.1)}</strong>
+          <small>km/h</small>
+        </div>
+        <div className="hud__dial">
+          <span className="hud__dial-label">Distance</span>
+          <strong>{formatRacerNumber(distance)}</strong>
+          <small>m</small>
+        </div>
+        <div className="hud__dial">
+          <span className="hud__dial-label">Combo</span>
+          <strong>{combo.toFixed(1)}x</strong>
+          <small>{lastEvent}</small>
         </div>
       </div>
     </section>

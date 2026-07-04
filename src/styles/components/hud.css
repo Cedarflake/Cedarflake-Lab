@@ -1,114 +1,77 @@
 .hud {
+  --hud-dial-gap: 10px;
+  --hud-dial-size: 72px;
+  --hud-score-width: 156px;
+  --hud-racer-width: calc(
+    var(--hud-score-width) + var(--hud-dial-size) + var(--hud-dial-size) + var(--hud-dial-size) +
+      var(--hud-dial-gap) + var(--hud-dial-gap) + var(--hud-dial-gap)
+  );
+
   position: absolute;
-  inset: calc(var(--space-safe-page) + env(safe-area-inset-top))
-    calc(var(--space-safe-page) + env(safe-area-inset-right)) auto
-    calc(var(--space-safe-page) + env(safe-area-inset-left));
+  inset: auto auto calc(24px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
   z-index: var(--z-hud);
   display: grid;
-  grid-template-columns: minmax(160px, 1.2fr) repeat(3, minmax(112px, 0.6fr));
-  gap: 10px;
-  align-items: stretch;
+  gap: 14px;
+  width: min(var(--hud-racer-width), calc(100vw - 128px));
+  color: rgba(47, 37, 53, 0.86);
   pointer-events: none;
 }
 
-.hud__cluster {
-  min-width: 0;
-  padding: 12px 14px;
-  color: rgba(47, 37, 53, 0.88);
-  background: var(--color-surface-hud);
-  border: var(--border-glass);
-  border-radius: var(--radius-control);
-  box-shadow: var(--shadow-hud);
-  backdrop-filter: var(--blur-hud);
-}
-
-.hud__cluster--primary {
-  background: rgba(221, 211, 190, 0.64);
-}
-
-.hud__label {
-  display: block;
-  margin-block-end: 4px;
-  color: var(--color-text-soft);
-  font-size: 0.68rem;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.hud strong {
-  display: block;
-  overflow: hidden;
-  font-size: clamp(1.05rem, 2vw, 1.72rem);
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hud small {
-  display: block;
-  overflow: hidden;
-  margin-block-start: 5px;
-  color: var(--color-text-soft);
-  font-size: 0.76rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hud__meters {
-  grid-column: 1 / -1;
+.hud__bar-parameters {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
+  width: min(var(--hud-racer-width), 100%);
 }
 
-.hud__meter {
+.hud__bar-row {
   display: grid;
-  grid-template-columns: minmax(54px, auto) minmax(0, 1fr) minmax(48px, auto);
-  gap: 8px;
+  grid-template-columns: 76px minmax(0, 1fr) 64px;
+  gap: 9px;
   align-items: center;
-  min-width: 0;
   padding: 6px 8px;
-  color: rgba(47, 37, 53, 0.78);
-  background: rgba(255, 255, 255, 0.22);
-  border: var(--border-glass-soft);
+  background: rgba(234, 228, 214, 0.24);
+  border: 1px solid rgba(232, 226, 211, 0.32);
   border-radius: var(--radius-control);
+  box-shadow: 0 8px 22px rgba(48, 43, 52, 0.1);
+  backdrop-filter: blur(9px);
 }
 
-.hud__meter-label,
-.hud__meter-value {
+.hud__bar-label,
+.hud__bar-value {
   overflow: hidden;
   font-size: 0.64rem;
-  font-weight: 700;
+  font-weight: 760;
   line-height: 1;
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-.hud__meter-value {
+.hud__bar-label {
+  color: rgba(47, 37, 53, 0.68);
+}
+
+.hud__bar-value {
+  color: rgba(47, 37, 53, 0.78);
   text-align: end;
 }
 
-.hud__integrity,
-.hud__drift,
-.hud__checkpoint {
+.hud__bar {
   height: 7px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.42);
   border-radius: var(--radius-pill);
 }
 
-.hud__integrity span,
-.hud__drift span,
-.hud__checkpoint span {
+.hud__bar span {
   display: block;
   height: 100%;
   border-radius: inherit;
   transition: inline-size var(--duration-meter) var(--ease-standard);
 }
 
-.hud__integrity span {
+.hud__bar--integrity span {
   background: linear-gradient(
     90deg,
     var(--color-accent-mint),
@@ -117,91 +80,190 @@
   );
 }
 
-.hud__drift span {
+.hud__bar--drift span {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.22),
     var(--color-danger),
     var(--color-accent)
   );
 }
 
-.hud__checkpoint span {
+.hud__bar--checkpoint span {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.24),
     var(--color-accent-cyan),
     var(--color-accent)
   );
 }
 
-.hud[data-low-integrity="true"] .hud__integrity {
+.hud__racer-parameters {
+  display: grid;
+  grid-template-columns: var(--hud-score-width) repeat(3, var(--hud-dial-size));
+  gap: var(--hud-dial-gap);
+  align-items: end;
+}
+
+.hud__dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: var(--hud-dial-size);
+  aspect-ratio: 1;
+  padding: 8px;
+  overflow: hidden;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.48), transparent 42%),
+    rgba(229, 222, 209, 0.38);
+  border: 1px solid rgba(232, 226, 211, 0.5);
+  border-radius: 50%;
+  box-shadow:
+    0 14px 30px rgba(48, 43, 52, 0.16),
+    inset 0 0 18px rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.hud__dial--score {
+  width: var(--hud-score-width);
+  aspect-ratio: auto;
+  min-height: 72px;
+  border-radius: var(--radius-pill);
+}
+
+.hud__dial::before {
+  position: absolute;
+  inset: 7px;
+  content: "";
+  border: 1px solid rgba(121, 174, 177, 0.34);
+  border-radius: inherit;
+}
+
+.hud__dial-label {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(47, 37, 53, 0.62);
+  font-size: 0.5rem;
+  font-weight: 760;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hud__dial--score strong {
+  font-size: 1.18rem;
+}
+
+.hud__dial--score small {
+  max-width: calc(100% - 16px);
+}
+
+.hud__dial strong {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(41, 35, 47, 0.9);
+  font-size: 1rem;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud__dial small {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(47, 37, 53, 0.54);
+  font-size: 0.48rem;
+  font-weight: 680;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud[data-status="ready"] {
+  opacity: 0.86;
+}
+
+.hud[data-status="paused"] {
+  opacity: 0.58;
+}
+
+.hud[data-low-integrity="true"] .hud__bar--integrity {
   box-shadow: 0 0 18px rgba(240, 165, 143, 0.34);
 }
 
-.hud[data-drift-ready="true"] .hud__drift {
+.hud[data-drift-ready="true"] .hud__bar--drift {
   box-shadow:
     0 0 16px rgba(255, 240, 184, 0.38),
     inset 0 0 8px rgba(255, 255, 255, 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hud__integrity span,
-  .hud__drift span,
-  .hud__checkpoint span {
+  .hud__bar span {
     transition: none;
   }
 }
 
 @media (max-width: 760px) {
   .hud {
-    inset: calc(var(--space-safe-mobile) + env(safe-area-inset-top))
-      calc(var(--space-safe-mobile) + env(safe-area-inset-right)) auto
-      calc(var(--space-safe-mobile) + env(safe-area-inset-left));
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    --hud-dial-gap: 7px;
+    --hud-dial-size: 56px;
+    --hud-score-width: 124px;
+
+    inset: auto auto calc(92px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    width: min(var(--hud-racer-width), calc(100vw - 24px));
+    gap: 10px;
+  }
+
+  .hud__bar-row {
+    grid-template-columns: 64px minmax(0, 1fr) 52px;
     gap: 6px;
-  }
-
-  .hud__cluster {
-    padding: 7px 9px;
-  }
-
-  .hud__label {
-    margin-block-end: 2px;
-    font-size: 0.58rem;
-  }
-
-  .hud strong {
-    font-size: 0.96rem;
-  }
-
-  .hud small {
-    margin-block-start: 3px;
-    font-size: 0.62rem;
-  }
-
-  .hud__meters {
-    gap: 5px;
-  }
-
-  .hud__meter {
-    grid-template-columns: 1fr;
-    gap: 4px;
     padding: 5px 6px;
   }
 
-  .hud__meter-label,
-  .hud__meter-value {
+  .hud__bar-label,
+  .hud__bar-value {
     font-size: 0.56rem;
   }
 
-  .hud__meter-value {
-    display: none;
+  .hud__bar {
+    height: 5px;
   }
 
-  .hud__integrity,
-  .hud__drift,
-  .hud__checkpoint {
-    height: 5px;
+  .hud__racer-parameters {
+    grid-template-columns: var(--hud-score-width) repeat(3, var(--hud-dial-size));
+    gap: var(--hud-dial-gap);
+  }
+
+  .hud__dial {
+    padding: 6px;
+  }
+
+  .hud__dial--score {
+    min-height: 56px;
+  }
+
+  .hud__dial-label {
+    font-size: 0.44rem;
+  }
+
+  .hud__dial strong {
+    font-size: 0.82rem;
+  }
+
+  .hud__dial--score strong {
+    font-size: 0.92rem;
+  }
+
+  .hud__dial small {
+    font-size: 0.42rem;
   }
 }

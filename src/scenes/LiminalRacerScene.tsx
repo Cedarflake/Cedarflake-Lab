@@ -32,7 +32,12 @@ import {
 } from "@/game/generation"
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { clamp, lerp } from "@/game/number"
-import { isCollisionRecovering, willEndRunAfterDamage } from "@/game/runState"
+import {
+  isCollisionRecovering,
+  resolveCollisionDamage,
+  willEndRunAfterDamage,
+} from "@/game/runState"
+import { resolveBoostedSpeed } from "@/game/speed"
 import {
   resolveRelativeTrackCenter,
   resolveRelativeTrackPose,
@@ -138,7 +143,9 @@ function RacerWorld() {
   const runtimeRef = useRef<RuntimeState>(createRuntimeState())
   const carXRef = useRef(0)
   const distanceRef = useRef(0)
-  const isDriftingRef = useRef(false)
+  const driftIntensityRef = useRef(0)
+  const driftSpeedBonusRef = useRef(0)
+  const skidIntensityRef = useRef(0)
   const speedRef = useRef(0)
   const steeringRef = useRef(0)
   const wasDriftingRef = useRef(false)
@@ -161,7 +168,9 @@ function RacerWorld() {
     runtimeRef.current = createRuntimeState()
     carXRef.current = 0
     distanceRef.current = 0
-    isDriftingRef.current = false
+    driftIntensityRef.current = 0
+    driftSpeedBonusRef.current = 0
+    skidIntensityRef.current = 0
     speedRef.current = 0
     steeringRef.current = 0
     wasDriftingRef.current = false
@@ -206,7 +215,12 @@ function RacerWorld() {
     }
 
     if (status !== "running") {
-      isDriftingRef.current = false
+      driftIntensityRef.current = lerp(driftIntensityRef.current, 0, Math.min(frameDelta * 8, 1))
+      skidIntensityRef.current = lerp(skidIntensityRef.current, 0, Math.min(frameDelta * 10, 1))
+      driftSpeedBonusRef.current = Math.max(
+        0,
+        driftSpeedBonusRef.current - trackConfig.driftMaxSpeedBonusFallRate * frameDelta,
+      )
       speedRef.current = runtime.speed
       steeringRef.current = runtime.steering
       runtime.speed = lerp(runtime.speed, 0, Math.min(frameDelta * 2.2, 1))
@@ -225,17 +239,31 @@ function RacerWorld() {
       brake: Math.max(keyboardInput.brake, gamepadInput.brake, touchInput.brake),
       isDrifting: keyboardInput.isDrifting || gamepadInput.isDrifting || touchInput.isDrifting,
     }
-    isDriftingRef.current = input.isDrifting
-    const grip = input.isDrifting ? trackConfig.driftGrip : trackConfig.normalGrip
+    const driftIntent = input.isDrifting && runtime.speed > trackConfig.driftMinimumSpeed * 0.72
+    const grip = driftIntent ? trackConfig.driftGrip : trackConfig.normalGrip
     const difficulty = resolveRunDifficulty(runtime.distance)
-    const acceleration =
-      input.throttle * trackConfig.baseAcceleration - input.brake * trackConfig.braking
-    runtime.speed = clamp(
-      runtime.speed + acceleration * frameDelta - trackConfig.drag * frameDelta,
-      input.throttle > 0 ? 12 : 0,
-      difficulty.maxSpeed,
+    const driftSpeedBonusDelta =
+      (driftIntent
+        ? trackConfig.driftMaxSpeedBonusRiseRate
+        : -trackConfig.driftMaxSpeedBonusFallRate) * frameDelta
+    driftSpeedBonusRef.current = clamp(
+      driftSpeedBonusRef.current + driftSpeedBonusDelta,
+      0,
+      trackConfig.driftMaxSpeedBonus,
     )
-    const targetVelocityX = resolveSteeringVelocity(input.steer, runtime.speed, difficulty.maxSpeed)
+    const speedLimit = difficulty.maxSpeed + driftSpeedBonusRef.current
+    const acceleration =
+      input.throttle *
+        (trackConfig.baseAcceleration + (driftIntent ? trackConfig.driftAccelerationBonus : 0)) -
+      input.brake * trackConfig.braking
+    const nextSpeed = runtime.speed + acceleration * frameDelta - trackConfig.drag * frameDelta
+    runtime.speed =
+      nextSpeed > speedLimit
+        ? Math.max(speedLimit, runtime.speed - trackConfig.drag * frameDelta * 0.85)
+        : clamp(nextSpeed, input.throttle > 0 ? 12 : 0, speedLimit)
+    const targetVelocityX =
+      resolveSteeringVelocity(input.steer, runtime.speed, difficulty.maxSpeed) *
+      (driftIntent ? trackConfig.driftSteeringBoost : 1)
     runtime.velocityX = lerp(
       runtime.velocityX,
       targetVelocityX,
@@ -251,6 +279,34 @@ function RacerWorld() {
     runtime.steering = lerp(runtime.steering, input.steer, Math.min(frameDelta * 7, 1))
     steeringRef.current = runtime.steering
     speedRef.current = runtime.speed
+
+    const targetDriftIntensity = input.isDrifting
+      ? clamp(
+          ((Math.abs(runtime.velocityX) - trackConfig.driftMinimumVelocity * 0.45) / 7.5) *
+            ((runtime.speed - trackConfig.driftMinimumSpeed * 0.6) / 22),
+          0,
+          1,
+        )
+      : 0
+    driftIntensityRef.current = lerp(
+      driftIntensityRef.current,
+      targetDriftIntensity,
+      Math.min(frameDelta * 10, 1),
+    )
+    const targetSkidIntensity = driftIntent
+      ? clamp(
+          clamp((runtime.speed - trackConfig.driftMinimumSpeed * 0.55) / 28, 0, 1) * 0.42 +
+            clamp(Math.abs(runtime.velocityX) / (trackConfig.driftMinimumVelocity * 2.4), 0, 1) *
+              0.58,
+          0.22,
+          1,
+        )
+      : 0
+    skidIntensityRef.current = lerp(
+      skidIntensityRef.current,
+      targetSkidIntensity,
+      Math.min(frameDelta * 12, 1),
+    )
 
     if (runtime.distance - worldDistanceRef.current >= worldWindowUpdateDistance) {
       worldDistanceRef.current = runtime.distance
@@ -275,16 +331,25 @@ function RacerWorld() {
       car.position.x = lerp(car.position.x, runtime.x, Math.min(frameDelta * 11, 1))
       carXRef.current = car.position.x
       car.position.y = settledCarHeight + Math.sin(runtime.distance * 0.12) * carRoadBobAmplitude
-      car.rotation.y = -runtime.velocityX * 0.018
+      car.rotation.y = lerp(
+        car.rotation.y,
+        -runtime.velocityX * (0.018 + driftIntensityRef.current * 0.012) -
+          runtime.steering * driftIntensityRef.current * 0.08,
+        Math.min(frameDelta * 8, 1),
+      )
       car.rotation.x = lerp(car.rotation.x, input.brake > 0 ? -0.035 : 0.018, frameDelta * 6)
       car.rotation.z = lerp(
         car.rotation.z,
-        input.isDrifting ? -runtime.steering * 0.12 : -runtime.velocityX * 0.008,
+        input.isDrifting
+          ? -runtime.steering * (0.14 + driftIntensityRef.current * 0.08)
+          : -runtime.velocityX * 0.008,
         frameDelta * 8,
       )
     }
 
-    const cameraX = runtime.x * (isPortrait ? 0.28 : 0.18)
+    const cameraDriftLag =
+      runtime.velocityX * driftIntensityRef.current * (isPortrait ? 0.022 : 0.032)
+    const cameraX = runtime.x * (isPortrait ? 0.28 : 0.18) - cameraDriftLag
     state.camera.position.x = lerp(state.camera.position.x, cameraX, Math.min(frameDelta * 2.4, 1))
     const cameraY = isPortrait ? 5.6 + runtime.speed * 0.004 : 5.2 + runtime.speed * 0.006
     const cameraZ = isPortrait ? 10.2 + runtime.speed * 0.009 : 11.2 + runtime.speed * 0.012
@@ -296,8 +361,11 @@ function RacerWorld() {
     state.camera.lookAt(runtime.x * 0.2, lookAtY, lookAtZ)
 
     if (state.camera instanceof ThreePerspectiveCamera) {
-      const speedRatio = runtime.speed / difficulty.maxSpeed
-      const targetFov = baseCameraFov + (maxCameraFov - baseCameraFov) * speedRatio
+      const speedRatio = runtime.speed / speedLimit
+      const targetFov =
+        baseCameraFov +
+        (maxCameraFov - baseCameraFov) * speedRatio +
+        driftIntensityRef.current * 1.4
       state.camera.fov = lerp(state.camera.fov, targetFov, Math.min(frameDelta * 2.8, 1))
       state.camera.updateProjectionMatrix()
     }
@@ -332,15 +400,24 @@ function RacerWorld() {
             continue
           }
 
+          const collisionDamage = resolveCollisionDamage({
+            baseDamage: trackConfig.collisionDamage,
+            speed: runtime.speed,
+            speedReference: trackConfig.maxSpeed,
+            minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
+            maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
+            isDrifting: driftIntent,
+            driftDamageMultiplier: trackConfig.driftCollisionDamageMultiplier,
+          })
           const willEndRun = willEndRunAfterDamage(
             useGameStore.getState().integrity,
-            trackConfig.collisionDamage,
+            collisionDamage,
           )
 
           lastCollisionAtRef.current = elapsedTime
           runtime.speed *= 0.58
           runtime.velocityX *= -0.28
-          damage(trackConfig.collisionDamage)
+          damage(collisionDamage)
 
           if (willEndRun) {
             runtime.handledObstacles.add(obstacle.id)
@@ -377,7 +454,7 @@ function RacerWorld() {
         const caughtBoost = Math.abs(runtime.x - boostX) < boostGate.width + 0.55
 
         if (caughtBoost) {
-          runtime.speed = Math.min(runtime.speed + trackConfig.boostSpeed, difficulty.maxSpeed)
+          runtime.speed = resolveBoostedSpeed(runtime.speed, trackConfig.boostSpeed, speedLimit)
           addScore(trackConfig.boostScore + runtime.speed * 3, {
             label: "Signal returned wrong",
             feedbackKind: "boost",
@@ -536,7 +613,7 @@ function RacerWorld() {
         <PlayerCar
           carRef={carRef}
           distanceRef={distanceRef}
-          isDriftingRef={isDriftingRef}
+          skidIntensityRef={skidIntensityRef}
           steeringRef={steeringRef}
         />
       </group>

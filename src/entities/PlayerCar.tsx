@@ -3,6 +3,7 @@ import type { RefObject } from "react"
 
 import { RoundedBox } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber"
+import { BufferGeometry, DoubleSide, Float32BufferAttribute } from "three"
 import type { Group } from "three"
 
 import { dreamPalette } from "@/game/gameConfig"
@@ -21,7 +22,7 @@ interface SkidMaterialRef {
 interface PlayerCarProps {
   carRef: RefObject<Group | null>
   distanceRef: RefObject<number>
-  isDriftingRef: RefObject<boolean>
+  skidIntensityRef: RefObject<number>
   steeringRef: RefObject<number>
 }
 
@@ -30,16 +31,54 @@ interface WheelPlacement {
   canSteer: boolean
 }
 
-export function PlayerCar({ carRef, distanceRef, isDriftingRef, steeringRef }: PlayerCarProps) {
+const rearWheelZ = 1.16
+const frontWheelZ = -1.12
+const skidRayY = -0.38
+const skidRayNearZ = rearWheelZ + 0.46
+const skidRayFarZ = skidRayNearZ + 1.26
+const skidRayNearHalfWidth = 0.095
+const skidRayFarHalfWidth = 0.018
+
+function createSkidRayGeometry() {
+  const geometry = new BufferGeometry()
+
+  geometry.setAttribute(
+    "position",
+    new Float32BufferAttribute(
+      [
+        -skidRayNearHalfWidth,
+        0,
+        skidRayNearZ,
+        skidRayNearHalfWidth,
+        0,
+        skidRayNearZ,
+        -skidRayFarHalfWidth,
+        0,
+        skidRayFarZ,
+        skidRayFarHalfWidth,
+        0,
+        skidRayFarZ,
+      ],
+      3,
+    ),
+  )
+  geometry.setIndex([0, 2, 1, 1, 2, 3])
+  geometry.computeVertexNormals()
+
+  return geometry
+}
+
+export function PlayerCar({ carRef, distanceRef, skidIntensityRef, steeringRef }: PlayerCarProps) {
   const wheelRefs = useRef<Array<WheelRef | null>>([])
   const wheelSteeringRefs = useRef<Array<WheelRef | null>>([])
   const skidMaterialRefs = useRef<Array<SkidMaterialRef | null>>([])
+  const skidRayGeometry = useMemo(createSkidRayGeometry, [])
   const wheelPlacements = useMemo(
     (): WheelPlacement[] => [
-      { position: [-0.86, -0.28, 1.16], canSteer: false },
-      { position: [0.86, -0.28, 1.16], canSteer: false },
-      { position: [-0.86, -0.28, -1.12], canSteer: true },
-      { position: [0.86, -0.28, -1.12], canSteer: true },
+      { position: [-0.86, -0.28, rearWheelZ], canSteer: false },
+      { position: [0.86, -0.28, rearWheelZ], canSteer: false },
+      { position: [-0.86, -0.28, frontWheelZ], canSteer: true },
+      { position: [0.86, -0.28, frontWheelZ], canSteer: true },
     ],
     [],
   )
@@ -47,7 +86,7 @@ export function PlayerCar({ carRef, distanceRef, isDriftingRef, steeringRef }: P
   useFrame(() => {
     const wheelRotation = -distanceRef.current * 0.24
     const steeringAngle = -steeringRef.current * 0.26
-    const skidOpacity = isDriftingRef.current ? 0.34 : 0
+    const skidOpacity = skidIntensityRef.current * 0.46
 
     wheelRefs.current.forEach((wheel) => {
       if (!wheel) return
@@ -133,14 +172,17 @@ export function PlayerCar({ carRef, distanceRef, isDriftingRef, steeringRef }: P
         </group>
       ))}
 
-      {[-0.64, 0.64].map((x, index) => (
-        <mesh key={x} position={[x, -0.46, -1.92]} rotation={[-Math.PI / 2, 0, 0]}>
-          <boxGeometry args={[0.42, 2.4, 0.02]} />
+      {[-0.86, 0.86].map((x, index) => (
+        <mesh key={x} position={[x, skidRayY, 0]} renderOrder={6}>
+          <primitive attach="geometry" object={skidRayGeometry} />
           <meshBasicMaterial
             ref={(material) => {
               skidMaterialRefs.current[index] = material
             }}
             color={dreamPalette.carGlow}
+            depthTest={false}
+            depthWrite={false}
+            side={DoubleSide}
             transparent
             opacity={0}
           />
