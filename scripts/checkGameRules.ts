@@ -26,7 +26,7 @@ import {
   willEndRunAfterDamage,
 } from "../src/game/runState"
 import { resolveScoreFeedback } from "../src/game/scoring"
-import { resolveBoostedSpeed } from "../src/game/speed"
+import { resolveBoostedSpeed, resolveDrivingSpeed } from "../src/game/speed"
 import { resolveSteeringVelocity } from "../src/game/steering"
 import { resolveTouchInput } from "../src/game/touchInput"
 
@@ -99,7 +99,7 @@ assert(
 )
 const fastCollisionDamage = resolveCollisionDamage({
   baseDamage: trackConfig.collisionDamage,
-  speed: trackConfig.maxSpeed + trackConfig.maxSpeedBonus + trackConfig.driftMaxSpeedBonus,
+  speed: trackConfig.maxSpeed + trackConfig.driftMaxSpeedBonus,
   speedReference: trackConfig.maxSpeed,
   minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
   maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
@@ -108,7 +108,7 @@ const fastCollisionDamage = resolveCollisionDamage({
 })
 const fastDriftCollisionDamage = resolveCollisionDamage({
   baseDamage: trackConfig.collisionDamage,
-  speed: trackConfig.maxSpeed + trackConfig.maxSpeedBonus + trackConfig.driftMaxSpeedBonus,
+  speed: trackConfig.maxSpeed + trackConfig.driftMaxSpeedBonus,
   speedReference: trackConfig.maxSpeed,
   minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
   maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
@@ -130,9 +130,10 @@ assert(clamp(0.4, 0, 1) === 0.4, "Expected clamp to preserve in-range values")
 assert(lerp(10, 20, 0.25) === 12.5, "Expected lerp to interpolate linearly")
 assert(wrapDistance(23, 10) === 3, "Expected wrapDistance to wrap positive distances")
 assert(wrapDistance(-2, 10) === 8, "Expected wrapDistance to wrap negative distances")
-assert(resolveRunDifficulty(0).maxSpeed === 58, "Expected base max speed at the run start")
-assert(resolveRunDifficulty(800).maxSpeed === 64, "Expected midpoint speed ramp")
-assert(resolveRunDifficulty(3200).maxSpeed === 70, "Expected capped max speed ramp")
+assert(
+  resolveRunDifficulty().maxSpeed === 70,
+  "Expected ordinary max speed to be available without a startup distance ramp",
+)
 assert(
   resolveSteeringVelocity(1, 0, trackConfig.maxSpeed) === 0,
   "Expected steering input to avoid moving a stationary car sideways",
@@ -152,6 +153,26 @@ assert(
 assert(
   resolveBoostedSpeed(96.8, trackConfig.boostSpeed, 96.8) === 96.8,
   "Expected boost gates to avoid slowing the car at the drift speed cap",
+)
+assert(
+  resolveDrivingSpeed({
+    acceleration: trackConfig.baseAcceleration,
+    drag: trackConfig.drag,
+    frameDelta: 1 / 60,
+    speed: 0,
+    speedLimit: trackConfig.maxSpeed,
+  }) < 1,
+  "Expected startup throttle to avoid an artificial launch speed floor",
+)
+assert(
+  resolveDrivingSpeed({
+    acceleration: trackConfig.baseAcceleration,
+    drag: trackConfig.drag,
+    frameDelta: 1,
+    speed: 20,
+    speedLimit: trackConfig.maxSpeed,
+  }) === 40,
+  "Expected resumed throttle acceleration to follow the same speed integration",
 )
 assert(
   resolveObstacleHalfWidth({

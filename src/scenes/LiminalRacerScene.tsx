@@ -37,7 +37,7 @@ import {
   resolveCollisionDamage,
   willEndRunAfterDamage,
 } from "@/game/runState"
-import { resolveBoostedSpeed } from "@/game/speed"
+import { resolveBoostedSpeed, resolveDrivingSpeed } from "@/game/speed"
 import {
   resolveRelativeTrackCenter,
   resolveRelativeTrackPose,
@@ -241,7 +241,7 @@ function RacerWorld() {
     }
     const driftIntent = input.isDrifting && runtime.speed > trackConfig.driftMinimumSpeed * 0.72
     const grip = driftIntent ? trackConfig.driftGrip : trackConfig.normalGrip
-    const difficulty = resolveRunDifficulty(runtime.distance)
+    const difficulty = resolveRunDifficulty()
     const driftSpeedBonusDelta =
       (driftIntent
         ? trackConfig.driftMaxSpeedBonusRiseRate
@@ -256,11 +256,13 @@ function RacerWorld() {
       input.throttle *
         (trackConfig.baseAcceleration + (driftIntent ? trackConfig.driftAccelerationBonus : 0)) -
       input.brake * trackConfig.braking
-    const nextSpeed = runtime.speed + acceleration * frameDelta - trackConfig.drag * frameDelta
-    runtime.speed =
-      nextSpeed > speedLimit
-        ? Math.max(speedLimit, runtime.speed - trackConfig.drag * frameDelta * 0.85)
-        : clamp(nextSpeed, input.throttle > 0 ? 12 : 0, speedLimit)
+    runtime.speed = resolveDrivingSpeed({
+      acceleration,
+      drag: trackConfig.drag,
+      frameDelta,
+      speed: runtime.speed,
+      speedLimit,
+    })
     const targetVelocityX =
       resolveSteeringVelocity(input.steer, runtime.speed, difficulty.maxSpeed) *
       (driftIntent ? trackConfig.driftSteeringBoost : 1)
