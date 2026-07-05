@@ -23,6 +23,7 @@ export default defineConfig({
 
           return "assets/[name][extname]"
         },
+        banner: "\"use client\";",
         globals: {
           react: "React",
         },

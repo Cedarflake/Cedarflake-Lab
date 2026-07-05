@@ -1,15 +1,34 @@
+export { FocusOrb, FocusOrbBackground, FocusOrbButton } from "./components/focus-orb/FocusOrb"
+
 export {
-  FocusOrb,
-  FocusOrbBackground,
-  FocusOrbButton,
-  type FocusOrbBackgroundProps,
-  type FocusOrbButtonProps,
-  type FocusOrbColors,
-  type FocusOrbFit,
-  type FocusOrbProps,
-  type FocusOrbRenderStatus,
-  type FocusOrbState,
-  type FocusOrbVariant,
-} from "./FocusOrb"
+  defaultColors as focusOrbDefaultColors,
+  defaultInteractionOptions as focusOrbDefaultInteractionOptions,
+  defaultMotionOptions as focusOrbDefaultMotionOptions,
+  defaultRenderingOptions as focusOrbDefaultRenderingOptions,
+  defaultShaderOptions as focusOrbDefaultShaderOptions,
+  defaultTextureSrc as focusOrbDefaultTextureSrc,
+} from "./config/defaults"
+
+export type {
+  FocusOrbAudioInput,
+  FocusOrbAudioVector,
+  FocusOrbBackgroundProps,
+  FocusOrbButtonProps,
+  FocusOrbColors,
+  FocusOrbFit,
+  FocusOrbInteractionOptions,
+  FocusOrbMotionOptions,
+  FocusOrbProps,
+  FocusOrbRenderStatus,
+  FocusOrbRenderingOptions,
+  FocusOrbShaderOptions,
+  FocusOrbState,
+  FocusOrbTextureCrossOrigin,
+  FocusOrbVariant,
+  ResolvedFocusOrbInteractionOptions,
+  ResolvedFocusOrbMotionOptions,
+  ResolvedFocusOrbRenderingOptions,
+  ResolvedFocusOrbShaderOptions,
+} from "./types/focusOrb"
 
 export { default as focusOrbTextureUrl } from "./assets/noise-watercolor-m3j88gni.webp"

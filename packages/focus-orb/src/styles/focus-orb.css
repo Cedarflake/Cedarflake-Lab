@@ -1,5 +1,8 @@
 .focus-orb {
   --focus-orb-height: 256px;
+  --focus-orb-hover-scale: 1.02;
+  --focus-orb-pressed-scale: 0.99;
+  --focus-orb-transition-ms: 300ms;
   --focus-orb-width: 256px;
   position: relative;
   display: flex;
@@ -19,16 +22,16 @@
   cursor: pointer;
   outline: none;
   transform-origin: center;
-  transition: transform 300ms ease-out;
+  transition: transform var(--focus-orb-transition-ms) ease-out;
 }
 
 .focus-orb--button:hover,
 .focus-orb--button:focus-visible {
-  transform: scale(1.02);
+  transform: scale(var(--focus-orb-hover-scale));
 }
 
 .focus-orb--button:active {
-  transform: scale(0.99);
+  transform: scale(var(--focus-orb-pressed-scale));
 }
 
 .focus-orb--button:disabled {
