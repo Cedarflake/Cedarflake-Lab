@@ -1,4 +1,6 @@
 export type GameStatus = "ready" | "running" | "paused" | "ended"
+export type BoostLane = -1 | 0 | 1
+export type RoadLane = -2 | -1 | 0 | 1 | 2
 
 export interface PlayerInput {
   steer: number
@@ -9,7 +11,7 @@ export interface PlayerInput {
 
 export interface Obstacle {
   id: string
-  lane: number
+  lane: RoadLane
   distance: number
   width: number
   kind: "pillar" | "hole" | "wall"
@@ -23,13 +25,13 @@ export interface Checkpoint {
 
 export interface BoostGate {
   id: string
-  lane: number
+  lane: BoostLane
   distance: number
   width: number
 }
 
 export interface MemoryShard {
   id: string
-  lane: number
+  lane: RoadLane
   distance: number
 }

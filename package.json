@@ -14,6 +14,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "check": "pnpm run format:check && pnpm lint && pnpm run check:generation && pnpm run check:rules && pnpm run check:licenses && pnpm build && pnpm run check:bundle",
+    "check:browser": "pnpm run check:canvas -- http://127.0.0.1:4173/ && pnpm run check:interaction -- http://127.0.0.1:4173/",
     "check:bundle": "node scripts/checkBundleBudget.mjs",
     "check:canvas": "node scripts/checkCanvas.mjs",
     "check:generation": "tsx scripts/checkGeneration.ts",
@@ -30,7 +31,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@types/node": "^26.1.0",
+    "@types/node": "^22.20.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@types/three": "0.185.0",

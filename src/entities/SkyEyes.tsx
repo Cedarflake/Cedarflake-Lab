@@ -4,6 +4,8 @@ import type { RefObject } from "react"
 import { useFrame } from "@react-three/fiber"
 import { CanvasTexture, LinearFilter, TextureLoader } from "three"
 
+import { wrapDistance } from "@/game/number"
+
 interface SkyEyesProps {
   distanceRef: RefObject<number>
 }
@@ -52,6 +54,8 @@ const eyeClouds: FloatingBillboard[] = [
   { x: 6, y: 16.2, z: -96, scale: [15.8, 5.8, 1], opacity: 0.46 },
   { x: -6, y: 20.4, z: -142, scale: [18.2, 6.2, 1], opacity: 0.36 },
 ]
+const maxFrameDelta = 0.1
+const skyMotionCycleSeconds = 24 * 60 * 60
 
 function createEyeJumpStates() {
   return skyEyes.map((_, index) => ({
@@ -223,7 +227,7 @@ export function SkyEyes({ distanceRef }: SkyEyesProps) {
   const eyeRefs = useRef<Array<BillboardRef | null>>([])
   const cloudRefs = useRef<Array<BillboardRef | null>>([])
   const elapsedRef = useRef(0)
-  const eyeJumpStatesRef = useRef<EyeJumpState[]>(createEyeJumpStates())
+  const eyeJumpStatesRef = useRef<EyeJumpState[] | null>(null)
   const eyeTexture = useMemo(() => {
     const texture = new TextureLoader().load(imageEyeTextureSrc)
     texture.minFilter = LinearFilter
@@ -231,6 +235,10 @@ export function SkyEyes({ distanceRef }: SkyEyesProps) {
     return texture
   }, [])
   const cloudTexture = useMemo(() => createEyeCloudTexture(), [])
+
+  if (eyeJumpStatesRef.current === null) {
+    eyeJumpStatesRef.current = createEyeJumpStates()
+  }
 
   useEffect(() => {
     return () => {
@@ -241,16 +249,15 @@ export function SkyEyes({ distanceRef }: SkyEyesProps) {
 
   useFrame((state, delta) => {
     const distance = distanceRef.current
-    elapsedRef.current += Math.min(delta, 0.1)
-    const elapsed = elapsedRef.current
-
-    updateSkyEyes(
-      eyeRefs.current,
-      eyeJumpStatesRef.current,
-      elapsed,
-      distance,
-      state.camera.position,
+    elapsedRef.current = wrapDistance(
+      elapsedRef.current + Math.min(delta, maxFrameDelta),
+      skyMotionCycleSeconds,
     )
+    const elapsed = elapsedRef.current
+    const eyeJumpStates = eyeJumpStatesRef.current
+    if (!eyeJumpStates) return
+
+    updateSkyEyes(eyeRefs.current, eyeJumpStates, elapsed, distance, state.camera.position)
     updateBillboards(eyeClouds, cloudRefs.current, elapsed, distance, state.camera.position, 2.3)
   })
 

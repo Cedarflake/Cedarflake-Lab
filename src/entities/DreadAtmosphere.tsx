@@ -3,7 +3,7 @@ import type { RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
 
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
 import { wrapDistance } from "@/game/number"
 
 interface DreadAtmosphereProps {
@@ -40,6 +40,12 @@ const rememberedHeadColor = "#4a3946"
 const rememberedLimbColor = "#6f2d3f"
 const skyTearBrightColor = "#d6a2ad"
 const skyTearDarkColor = "#352a36"
+
+function smoothstep(edge0: number, edge1: number, value: number) {
+  const t = Math.min(Math.max((value - edge0) / (edge1 - edge0), 0), 1)
+
+  return t * t * (3 - 2 * t)
+}
 
 function resolveAtmosphereZ(
   originDistance: number,
@@ -187,7 +193,8 @@ export function DreadAtmosphere({ distanceRef, speedRef }: DreadAtmosphereProps)
       )
       node.scale.setScalar((0.86 + (index % 5) * 0.1) * heightPulse)
       node.rotation.set(0, side > 0 ? -0.2 : 0.2, Math.sin(phase * 0.4) * 0.045)
-      node.visible = z < 10 && z > -190
+      node.visible =
+        z < renderWindowConfig.dreadPeripheral.near && z > renderWindowConfig.dreadPeripheral.far
     })
 
     skyTearNodes.forEach(({ index, side }) => {
@@ -205,14 +212,16 @@ export function DreadAtmosphere({ distanceRef, speedRef }: DreadAtmosphereProps)
       )
       node.scale.setScalar(1.28 + speedTension * 0.16 + (blink ? 0.4 : 0))
       node.rotation.set(0, 0, side * 0.055 + Math.sin(phase * 0.55) * 0.055)
-      node.visible = z < 6 && z > -230
+      node.visible =
+        z < renderWindowConfig.dreadSkyTear.near && z > renderWindowConfig.dreadSkyTear.far
     })
 
     const light = lightRef.current
     if (light) {
-      light.intensity +=
-        ((Math.sin(distance * 0.025) > 0.82 ? 3.4 : 0.55 + speedTension * 0.74) - light.intensity) *
-        Math.min(delta * 2.2, 1)
+      const pulse = smoothstep(0.62, 0.94, Math.sin(distance * 0.025))
+      const targetIntensity = 0.55 + speedTension * 0.74 + pulse * 2.2
+
+      light.intensity += (targetIntensity - light.intensity) * Math.min(delta * 2.2, 1)
     }
   })
 

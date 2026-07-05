@@ -1,6 +1,10 @@
 import type { HtmlTagDescriptor, IndexHtmlTransformContext, Plugin } from "vite"
 
-import { loadingCakeAssetPreloads, loadingCakePreloadAttribute } from "../src/app/loadingCakeAssets"
+import {
+  loadingCakeAssetPreloads,
+  loadingCakePreloadAttribute,
+  loadingCakePreloadMedia,
+} from "../src/app/loadingCakeAssets"
 import type { LoadingCakePreloadAsset } from "../src/app/loadingCakeAssets"
 
 type BuildBundle = NonNullable<IndexHtmlTransformContext["bundle"]>
@@ -62,6 +66,7 @@ function createLoadingCakeAssetPreloadAttrs(asset: LoadingCakePreloadAsset): Htm
     as: asset.as,
     fetchpriority: "high",
     href: asset.href,
+    media: loadingCakePreloadMedia,
     rel: "preload",
     type: asset.type,
   }
@@ -87,6 +92,7 @@ function createLoadingCakeModulePreloadTags(fileNames: string[]): HtmlTagDescrip
       [earlyLoadingCakePreloadAttribute]: "true",
       crossorigin: "",
       href: `/${fileName}`,
+      media: loadingCakePreloadMedia,
       rel: "modulepreload",
     },
     injectTo: "head",

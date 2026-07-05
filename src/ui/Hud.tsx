@@ -28,7 +28,7 @@ export function Hud({ debugMode }: HudProps) {
     <section
       className="hud"
       data-drift-ready={isDriftReady ? "true" : undefined}
-      data-low-integrity={integrity <= 32 ? "true" : undefined}
+      data-low-integrity={integrity <= trackConfig.lowIntegrityThreshold ? "true" : undefined}
       data-status={status}
       aria-label="Race telemetry"
       aria-hidden={status !== "running"}

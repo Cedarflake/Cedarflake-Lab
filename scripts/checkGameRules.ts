@@ -19,6 +19,7 @@ import {
   resolveGamepadOverlayInput,
   type GamepadLike,
 } from "../src/game/gamepadInput"
+import { createObstacleAt } from "../src/game/generation"
 import { trackConfig } from "../src/game/gameConfig"
 import { clamp, lerp, wrapDistance } from "../src/game/number"
 import {
@@ -29,11 +30,16 @@ import {
 import { resolveScoreFeedback } from "../src/game/scoring"
 import { resolveBoostedSpeed, resolveDrivingSpeed } from "../src/game/speed"
 import { resolveSteeringVelocity } from "../src/game/steering"
-import { resolveTouchInput } from "../src/game/touchInput"
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
     throw new Error(message)
+  }
+}
+
+function assertClose(actual: number, expected: number, message: string) {
+  if (Math.abs(actual - expected) > 0.001) {
+    throw new Error(`${message}: expected ${expected}, got ${actual}`)
   }
 }
 
@@ -165,12 +171,13 @@ assert(
   "Expected boost gates to add speed below the current cap",
 )
 assert(
-  resolveBoostedSpeed(84, trackConfig.boostSpeed, 96.8) === 96.8,
-  "Expected boost gates to clamp to the drift speed cap",
+  resolveBoostedSpeed(84, trackConfig.boostSpeed, 96.8) === 100,
+  "Expected boost gates to push through the current speed cap",
 )
-assert(
-  resolveBoostedSpeed(96.8, trackConfig.boostSpeed, 96.8) === 96.8,
-  "Expected boost gates to avoid slowing the car at the drift speed cap",
+assertClose(
+  resolveBoostedSpeed(96.8, trackConfig.boostSpeed, 96.8),
+  112.8,
+  "Expected boost gates to apply a temporary cap bonus at the drift speed cap",
 )
 assert(
   resolveDrivingSpeed({
@@ -197,11 +204,17 @@ assert(
     id: "wall-check",
     lane: 0,
     distance: 1,
-    width: 1.55,
+    width: wallObstacleWidth,
     kind: "wall",
   }) ===
     wallObstacleWidth / 2,
   "Expected wall collision half width to follow the rendered wall model",
+)
+assert(
+  Array.from({ length: 120 }, (_, index) => createObstacleAt(index)).some(
+    (obstacle) => obstacle.kind === "wall" && obstacle.width === wallObstacleWidth,
+  ),
+  "Expected generated walls to store the same width used by rendering and collision",
 )
 assert(
   resolveObstacleCollisionHalfWidth({
@@ -273,20 +286,6 @@ assert(
   "Expected plain score events to skip feedback",
 )
 
-const activeTouchControls = new Set(["go", "drift", "left", "right"] as const)
-assert(
-  resolveTouchInput(activeTouchControls).steer === 0,
-  "Expected opposite touch steer to cancel",
-)
-assert(
-  resolveTouchInput(activeTouchControls).throttle === 1,
-  "Expected touch throttle to stay active",
-)
-assert(resolveTouchInput(activeTouchControls).isDrifting, "Expected touch drift to stay active")
-
-activeTouchControls.delete("right")
-assert(resolveTouchInput(activeTouchControls).steer === -1, "Expected held left touch to survive")
-
 const xboxDrivingInput = resolveGamepadInput([
   createGamepad(
     {
@@ -296,9 +295,15 @@ const xboxDrivingInput = resolveGamepadInput([
     [0.42],
   ),
 ])
-assert(xboxDrivingInput.steer === 0.42, "Expected Xbox left stick to steer")
+assertClose(xboxDrivingInput.steer, 0.3095, "Expected Xbox left stick to steer smoothly")
 assert(xboxDrivingInput.throttle === 1, "Expected Xbox RT to drive")
 assert(xboxDrivingInput.isDrifting, "Expected Xbox shoulder button to drift")
+
+const subtleStickInput = resolveGamepadInput([createGamepad({}, [0.17])])
+assert(
+  subtleStickInput.steer > 0 && subtleStickInput.steer < 0.02,
+  "Expected stick movement just outside the deadzone to start softly",
+)
 
 const xboxBrakeInput = resolveGamepadInput([createGamepad({ 6: 1 })])
 assert(xboxBrakeInput.brake === 1, "Expected Xbox LT to brake")

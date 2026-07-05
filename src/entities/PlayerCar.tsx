@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import type { RefObject } from "react"
 
 import { RoundedBox } from "@react-three/drei"
@@ -87,6 +87,12 @@ export function PlayerCar({ carRef, distanceRef, skidIntensityRef, steeringRef }
     ],
     [],
   )
+
+  useEffect(() => {
+    return () => {
+      skidRayGeometry.dispose()
+    }
+  }, [skidRayGeometry])
 
   useFrame(() => {
     const wheelRotation = -distanceRef.current * 0.24

@@ -1,14 +1,14 @@
-import { useMemo, useRef } from "react"
+import { useMemo } from "react"
 import type { RefObject } from "react"
 
-import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { resolveDesertGroundHeight } from "@/game/desertTerrain"
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, sceneryConfig, trackConfig } from "@/game/gameConfig"
 
 import { DuneCross } from "./desertPrimitives"
-import { createSideSceneryItems, resolveSceneryZ } from "./shared"
+import { createSideSceneryItems } from "./shared"
+import { useScrollingScenery } from "./useScrollingScenery"
 
 interface TombstonesProps {
   distanceRef: RefObject<number>
@@ -19,7 +19,7 @@ interface TombstoneNodeProps {
   nodeRef: (node: Group | null) => void
 }
 
-const tombstoneCycleDistance = 460
+const { tombstones, visibility } = sceneryConfig
 
 function TombstoneNode({ index, nodeRef }: TombstoneNodeProps) {
   const isTall = index % 3 === 0
@@ -53,35 +53,39 @@ function TombstoneNode({ index, nodeRef }: TombstoneNodeProps) {
 }
 
 export function Tombstones({ distanceRef }: TombstonesProps) {
-  const tombstoneRefs = useRef<Array<Group | null>>([])
-  const tombstones = useMemo(() => createSideSceneryItems(22), [])
-
-  useFrame(() => {
-    const distance = distanceRef.current
-
-    tombstones.forEach(({ index, side }) => {
-      const tombstone = tombstoneRefs.current[index]
-      if (!tombstone) return
-
-      const sideBand = index % 4
-      const z = resolveSceneryZ(32 + index * 25, distance, 0.94, tombstoneCycleDistance)
-      const x = side * (trackConfig.roadHalfWidth + 7.2 + sideBand * 3.4 + (index % 3) * 0.72)
+  const tombstoneItems = useMemo(() => createSideSceneryItems(tombstones.count), [])
+  const setTombstoneRef = useScrollingScenery({
+    cycleDistance: tombstones.cycleDistance,
+    distanceRef,
+    items: tombstoneItems,
+    originDistance: ({ index }) => tombstones.originStart + index * tombstones.spacing,
+    speed: tombstones.speed,
+    visibilityRange: visibility,
+    update: ({ item, node, z }) => {
+      const { index, side } = item
+      const sideBand = index % tombstones.sideBandCount
+      const x =
+        side *
+        (trackConfig.roadHalfWidth +
+          tombstones.baseSideOffset +
+          sideBand * tombstones.sideBandOffset +
+          (index % tombstones.indexOffsetCount) * tombstones.indexOffset)
       const groundY = resolveDesertGroundHeight(x, z)
-      const lean = Math.sin(index * 1.7) * 0.16
+      const lean = Math.sin(index * tombstones.leanPhase) * tombstones.leanAmplitude
 
-      tombstone.position.set(x, groundY + 0.18, z)
-      tombstone.rotation.set(0, side * (0.18 + sideBand * 0.08), lean)
-    })
+      node.position.set(x, groundY + tombstones.groundOffset, z)
+      node.rotation.set(0, side * (tombstones.yawBase + sideBand * tombstones.yawBandOffset), lean)
+    },
   })
 
   return (
     <>
-      {tombstones.map(({ index }) => (
+      {tombstoneItems.map(({ index }) => (
         <TombstoneNode
           key={index}
           index={index}
           nodeRef={(node) => {
-            tombstoneRefs.current[index] = node
+            setTombstoneRef(index, node)
           }}
         />
       ))}

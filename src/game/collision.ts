@@ -1,11 +1,13 @@
 import type { Obstacle } from "@/shared/types"
 
+import { trackConfig } from "./gameConfig"
+
 export const playerCollisionHalfWidth = 0.95
 export const playerModelHalfDepth = 1.7
 export const playerModelHalfWidth = 1.17
 export const memoryShardModelHalfDepth = 0.95
 export const memoryShardModelHalfWidth = 0.95
-export const wallObstacleWidth = 2.45
+export const wallObstacleWidth = trackConfig.wallObstacleWidth
 export const nearMissPadding = 0.85
 
 interface FootprintOverlapInput {

@@ -1,11 +1,11 @@
-import { useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import type { RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
 import { PlaneGeometry } from "three"
 
 import { desertTerrain, resolveDesertGroundHeight } from "@/game/desertTerrain"
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
 import { wrapDistance } from "@/game/number"
 import { resolveRelativeTrackCenter, resolveTrackHeading } from "@/game/trackPath"
 
@@ -66,6 +66,14 @@ export function Track({ distanceRef }: TrackProps) {
     [],
   )
 
+  useEffect(() => {
+    return () => {
+      terrainGeometries.forEach((geometry) => {
+        geometry.dispose()
+      })
+    }
+  }, [terrainGeometries])
+
   useFrame(() => {
     const distance = distanceRef.current
     const offset = wrapDistance(distance, trackConfig.segmentLength)
@@ -76,7 +84,7 @@ export function Track({ distanceRef }: TrackProps) {
 
       const segmentDistance = firstSegmentDistance + index * trackConfig.segmentLength
       const segmentParity = Math.floor(segmentDistance / trackConfig.segmentLength) % 2
-      const z = -(segmentDistance - distance) + 8
+      const z = -(segmentDistance - distance) + renderWindowConfig.trackZOffset
       const bend = resolveRelativeTrackCenter(segmentDistance, distance)
       const heading = resolveTrackHeading(segmentDistance)
       const baseRoad = roadSurfaceRefs.current[index * 2]

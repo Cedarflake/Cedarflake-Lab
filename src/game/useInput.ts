@@ -55,13 +55,8 @@ export function useKeyboardInput() {
   const keysRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    const {
-      resetGamepadInput,
-      resetKeyboardInput,
-      resetTouchInput,
-      setGamepadInput,
-      setKeyboardInput,
-    } = useInputStore.getState()
+    const { resetGamepadInput, resetKeyboardInput, setGamepadInput, setKeyboardInput } =
+      useInputStore.getState()
     let animationFrame = 0
     let wasRunning = false
 
@@ -104,7 +99,6 @@ export function useKeyboardInput() {
       gamepadIndexRef.current = null
       resetGamepadInput()
       resetKeyboardInput()
-      resetTouchInput()
     }
 
     function resetWhenHidden() {
@@ -114,13 +108,9 @@ export function useKeyboardInput() {
     }
 
     function resetWhenWindowBlurred() {
-      const { status } = useGameStore.getState()
-
-      if (status === "running" && document.visibilityState === "visible") {
-        return
+      if (document.visibilityState === "hidden" || !document.hasFocus()) {
+        resetInput()
       }
-
-      resetInput()
     }
 
     function syncGamepadInput() {
@@ -133,10 +123,7 @@ export function useKeyboardInput() {
         setGamepadInput(resolveGamepadInput(gamepads, gamepadIndexRef.current))
       } else if (wasRunning) {
         wasRunning = false
-        keysRef.current.clear()
         resetGamepadInput()
-        resetKeyboardInput()
-        resetTouchInput()
       }
 
       animationFrame = window.requestAnimationFrame(syncGamepadInput)

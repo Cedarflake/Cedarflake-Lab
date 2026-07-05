@@ -9,7 +9,7 @@ interface DrivingSpeedInput {
 }
 
 export function resolveBoostedSpeed(currentSpeed: number, boostAmount: number, speedLimit: number) {
-  return Math.max(currentSpeed, Math.min(currentSpeed + boostAmount, speedLimit))
+  return Math.max(currentSpeed, Math.min(currentSpeed + boostAmount, speedLimit + boostAmount))
 }
 
 export function resolveDrivingSpeed({

@@ -1,8 +1,10 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 
-import "@/app/threeWarningFilter"
 import { App } from "@/app/App"
+import { installThreeWarningFilter } from "@/app/threeWarningFilter"
+
+installThreeWarningFilter()
 
 const rootElement = document.getElementById("root")
 

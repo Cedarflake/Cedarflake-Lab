@@ -66,9 +66,9 @@ jobs:
           cp /tmp/liminal-drift-vite.log artifacts/vite-preview.log
 
           set +e
-          node scripts/checkCanvas.mjs http://127.0.0.1:4173/ 2>&1 | tee artifacts/check-canvas.log
+          pnpm run check:canvas -- http://127.0.0.1:4173/ 2>&1 | tee artifacts/check-canvas.log
           canvas_status=${PIPESTATUS[0]}
-          node scripts/checkInteraction.mjs http://127.0.0.1:4173/ 2>&1 | tee artifacts/check-interaction.log
+          pnpm run check:interaction -- http://127.0.0.1:4173/ 2>&1 | tee artifacts/check-interaction.log
           interaction_status=${PIPESTATUS[0]}
           set -e
 

@@ -6,7 +6,7 @@ import { AdditiveBlending, Color } from "three"
 import type { Group } from "three"
 import type { MeshBasicMaterial } from "three"
 
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
 import { resolveRelativeTrackPose, resolveTrackLaneOffset } from "@/game/trackPath"
 import type { MemoryShard } from "@/shared/types"
 
@@ -166,12 +166,18 @@ export function MemoryShards({
         pose.heading + phase * 0.22,
         Math.cos(phase) * 0.08,
       )
-      shard.visible = pose.z <= 18 && pose.z >= -260
+      shard.visible =
+        pose.z <= renderWindowConfig.memoryShards.near &&
+        pose.z >= renderWindowConfig.memoryShards.far
 
       if (collectedMemoryShardIds.has(memoryShard.id)) {
         const collectedAt = collectedMemoryShardEffects.get(memoryShard.id)
-        const effectAge =
-          typeof collectedAt === "number" ? elapsedTime - collectedAt : collectionEffectSeconds
+        const effectStart = typeof collectedAt === "number" ? collectedAt : elapsedTime
+        const effectAge = elapsedTime - effectStart
+
+        if (typeof collectedAt !== "number") {
+          collectedMemoryShardEffects.set(memoryShard.id, effectStart)
+        }
 
         if (core) {
           core.visible = false

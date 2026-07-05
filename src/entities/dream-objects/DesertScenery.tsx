@@ -1,14 +1,14 @@
-import { useMemo, useRef } from "react"
+import { useMemo } from "react"
 import type { RefObject } from "react"
 
-import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { resolveDesertGroundHeight } from "@/game/desertTerrain"
-import { trackConfig } from "@/game/gameConfig"
+import { sceneryConfig, trackConfig } from "@/game/gameConfig"
 
 import { DuneCluster, RuinCluster } from "./desertPrimitives"
-import { createSideSceneryItems, resolveSceneryZ } from "./shared"
+import { createSideSceneryItems } from "./shared"
+import { useScrollingScenery } from "./useScrollingScenery"
 
 interface DesertSceneryProps {
   distanceRef: RefObject<number>
@@ -19,8 +19,7 @@ interface DesertNodeProps {
   nodeRef: (node: Group | null) => void
 }
 
-const desertSetPieceCycleDistance = 420
-const desertFieldCycleDistance = 520
+const { desert, visibility } = sceneryConfig
 
 function DesertSetPieceNode({ index, nodeRef }: DesertNodeProps) {
   const scale = 0.86 + (index % 5) * 0.14
@@ -50,48 +49,60 @@ function DesertFieldNode({ index, nodeRef }: DesertNodeProps) {
 }
 
 export function DesertScenery({ distanceRef }: DesertSceneryProps) {
-  const desertSetPieceRefs = useRef<Array<Group | null>>([])
-  const desertFieldRefs = useRef<Array<Group | null>>([])
-  const desertSetPieces = useMemo(() => createSideSceneryItems(18), [])
-  const desertField = useMemo(() => createSideSceneryItems(34), [])
-
-  useFrame(() => {
-    const distance = distanceRef.current
-
-    desertSetPieces.forEach(({ index, side }) => {
-      const setPiece = desertSetPieceRefs.current[index]
-      if (!setPiece) return
-
-      const z = resolveSceneryZ(24 + index * 34, distance, 1.18, desertSetPieceCycleDistance)
-      const x = side * (10.4 + (index % 4) * 3.1)
+  const desertSetPieces = useMemo(() => createSideSceneryItems(desert.setPiece.count), [])
+  const desertField = useMemo(() => createSideSceneryItems(desert.field.count), [])
+  const setDesertSetPieceRef = useScrollingScenery({
+    cycleDistance: desert.setPiece.cycleDistance,
+    distanceRef,
+    items: desertSetPieces,
+    originDistance: ({ index }) => desert.setPiece.originStart + index * desert.setPiece.spacing,
+    speed: desert.setPiece.speed,
+    visibilityRange: visibility,
+    update: ({ distance, item, node, z }) => {
+      const { index, side } = item
+      const x =
+        side *
+        (desert.setPiece.baseSideOffset +
+          (index % desert.setPiece.sideBandCount) * desert.setPiece.sideBandOffset)
       const groundY = resolveDesertGroundHeight(x, z)
-      const floatPhase = distance * 0.025 + index * 0.7
+      const floatPhase =
+        distance * desert.setPiece.phaseDistanceSpeed + index * desert.setPiece.phaseStride
 
-      setPiece.position.set(x, groundY + 0.16, z)
-      setPiece.rotation.set(
+      node.position.set(x, groundY + desert.setPiece.groundOffset, z)
+      node.rotation.set(
         Math.sin(floatPhase * 0.7) * 0.006,
         side * 0.12 + Math.sin(floatPhase * 0.5) * 0.025,
         Math.cos(floatPhase * 0.8) * 0.008,
       )
-    })
-
-    desertField.forEach(({ index, side }) => {
-      const fieldPiece = desertFieldRefs.current[index]
-      if (!fieldPiece) return
-
-      const sideBand = index % 3
-      const z = resolveSceneryZ(14 + index * 18, distance, 0.82, desertFieldCycleDistance)
-      const x = side * (trackConfig.roadHalfWidth + 9.5 + sideBand * 6.2 + (index % 5) * 0.9)
+    },
+  })
+  const setDesertFieldRef = useScrollingScenery({
+    cycleDistance: desert.field.cycleDistance,
+    distanceRef,
+    items: desertField,
+    originDistance: ({ index }) => desert.field.originStart + index * desert.field.spacing,
+    speed: desert.field.speed,
+    visibilityRange: visibility,
+    update: ({ distance, item, node, z }) => {
+      const { index, side } = item
+      const sideBand = index % desert.field.sideBandCount
+      const x =
+        side *
+        (trackConfig.roadHalfWidth +
+          desert.field.baseSideOffset +
+          sideBand * desert.field.sideBandOffset +
+          (index % desert.field.indexOffsetCount) * desert.field.indexOffset)
       const groundY = resolveDesertGroundHeight(x, z)
-      const floatPhase = distance * 0.016 + index * 0.43
+      const floatPhase =
+        distance * desert.field.phaseDistanceSpeed + index * desert.field.phaseStride
 
-      fieldPiece.position.set(x, groundY + 0.12, z)
-      fieldPiece.rotation.set(
+      node.position.set(x, groundY + desert.field.groundOffset, z)
+      node.rotation.set(
         Math.sin(floatPhase * 0.5) * 0.004,
         side * (0.2 + sideBand * 0.08) + Math.sin(floatPhase * 0.7) * 0.018,
         Math.cos(floatPhase * 0.6) * 0.006,
       )
-    })
+    },
   })
 
   return (
@@ -101,7 +112,7 @@ export function DesertScenery({ distanceRef }: DesertSceneryProps) {
           key={index}
           index={index}
           nodeRef={(node) => {
-            desertSetPieceRefs.current[index] = node
+            setDesertSetPieceRef(index, node)
           }}
         />
       ))}
@@ -111,7 +122,7 @@ export function DesertScenery({ distanceRef }: DesertSceneryProps) {
           key={index}
           index={index}
           nodeRef={(node) => {
-            desertFieldRefs.current[index] = node
+            setDesertFieldRef(index, node)
           }}
         />
       ))}

@@ -74,7 +74,7 @@
   box-shadow:
     0 10px 28px rgba(20, 18, 24, 0.24),
     inset 0 0 0 1px rgba(236, 226, 197, 0.08);
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--blur-hud);
 }
 
 .hud__bar-label,
@@ -165,7 +165,7 @@
     0 14px 34px rgba(20, 18, 24, 0.32),
     inset 0 0 18px rgba(218, 207, 169, 0.12),
     inset 0 -18px 28px rgba(20, 27, 27, 0.24);
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--blur-hud);
 }
 
 .hud__dial--score {
@@ -258,61 +258,5 @@
 @media (prefers-reduced-motion: reduce) {
   .hud__bar span {
     transition: none;
-  }
-}
-
-@media (max-width: 760px) {
-  .hud {
-    --hud-dial-gap: 7px;
-    --hud-dial-size: 56px;
-    --hud-score-width: 124px;
-
-    inset: auto auto calc(92px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
-    width: min(var(--hud-racer-width), calc(100vw - 24px));
-    gap: 10px;
-  }
-
-  .hud__bar-row {
-    grid-template-columns: 64px minmax(0, 1fr) 52px;
-    gap: 6px;
-    padding: 5px 6px;
-  }
-
-  .hud__bar-label,
-  .hud__bar-value {
-    font-size: 0.56rem;
-  }
-
-  .hud__bar {
-    height: 5px;
-  }
-
-  .hud__racer-parameters {
-    grid-template-columns: var(--hud-score-width) repeat(3, var(--hud-dial-size));
-    gap: var(--hud-dial-gap);
-  }
-
-  .hud__dial {
-    padding: 6px;
-  }
-
-  .hud__dial--score {
-    min-height: 56px;
-  }
-
-  .hud__dial-label {
-    font-size: 0.44rem;
-  }
-
-  .hud__dial strong {
-    font-size: 0.82rem;
-  }
-
-  .hud__dial--score strong {
-    font-size: 0.92rem;
-  }
-
-  .hud__dial small {
-    font-size: 0.42rem;
   }
 }

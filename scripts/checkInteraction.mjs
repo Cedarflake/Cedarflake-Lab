@@ -216,31 +216,41 @@ try {
     await page.keyboard.down("Space")
     const driftCharge = await waitForProgressAboveZero(page, "Drift charge", 4200)
 
-    const text = await page.locator("body").innerText()
-    const keyboardSpeed = readMetric(text, "SPEED")
-
     if (driftCharge <= 0) {
       throw new Error(`Expected keyboard drifting to build charge, got ${driftCharge}`)
     }
 
-    await page.keyboard.down("Escape")
-    await page.getByRole("dialog", { name: "Paused" }).waitFor()
     await page.keyboard.up("Space")
     await page.keyboard.up("d")
-    await page.keyboard.up("w")
+    await page.keyboard.down("Escape")
+    await page.getByRole("dialog", { name: "Paused" }).waitFor()
+    await page.keyboard.up("Escape")
+    const pausedText = await page.locator("body").innerText()
+    const pausedSpeed = readMetric(pausedText, "SPEED")
     await page.getByRole("button", { name: "Resume" }).click()
+    await page.waitForTimeout(900)
+
+    const heldResumeText = await page.locator("body").innerText()
+    const heldResumeSpeed = readMetric(heldResumeText, "SPEED")
+
+    if (heldResumeSpeed < pausedSpeed - 3) {
+      throw new Error(
+        `Expected held W to survive pause and resume, got ${pausedSpeed} -> ${heldResumeSpeed}`,
+      )
+    }
+
+    await page.keyboard.up("w")
     await page.waitForTimeout(1000)
 
     const resumedText = await page.locator("body").innerText()
     const resumedSpeed = readMetric(resumedText, "SPEED")
 
-    if (resumedSpeed > keyboardSpeed + 5) {
+    if (resumedSpeed >= heldResumeSpeed - 4) {
       throw new Error(
-        `Expected keyboard input to reset on pause, got ${keyboardSpeed} -> ${resumedSpeed}`,
+        `Expected released W to decelerate after resume, got ${heldResumeSpeed} -> ${resumedSpeed}`,
       )
     }
 
-    await page.keyboard.up("Escape")
     await context.close()
   }
 

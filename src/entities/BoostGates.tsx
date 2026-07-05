@@ -1,11 +1,11 @@
-import { useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import type { RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
 import { BufferGeometry, DoubleSide, Float32BufferAttribute } from "three"
 import type { Group } from "three"
 
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
 import { resolveRelativeTrackPose, resolveTrackLaneOffset } from "@/game/trackPath"
 import type { BoostGate } from "@/shared/types"
 
@@ -15,20 +15,25 @@ interface BoostGatesProps {
 }
 
 interface BoostGateNodeProps {
+  arrowHeadGeometry: BufferGeometry
   boostGate: BoostGate
   nodeRef: (node: Group | null) => void
 }
 
-const boostArrowHeadGeometry = new BufferGeometry()
+function createBoostArrowHeadGeometry() {
+  const geometry = new BufferGeometry()
 
-boostArrowHeadGeometry.setAttribute(
-  "position",
-  new Float32BufferAttribute([0, 0, -1.16, -0.72, 0, -0.24, 0.72, 0, -0.24], 3),
-)
-boostArrowHeadGeometry.setIndex([0, 1, 2])
-boostArrowHeadGeometry.computeVertexNormals()
+  geometry.setAttribute(
+    "position",
+    new Float32BufferAttribute([0, 0, -1.16, -0.72, 0, -0.24, 0.72, 0, -0.24], 3),
+  )
+  geometry.setIndex([0, 1, 2])
+  geometry.computeVertexNormals()
 
-function BoostGateNode({ boostGate, nodeRef }: BoostGateNodeProps) {
+  return geometry
+}
+
+function BoostGateNode({ arrowHeadGeometry, boostGate, nodeRef }: BoostGateNodeProps) {
   return (
     <group ref={nodeRef}>
       <mesh castShadow receiveShadow>
@@ -46,7 +51,7 @@ function BoostGateNode({ boostGate, nodeRef }: BoostGateNodeProps) {
         <meshBasicMaterial color="#fff7c6" transparent opacity={0.92} toneMapped={false} />
       </mesh>
       <mesh position={[0, 0.14, 0]} renderOrder={2}>
-        <primitive object={boostArrowHeadGeometry} attach="geometry" />
+        <primitive object={arrowHeadGeometry} attach="geometry" />
         <meshBasicMaterial
           color="#fff7c6"
           side={DoubleSide}
@@ -61,6 +66,13 @@ function BoostGateNode({ boostGate, nodeRef }: BoostGateNodeProps) {
 
 export function BoostGates({ boostGates, distanceRef }: BoostGatesProps) {
   const gateRefs = useRef<Array<Group | null>>([])
+  const arrowHeadGeometry = useMemo(createBoostArrowHeadGeometry, [])
+
+  useEffect(() => {
+    return () => {
+      arrowHeadGeometry.dispose()
+    }
+  }, [arrowHeadGeometry])
 
   useFrame(() => {
     const distance = distanceRef.current
@@ -74,7 +86,8 @@ export function BoostGates({ boostGates, distanceRef }: BoostGatesProps) {
 
       gate.position.set(pose.x + laneOffset.x, 0.08, pose.z + laneOffset.z)
       gate.rotation.set(0, pose.heading, 0)
-      gate.visible = pose.z <= 18 && pose.z >= -260
+      gate.visible =
+        pose.z <= renderWindowConfig.boostGates.near && pose.z >= renderWindowConfig.boostGates.far
     })
   })
 
@@ -83,6 +96,7 @@ export function BoostGates({ boostGates, distanceRef }: BoostGatesProps) {
       {boostGates.map((boostGate, index) => (
         <BoostGateNode
           key={boostGate.id}
+          arrowHeadGeometry={arrowHeadGeometry}
           boostGate={boostGate}
           nodeRef={(node) => {
             gateRefs.current[index] = node

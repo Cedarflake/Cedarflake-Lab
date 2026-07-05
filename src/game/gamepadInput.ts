@@ -60,9 +60,11 @@ function resolveConnectedGamepads(gamepads: readonly (GamepadLike | null)[]) {
 }
 
 function resolveAxis(value: number | undefined, deadzone = 0.16) {
-  if (!value || Math.abs(value) < deadzone) return 0
+  const magnitude = Math.abs(value ?? 0)
 
-  return value
+  if (magnitude <= deadzone) return 0
+
+  return Math.sign(value ?? 0) * Math.min((magnitude - deadzone) / (1 - deadzone), 1)
 }
 
 function resolveButton(button: GamepadButtonLike | undefined) {

@@ -3,38 +3,23 @@ export function ControlsLegend() {
     <dl className="controls">
       <div className="glass-card controls__item">
         <dt>Drive</dt>
-        <dd>
-          <span className="controls__desktop">W / S / Up / Down</span>
-          <span className="controls__touch">Go / Brake</span>
-        </dd>
+        <dd>W / S / Up / Down</dd>
       </div>
       <div className="glass-card controls__item">
         <dt>Steer</dt>
-        <dd>
-          <span className="controls__desktop">A / D / Left / Right</span>
-          <span className="controls__touch">Left / Right</span>
-        </dd>
+        <dd>A / D / Left / Right</dd>
       </div>
       <div className="glass-card controls__item">
         <dt>Drift</dt>
-        <dd>
-          <span className="controls__desktop">Space / Shift</span>
-          <span className="controls__touch">Drift button</span>
-        </dd>
+        <dd>Space / Shift</dd>
       </div>
       <div className="glass-card controls__item">
         <dt>Pause</dt>
-        <dd>
-          <span className="controls__desktop">Esc</span>
-          <span className="controls__touch">Pause</span>
-        </dd>
+        <dd>Esc</dd>
       </div>
       <div className="glass-card controls__item">
         <dt>Gamepad</dt>
-        <dd>
-          <span className="controls__desktop">A / RT / LT / Menu</span>
-          <span className="controls__touch">Desktop only</span>
-        </dd>
+        <dd>A / RT / LT / Menu</dd>
       </div>
     </dl>
   )

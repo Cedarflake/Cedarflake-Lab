@@ -1,14 +1,15 @@
-import { Suspense, useEffect, useMemo, useRef } from "react"
+import { Suspense, useEffect, useMemo } from "react"
 import type { RefObject } from "react"
 
-import { useFrame, useLoader } from "@react-three/fiber"
+import { useLoader } from "@react-three/fiber"
 import { DoubleSide, MeshBasicMaterial, SRGBColorSpace, TextureLoader } from "three"
 import type { Group } from "three"
 
 import { resolveDesertGroundHeight } from "@/game/desertTerrain"
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, sceneryConfig, trackConfig } from "@/game/gameConfig"
 
-import { createSideSceneryItems, resolveSceneryZ } from "./shared"
+import { createSideSceneryItems } from "./shared"
+import { useScrollingScenery } from "./useScrollingScenery"
 
 interface PictureFramesProps {
   distanceRef: RefObject<number>
@@ -19,13 +20,22 @@ interface PictureFrameNodeProps {
   nodeRef: (node: Group | null) => void
 }
 
-const pictureFrameCycleDistance = 680
 const pictureFrameTextureAspect = 235 / 286
 const pictureFrameVisualHeight = 2.92
 const pictureFrameVisualWidth = pictureFrameVisualHeight * pictureFrameTextureAspect
 const pictureFrameOuterWidth = pictureFrameVisualWidth + 0.44
 const pictureFrameOuterHeight = pictureFrameVisualHeight + 0.44
 const pictureFrameRailThickness = 0.16
+const { pictureFrames } = sceneryConfig
+
+function resolvePictureFrameFlicker(distance: number, index: number) {
+  const { flicker } = pictureFrames
+
+  return (
+    Math.sin(distance * flicker.distanceSpeed + index * flicker.phaseStride) >
+    flicker.visibleThreshold
+  )
+}
 
 function PictureFrameImage() {
   const texture = useLoader(TextureLoader, "/image/image.png")
@@ -117,38 +127,40 @@ function PictureFrameNode({ index, nodeRef }: PictureFrameNodeProps) {
 }
 
 export function PictureFrames({ distanceRef }: PictureFramesProps) {
-  const pictureFrameRefs = useRef<Array<Group | null>>([])
-  const pictureFrames = useMemo(() => createSideSceneryItems(7), [])
-
-  useFrame(({ camera }) => {
-    const distance = distanceRef.current
-
-    pictureFrames.forEach(({ index, side }) => {
-      const pictureFrame = pictureFrameRefs.current[index]
-      if (!pictureFrame) return
-
-      const z = resolveSceneryZ(126 + index * 91, distance, 0.48, pictureFrameCycleDistance)
-      const phase = distance * 0.018 + index * 1.37
-      const sideBand = index % 3
+  const pictureFrameItems = useMemo(() => createSideSceneryItems(pictureFrames.count), [])
+  const setPictureFrameRef = useScrollingScenery({
+    cycleDistance: pictureFrames.cycleDistance,
+    distanceRef,
+    items: pictureFrameItems,
+    originDistance: ({ index }) => pictureFrames.originStart + index * pictureFrames.spacing,
+    speed: pictureFrames.speed,
+    visibilityRange: pictureFrames.visibility,
+    update: ({ camera, distance, item, node, z }) => {
+      const { index, side } = item
+      const phase = distance * pictureFrames.phaseDistanceSpeed + index * pictureFrames.phaseStride
+      const sideBand = index % pictureFrames.sideBandCount
       const x =
-        side * (trackConfig.roadHalfWidth + 4.6 + sideBand * 1.8 + Math.sin(phase * 0.7) * 0.72)
+        side *
+        (trackConfig.roadHalfWidth +
+          pictureFrames.baseSideOffset +
+          sideBand * pictureFrames.sideBandOffset +
+          Math.sin(phase * pictureFrames.swaySpeed) * pictureFrames.swayAmplitude)
       const groundY = resolveDesertGroundHeight(x, z)
-      const flicker = Math.sin(distance * 0.045 + index * 2.2) > 0.72
 
-      pictureFrame.position.set(x, groundY + 2.35, z)
-      pictureFrame.lookAt(camera.position.x, pictureFrame.position.y, camera.position.z)
-      pictureFrame.visible = flicker && z < 10 && z > -150
-    })
+      node.position.set(x, groundY + pictureFrames.groundOffset, z)
+      node.lookAt(camera.position.x, node.position.y, camera.position.z)
+      node.visible = node.visible && resolvePictureFrameFlicker(distance, index)
+    },
   })
 
   return (
     <>
-      {pictureFrames.map(({ index }) => (
+      {pictureFrameItems.map(({ index }) => (
         <PictureFrameNode
           key={index}
           index={index}
           nodeRef={(node) => {
-            pictureFrameRefs.current[index] = node
+            setPictureFrameRef(index, node)
           }}
         />
       ))}

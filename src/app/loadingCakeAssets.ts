@@ -9,6 +9,7 @@ export interface LoadingCakePreloadAsset {
 const loadingCakeBasePath = "/model/cake_is_a_lie"
 
 export const loadingCakePreloadAttribute = "data-loading-cake-preload"
+export const loadingCakePreloadMedia = "(min-width: 901px) and (pointer: fine)"
 
 export const loadingCakeModelPath = `${loadingCakeBasePath}/scene.gltf`
 
@@ -43,6 +44,7 @@ function appendPreloadLink(asset: LoadingCakePreloadAsset) {
   link.rel = "preload"
   link.as = asset.as
   link.href = asset.href
+  link.media = loadingCakePreloadMedia
   link.type = asset.type
   link.setAttribute(loadingCakePreloadAttribute, asset.href)
 

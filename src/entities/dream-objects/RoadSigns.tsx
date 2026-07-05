@@ -1,13 +1,13 @@
-import { useMemo, useRef } from "react"
+import { useMemo } from "react"
 import type { RefObject } from "react"
 
-import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { resolveDesertGroundHeight } from "@/game/desertTerrain"
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, sceneryConfig, trackConfig } from "@/game/gameConfig"
 
-import { createSideSceneryItems, resolveSceneryZ } from "./shared"
+import { createSideSceneryItems } from "./shared"
+import { useScrollingScenery } from "./useScrollingScenery"
 
 interface RoadSignsProps {
   distanceRef: RefObject<number>
@@ -18,7 +18,7 @@ interface SignNodeProps {
   nodeRef: (node: Group | null) => void
 }
 
-const signCycleDistance = 360
+const { roadSigns, visibility } = sceneryConfig
 
 function SignNode({ index, nodeRef }: SignNodeProps) {
   const isWarningSign = index % 2 === 0
@@ -55,23 +55,30 @@ function SignNode({ index, nodeRef }: SignNodeProps) {
 }
 
 export function RoadSigns({ distanceRef }: RoadSignsProps) {
-  const signRefs = useRef<Array<Group | null>>([])
-  const signs = useMemo(() => createSideSceneryItems(10), [])
-
-  useFrame(() => {
-    const distance = distanceRef.current
-
-    signs.forEach(({ index, side }) => {
-      const sign = signRefs.current[index]
-      if (!sign) return
-
-      const z = resolveSceneryZ(18 + index * 44, distance, 1.34, signCycleDistance)
-      const x = side * (trackConfig.roadHalfWidth + 3.8 + (index % 3) * 1.2)
+  const signs = useMemo(() => createSideSceneryItems(roadSigns.count), [])
+  const setSignRef = useScrollingScenery({
+    cycleDistance: roadSigns.cycleDistance,
+    distanceRef,
+    items: signs,
+    originDistance: ({ index }) => roadSigns.originStart + index * roadSigns.spacing,
+    speed: roadSigns.speed,
+    visibilityRange: visibility,
+    update: ({ item, node, z }) => {
+      const { index, side } = item
+      const x =
+        side *
+        (trackConfig.roadHalfWidth +
+          roadSigns.baseSideOffset +
+          (index % roadSigns.sideBandCount) * roadSigns.sideBandOffset)
       const groundY = resolveDesertGroundHeight(x, z)
 
-      sign.position.set(x, groundY + 1.55 + (index % 2) * 0.48, z)
-      sign.rotation.set(0, side > 0 ? -0.34 : 0.34, side * 0.035)
-    })
+      node.position.set(
+        x,
+        groundY + roadSigns.baseHeight + (index % 2) * roadSigns.alternateHeightOffset,
+        z,
+      )
+      node.rotation.set(0, side > 0 ? -roadSigns.yaw : roadSigns.yaw, side * roadSigns.roll)
+    },
   })
 
   return (
@@ -81,7 +88,7 @@ export function RoadSigns({ distanceRef }: RoadSignsProps) {
           key={index}
           index={index}
           nodeRef={(node) => {
-            signRefs.current[index] = node
+            setSignRef(index, node)
           }}
         />
       ))}

@@ -193,6 +193,14 @@ function RacerWorld({ debugMode }: RacerWorldProps) {
   useFrame((state, delta) => {
     const frameDelta = Math.min(delta, maxFrameDelta)
     const runtime = runtimeRef.current
+
+    if (status === "paused") {
+      distanceRef.current = runtime.distance
+      speedRef.current = runtime.speed
+      steeringRef.current = runtime.steering
+      return
+    }
+
     elapsedTimeRef.current += frameDelta
     const elapsedTime = elapsedTimeRef.current
     distanceRef.current = runtime.distance
@@ -238,12 +246,12 @@ function RacerWorld({ debugMode }: RacerWorldProps) {
       return
     }
 
-    const { gamepadInput, keyboardInput, touchInput } = useInputStore.getState()
+    const { gamepadInput, keyboardInput } = useInputStore.getState()
     const input = {
-      steer: clamp(keyboardInput.steer + gamepadInput.steer + touchInput.steer, -1, 1),
-      throttle: Math.max(keyboardInput.throttle, gamepadInput.throttle, touchInput.throttle),
-      brake: Math.max(keyboardInput.brake, gamepadInput.brake, touchInput.brake),
-      isDrifting: keyboardInput.isDrifting || gamepadInput.isDrifting || touchInput.isDrifting,
+      steer: clamp(keyboardInput.steer + gamepadInput.steer, -1, 1),
+      throttle: Math.max(keyboardInput.throttle, gamepadInput.throttle),
+      brake: Math.max(keyboardInput.brake, gamepadInput.brake),
+      isDrifting: keyboardInput.isDrifting || gamepadInput.isDrifting,
     }
     const driftIntent = input.isDrifting && runtime.speed > trackConfig.driftMinimumSpeed * 0.72
     const grip = driftIntent ? trackConfig.driftGrip : trackConfig.normalGrip

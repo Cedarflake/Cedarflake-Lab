@@ -5,7 +5,7 @@ import { Torus } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
-import { dreamPalette } from "@/game/gameConfig"
+import { dreamPalette, renderWindowConfig } from "@/game/gameConfig"
 import { resolveRelativeTrackPose } from "@/game/trackPath"
 import type { Checkpoint } from "@/shared/types"
 
@@ -63,7 +63,9 @@ export function Checkpoints({ checkpoints, distanceRef }: CheckpointsProps) {
 
       checkpointGroup.position.set(pose.x, 2.8, pose.z)
       checkpointGroup.rotation.set(0, pose.heading, Math.PI / 2)
-      checkpointGroup.visible = pose.z <= 20 && pose.z >= -260
+      checkpointGroup.visible =
+        pose.z <= renderWindowConfig.checkpoints.near &&
+        pose.z >= renderWindowConfig.checkpoints.far
     })
   })
 

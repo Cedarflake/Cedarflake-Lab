@@ -1,11 +1,11 @@
-import { useRef } from "react"
-import type { RefObject } from "react"
+import { useCallback, useRef } from "react"
+import type { MutableRefObject, RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { wallObstacleWidth } from "@/game/collision"
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
 import { resolveRelativeTrackPose, resolveTrackLaneOffset } from "@/game/trackPath"
 import type { Obstacle } from "@/shared/types"
 
@@ -15,11 +15,23 @@ interface ObstacleObjectsProps {
 }
 
 interface ObstacleNodeProps {
-  nodeRef: (node: Group | null) => void
   obstacle: Obstacle
+  obstacleRefs: MutableRefObject<Map<string, Group>>
 }
 
-function ObstacleNode({ nodeRef, obstacle }: ObstacleNodeProps) {
+function ObstacleNode({ obstacle, obstacleRefs }: ObstacleNodeProps) {
+  const nodeRef = useCallback(
+    (node: Group | null) => {
+      if (node) {
+        obstacleRefs.current.set(obstacle.id, node)
+        return
+      }
+
+      obstacleRefs.current.delete(obstacle.id)
+    },
+    [obstacle.id, obstacleRefs],
+  )
+
   if (obstacle.kind === "hole") {
     return (
       <group ref={nodeRef}>
@@ -97,13 +109,13 @@ function ObstacleNode({ nodeRef, obstacle }: ObstacleNodeProps) {
 }
 
 export function ObstacleObjects({ distanceRef, obstacles }: ObstacleObjectsProps) {
-  const obstacleRefs = useRef<Array<Group | null>>([])
+  const obstacleRefs = useRef<Map<string, Group>>(new Map())
 
   useFrame(() => {
     const distance = distanceRef.current
 
-    obstacles.forEach((obstacle, index) => {
-      const obstacleGroup = obstacleRefs.current[index]
+    obstacles.forEach((obstacle) => {
+      const obstacleGroup = obstacleRefs.current.get(obstacle.id)
       if (!obstacleGroup) return
 
       const pose = resolveRelativeTrackPose(obstacle.distance, distance, 2)
@@ -112,20 +124,15 @@ export function ObstacleObjects({ distanceRef, obstacles }: ObstacleObjectsProps
 
       obstacleGroup.position.set(pose.x + laneOffset.x, y, pose.z + laneOffset.z)
       obstacleGroup.rotation.set(0, pose.heading, 0)
-      obstacleGroup.visible = pose.z <= 16 && pose.z >= -260
+      obstacleGroup.visible =
+        pose.z <= renderWindowConfig.obstacles.near && pose.z >= renderWindowConfig.obstacles.far
     })
   })
 
   return (
     <>
-      {obstacles.map((obstacle, index) => (
-        <ObstacleNode
-          key={obstacle.id}
-          nodeRef={(node) => {
-            obstacleRefs.current[index] = node
-          }}
-          obstacle={obstacle}
-        />
+      {obstacles.map((obstacle) => (
+        <ObstacleNode key={obstacle.id} obstacle={obstacle} obstacleRefs={obstacleRefs} />
       ))}
     </>
   )

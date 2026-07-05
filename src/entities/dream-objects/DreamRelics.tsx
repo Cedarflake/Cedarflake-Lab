@@ -1,13 +1,13 @@
-import { useMemo, useRef } from "react"
+import { useMemo } from "react"
 import type { RefObject } from "react"
 
-import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
 import { resolveDesertGroundHeight } from "@/game/desertTerrain"
-import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { dreamPalette, sceneryConfig, trackConfig } from "@/game/gameConfig"
 
-import { createSideSceneryItems, resolveSceneryZ } from "./shared"
+import { createSideSceneryItems } from "./shared"
+import { useScrollingScenery } from "./useScrollingScenery"
 
 interface DreamRelicsProps {
   distanceRef: RefObject<number>
@@ -32,7 +32,7 @@ interface DreamRelicMotion {
   spinSpeed: number
 }
 
-const dreamRelicCycleDistance = 620
+const { dreamRelics, visibility } = sceneryConfig
 
 function createStableNoise(seed: number) {
   return Math.abs(Math.sin(seed * 12.9898 + 78.233) * 43758.5453) % 1
@@ -169,50 +169,57 @@ function DreamRelicNode({ index, nodeRef }: DreamRelicNodeProps) {
 }
 
 export function DreamRelics({ distanceRef }: DreamRelicsProps) {
-  const floatTimeRef = useRef(0)
-  const dreamRelicRefs = useRef<Array<Group | null>>([])
-  const dreamRelics = useMemo(() => createSideSceneryItems(28), [])
-  const dreamRelicMotions = useMemo(() => createDreamRelicMotions(28), [])
-
-  useFrame((_, delta) => {
-    const distance = distanceRef.current
-    floatTimeRef.current += Math.min(delta, 0.1)
-    const floatTime = floatTimeRef.current
-
-    dreamRelics.forEach(({ index, side }) => {
-      const relic = dreamRelicRefs.current[index]
-      if (!relic) return
-
+  const dreamRelicItems = useMemo(() => createSideSceneryItems(dreamRelics.count), [])
+  const dreamRelicMotions = useMemo(() => createDreamRelicMotions(dreamRelics.count), [])
+  const setDreamRelicRef = useScrollingScenery({
+    cycleDistance: dreamRelics.cycleDistance,
+    distanceRef,
+    items: dreamRelicItems,
+    originDistance: ({ index }) => dreamRelics.originStart + index * dreamRelics.spacing,
+    speed: dreamRelics.speed,
+    visibilityRange: visibility,
+    update: ({ elapsedTime, item, node, z }) => {
+      const { index, side } = item
       const motion = dreamRelicMotions[index]
       if (!motion) return
 
-      const sideBand = index % 5
-      const z = resolveSceneryZ(48 + index * 24, distance, 0.64, dreamRelicCycleDistance)
-      const x = side * (trackConfig.roadHalfWidth + 13.5 + sideBand * 4.6)
+      const sideBand = index % dreamRelics.sideBandCount
+      const x =
+        side *
+        (trackConfig.roadHalfWidth +
+          dreamRelics.baseSideOffset +
+          sideBand * dreamRelics.sideBandOffset)
       const groundY = resolveDesertGroundHeight(x, z)
-      const hoverPhase = floatTime * motion.hoverSpeed + motion.hoverPhase
-      const spin = floatTime * motion.spinSpeed * motion.spinDirection + motion.spinPhase
-      const pitchPhase = floatTime * motion.pitchSpeed + motion.pitchPhase
-      const rollPhase = floatTime * motion.rollSpeed + motion.rollPhase
+      const hoverPhase = elapsedTime * motion.hoverSpeed + motion.hoverPhase
+      const spin = elapsedTime * motion.spinSpeed * motion.spinDirection + motion.spinPhase
+      const pitchPhase = elapsedTime * motion.pitchSpeed + motion.pitchPhase
+      const rollPhase = elapsedTime * motion.rollSpeed + motion.rollPhase
       const hoverY = Math.sin(hoverPhase) * 0.38 + Math.sin(hoverPhase * motion.hoverWaveMix) * 0.2
 
-      relic.position.set(x, groundY + 2.85 + (index % 4) * 0.5 + hoverY, z)
-      relic.rotation.set(
+      node.position.set(
+        x,
+        groundY +
+          dreamRelics.baseHeight +
+          (index % dreamRelics.heightBandCount) * dreamRelics.heightBandOffset +
+          hoverY,
+        z,
+      )
+      node.rotation.set(
         Math.sin(pitchPhase) * 0.11,
         side * (0.42 + sideBand * 0.08) + motion.baseYaw + spin,
         Math.cos(rollPhase) * 0.09,
       )
-    })
+    },
   })
 
   return (
     <>
-      {dreamRelics.map(({ index }) => (
+      {dreamRelicItems.map(({ index }) => (
         <DreamRelicNode
           key={index}
           index={index}
           nodeRef={(node) => {
-            dreamRelicRefs.current[index] = node
+            setDreamRelicRef(index, node)
           }}
         />
       ))}

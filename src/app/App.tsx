@@ -28,11 +28,9 @@ function loadLoadingCake() {
   }))
 }
 
-preloadLoadingCakeAssets()
-void loadLoadingCake()
-
 const LoadingCake = lazy(loadLoadingCake)
 
+const desktopRequiredQuery = "(max-width: 900px), (pointer: coarse)"
 const minimumSceneLoadingMs = 3000
 const sceneLoadingFadeMs = 600
 
@@ -135,10 +133,12 @@ function SceneLoading({ isExiting }: SceneLoadingProps) {
 }
 
 function useRequiresDesktop() {
-  const [requiresDesktop, setRequiresDesktop] = useState(false)
+  const [requiresDesktop, setRequiresDesktop] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia(desktopRequiredQuery).matches,
+  )
 
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 900px), (pointer: coarse)")
+    const query = window.matchMedia(desktopRequiredQuery)
 
     function updateRequiresDesktop() {
       setRequiresDesktop(query.matches)
@@ -193,13 +193,22 @@ export function App() {
   const [hasMinimumLoadingElapsed, setHasMinimumLoadingElapsed] = useState(false)
   const [isLoadingVisible, setIsLoadingVisible] = useState(true)
   const [isLoadingExiting, setIsLoadingExiting] = useState(false)
-  const canExitLoading = hasSceneFrame && hasMinimumLoadingElapsed
+  const canExitLoading = (hasSceneFrame || hasSceneError) && hasMinimumLoadingElapsed
   const isSceneReady = !isLoadingVisible
   const canShowGameUi = isSceneReady && !hasSceneError
   const debugMode = useMemo(() => resolveDebugMode(), [])
 
   useKeyboardInput()
   useBackgroundMusic(status)
+
+  useEffect(() => {
+    if (requiresDesktop) {
+      return
+    }
+
+    preloadLoadingCakeAssets()
+    void loadLoadingCake()
+  }, [requiresDesktop])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -247,7 +256,6 @@ export function App() {
         <SceneErrorBoundary
           onError={() => {
             setHasSceneError(true)
-            setHasSceneFrame(true)
           }}
         >
           <Suspense fallback={null}>

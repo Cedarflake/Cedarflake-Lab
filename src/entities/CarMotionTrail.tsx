@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import type { RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
@@ -189,6 +189,14 @@ export function CarMotionTrail({ carXRef, distanceRef, speedRef }: CarMotionTrai
   const samplesRef = useRef<TrailSample[]>([])
   const surfaces = useMemo(() => trailOffsets.map(createTrailSurface), [])
 
+  useEffect(() => {
+    return () => {
+      surfaces.forEach((surface) => {
+        surface.geometry.dispose()
+      })
+    }
+  }, [surfaces])
+
   useFrame(() => {
     const currentDistance = distanceRef.current
     const currentX = carXRef.current
@@ -225,7 +233,7 @@ export function CarMotionTrail({ carXRef, distanceRef, speedRef }: CarMotionTrai
   return (
     <>
       {surfaces.map((surface, index) => (
-        <mesh key={surface.side} frustumCulled={false} renderOrder={20}>
+        <mesh key={`${surface.side}:${index}`} frustumCulled={false} renderOrder={20}>
           <primitive object={surface.geometry} attach="geometry" />
           <meshBasicMaterial
             ref={(material) => {
