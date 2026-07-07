@@ -7,6 +7,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "check": "pnpm -r check",
+    "check:package": "pnpm --filter @igcrystal/focus-orb build && tsc -p apps/demo/package-consumer/tsconfig.json --noEmit",
     "dev": "pnpm --filter @igcrystal/focus-orb-demo dev",
     "preview": "pnpm --filter @igcrystal/focus-orb-demo preview"
   },

@@ -14,6 +14,7 @@ PNPM workspace for the Focus Orb package and demo.
 ```bash
 pnpm install
 pnpm check
+pnpm check:package
 pnpm build
 pnpm dev
 ```

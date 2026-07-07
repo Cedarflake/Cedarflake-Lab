@@ -288,7 +288,6 @@ export const FocusOrb = forwardRef<FocusOrbHost, FocusOrbProps>((props, forwarde
     <button
       {...buttonProps}
       ref={setHostRef}
-      aria-expanded={resolvedActive}
       aria-label={resolvedActive ? ariaLabelActive : ariaLabelInactive}
       aria-pressed={resolvedActive}
       className={mergeClassNames("focus-orb", "focus-orb--button", className)}

@@ -1,6 +1,7 @@
 import type { CSSProperties, ForwardedRef, MutableRefObject } from "react"
 
 import {
+  defaultColors,
   defaultInteractionOptions,
   defaultMotionOptions,
   defaultRenderingOptions,
@@ -65,8 +66,8 @@ export function createHostStyle(
   }
 }
 
-export function hexToRgb(hex: string): Vec3 {
-  const value = hex.replace("#", "")
+export function hexToRgb(hex: string, fallback = "#ffffff"): Vec3 {
+  const value = normalizeHexColor(hex) ?? normalizeHexColor(fallback) ?? "ffffff"
 
   return new Float32Array([
     Number.parseInt(value.slice(0, 2), 16) / 255,
@@ -96,10 +97,10 @@ export function resolveAudioVector(value: FocusOrbAudioVector | undefined, fallb
 
 export function resolveColorVectors(colors: FocusOrbColors): FocusOrbColorVectors {
   return {
-    main: hexToRgb(colors.main),
-    low: hexToRgb(colors.low),
-    mid: hexToRgb(colors.mid),
-    high: hexToRgb(colors.high),
+    main: hexToRgb(colors.main, defaultColors.main),
+    low: hexToRgb(colors.low, defaultColors.low),
+    mid: hexToRgb(colors.mid, defaultColors.mid),
+    high: hexToRgb(colors.high, defaultColors.high),
   }
 }
 
@@ -145,6 +146,20 @@ export function resolveShaderOptions(shader: FocusOrbShaderOptions | undefined):
 
 function toCssSize(value: number | string): string {
   return typeof value === "number" ? `${value}px` : value
+}
+
+function normalizeHexColor(hex: string): string | undefined {
+  const value = hex.trim().replace(/^#/, "")
+
+  if (/^[\da-f]{3}$/i.test(value)) {
+    return [...value].map((char) => `${char}${char}`).join("")
+  }
+
+  if (/^[\da-f]{6}$/i.test(value)) {
+    return value
+  }
+
+  return undefined
 }
 
 function toError(error: unknown): Error {

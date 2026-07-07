@@ -7,6 +7,7 @@ export {
   defaultRenderingOptions as focusOrbDefaultRenderingOptions,
   defaultShaderOptions as focusOrbDefaultShaderOptions,
   defaultTextureSrc as focusOrbDefaultTextureSrc,
+  defaultTextureSrc as focusOrbTextureUrl,
 } from "./config/defaults"
 
 export type {
@@ -30,5 +31,3 @@ export type {
   ResolvedFocusOrbRenderingOptions,
   ResolvedFocusOrbShaderOptions,
 } from "./types/focusOrb"
-
-export { default as focusOrbTextureUrl } from "./assets/noise-watercolor-m3j88gni.webp"

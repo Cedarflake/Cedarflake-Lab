@@ -19,10 +19,13 @@
       "require": "./dist/index.cjs"
     },
     "./style.css": "./dist/style.css",
-    "./noise-watercolor-m3j88gni.webp": "./dist/assets/noise-watercolor-m3j88gni.webp"
+    "./noise-watercolor-m3j88gni.webp": {
+      "types": "./dist/assets/noise-watercolor-m3j88gni.webp.d.ts",
+      "default": "./dist/assets/noise-watercolor-m3j88gni.webp"
+    }
   },
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build": "vite build && tsc -p tsconfig.build.json --emitDeclarationOnly && node scripts/copyAssets.mjs",
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {

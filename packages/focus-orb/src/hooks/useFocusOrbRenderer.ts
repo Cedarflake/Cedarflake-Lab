@@ -10,6 +10,7 @@ import type {
   ResolvedFocusOrbRenderingOptions,
   ResolvedFocusOrbShaderOptions,
 } from "../types/focusOrb"
+import { defaultTextureSrc } from "../config/defaults"
 import { reportError, type FocusOrbColorVectors } from "../utils/focusOrb"
 import { createFocusOrbProgram, getFocusOrbUniforms, loadTexture, type FocusOrbUniforms } from "../renderer/webgl"
 
@@ -111,6 +112,7 @@ export function useFocusOrbRenderer({
     let cssWidth = 1
     let cssHeight = 1
     let texture: WebGLTexture | null = null
+    let loadedTextureSrc = effectRuntime.textureSrc
     let disposed = false
     let hover = 0
     let pressed = 0
@@ -192,12 +194,37 @@ export function useFocusOrbRenderer({
           intensity: runtime.motion.intensity,
           orbScale: runtime.orbScale,
           state: runtime.state,
-          textureSrc: runtime.textureSrc,
+          textureSrc: loadedTextureSrc,
           variant: runtime.variant,
         })
       }
 
       animationFrame = requestAnimationFrame(render)
+    }
+
+    function loadRuntimeTexture(src: string, canFallback: boolean) {
+      loadTexture(gl, src, effectRendering.textureCrossOrigin)
+        .then((loadedTexture) => {
+          if (disposed) {
+            gl.deleteTexture(loadedTexture)
+            return
+          }
+
+          texture = loadedTexture
+          loadedTextureSrc = src
+          animationFrame = requestAnimationFrame(render)
+        })
+        .catch((error: unknown) => {
+          if (disposed) {
+            return
+          }
+
+          reportError(runtimeRef.current.onError, error)
+
+          if (canFallback && src !== defaultTextureSrc) {
+            loadRuntimeTexture(defaultTextureSrc, false)
+          }
+        })
     }
 
     gl.enable(gl.BLEND)
@@ -214,19 +241,7 @@ export function useFocusOrbRenderer({
     resizeObserver?.observe(host)
     window.addEventListener("resize", resizeCanvas)
 
-    loadTexture(gl, effectRuntime.textureSrc, effectRendering.textureCrossOrigin)
-      .then((loadedTexture) => {
-        if (disposed) {
-          gl.deleteTexture(loadedTexture)
-          return
-        }
-
-        texture = loadedTexture
-        animationFrame = requestAnimationFrame(render)
-      })
-      .catch((error: unknown) => {
-        reportError(runtimeRef.current.onError, error)
-      })
+    loadRuntimeTexture(effectRuntime.textureSrc, true)
 
     return () => {
       disposed = true
