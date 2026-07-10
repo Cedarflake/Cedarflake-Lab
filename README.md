@@ -1,4 +1,4 @@
-# cedarflake-lab
+# Cedarflake lab
 
 Personal monorepo for experiments, apps, packages, and local workbench projects.
 
