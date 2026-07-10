@@ -1,6 +1,6 @@
 # cedarflake-lab
 
-Personal monorepo for Cedarflake experiments, apps, packages, and utility tools.
+Personal monorepo for experiments, apps, packages, and utility tools.
 
 ## Workspaces
 
