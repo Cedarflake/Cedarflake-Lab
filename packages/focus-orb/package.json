@@ -2,6 +2,7 @@
   "name": "@igcrystal/focus-orb",
   "version": "0.1.0",
   "description": "Reusable React WebGL focus orb component.",
+  "license": "BSD-3-Clause",
   "type": "module",
   "sideEffects": [
     "**/*.css"

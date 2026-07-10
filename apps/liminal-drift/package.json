@@ -2,6 +2,7 @@
   "name": "liminal-drift",
   "private": true,
   "version": "0.0.0",
+  "license": "BSD-3-Clause",
   "type": "module",
   "engines": {
     "node": ">=22 <25"

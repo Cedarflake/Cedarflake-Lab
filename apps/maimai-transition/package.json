@@ -2,6 +2,7 @@
   "name": "maimai-transition",
   "private": true,
   "version": "0.0.0",
+  "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
     "prepare:backgrounds": "node ./scripts/generate-background-manifest.mjs",
