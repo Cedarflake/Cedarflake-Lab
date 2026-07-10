@@ -1,14 +1,15 @@
-# Custom Bilibili Auto Follow/Unfollow 脚本
+# Bilibili Follow Cycle
 
-用于哔哩哔哩自动循环关注取关 UP 主.
+用于 Bilibili 用户空间页面的关注/取消关注自动化用户脚本，带有运行开关、间隔设置和日志面板。
 
+## 安装
 
->[!tip]
->由于一些原因, 原仓库无法更新, 故新建一个以继续更新
+在 Tampermonkey、Violentmonkey 等用户脚本管理器中导入 `bilibili-follow-cycle.user.js`。
 
-## 功能说明:
+## 注意
 
-1. 具有可视化面板, 方便控制脚本运行.
-2. 能够随时修改关注/取关的时间间隔, 注: 可以使用随机时间间隔, 随机时间间隔是配合使用的.
-3. 具有输出日志, 更方便了解当前脚本运行状态.
-4. 可以打开控制台查看当前时间间隔.
+脚本会自动操作当前登录账号。较短间隔或长期循环可能触发验证码、频率限制或账号风控；运行前请确认平台规则并自行承担账号风险。
+
+## License
+
+GNU Affero General Public License v3.0. See `LICENSE`.
