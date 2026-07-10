@@ -1,0 +1,120 @@
+name: Build and Release EXE
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.2.3 or v1.2.3)'
+        required: true
+        default: '1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository (fetch tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Create venv and install dependencies (PyInstaller + requirements)
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m venv .venv
+          .\.venv\Scripts\pip.exe install --upgrade pip
+          .\.venv\Scripts\pip.exe install pyinstaller
+          if (Test-Path 'requirements.txt') {
+            .\.venv\Scripts\pip.exe install -r requirements.txt
+          } else {
+            Write-Host 'No requirements.txt found, skipping.'
+          }
+          echo "VENV_PY=.venv\\Scripts\\python.exe" >> $env:GITHUB_ENV
+          echo "VENV_PYINSTALLER=.venv\\Scripts\\pyinstaller.exe" >> $env:GITHUB_ENV
+
+      - name: Build with PyInstaller (uses build.spec at repo root)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path $env:VENV_PYINSTALLER)) {
+            Write-Error "pyinstaller not found in venv: $env:VENV_PYINSTALLER"
+            exit 1
+          }
+          & $env:VENV_PYINSTALLER --clean --noconfirm build.spec
+
+      - name: Find built .exe
+        id: find_exe
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path dist -Recurse -Filter *.exe -File | Select-Object -First 1
+          if (-not $exe) {
+            Write-Error "No .exe found in dist directory. Build may have failed."
+            exit 1
+          }
+          echo "exe_path=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+          echo "exe_name=$($exe.Name)" >> $env:GITHUB_OUTPUT
+          Write-Host "Found exe: $($exe.FullName)"
+
+      - name: Compose tag name (prepend v if needed)
+        id: compose_tag
+        shell: pwsh
+        run: |
+          $input = "${{ github.event.inputs.version }}"
+          if ($input.StartsWith('v')) {
+            $tag = $input
+          } else {
+            $tag = "v$input"
+          }
+          echo "TAG=$tag" >> $env:GITHUB_ENV
+          Write-Host "Computed TAG: $tag"
+
+      - name: Ensure tag does not already exist && create & push tag
+        shell: pwsh
+        env:
+          TAG: ${{ env.TAG }}
+        run: |
+          Write-Host "Checking if tag $env:TAG exists on remote..."
+          $exists = git ls-remote --tags origin $env:TAG
+          if ($exists) {
+            Write-Error "Tag $env:TAG already exists on remote. Aborting to avoid overwrite."
+            exit 1
+          }
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a $env:TAG -m "Release $env:TAG"
+          git push origin $env:TAG
+          Write-Host "Tag $env:TAG created and pushed."
+
+      - name: Authenticate gh CLI (using GITHUB_TOKEN) and create release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ env.TAG }}
+        run: |
+          # gh is preinstalled on GH-hosted runners; authenticate with token
+          echo $env:GITHUB_TOKEN | gh auth login --with-token
+          # create a release for the tag
+          gh release create $env:TAG --title "$env:TAG" --notes "Release $env:TAG"
+          Write-Host "Created release $env:TAG"
+
+      - name: Upload EXE as release asset (gh)
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXE_PATH: ${{ steps.find_exe.outputs.exe_path }}
+          TAG: ${{ env.TAG }}
+        run: |
+          if (-not (Test-Path $env:EXE_PATH)) {
+            Write-Error "EXE not found: $env:EXE_PATH"
+            exit 1
+          }
+          gh release upload $env:TAG $env:EXE_PATH
+          Write-Host "Uploaded asset: $env:EXE_PATH"
