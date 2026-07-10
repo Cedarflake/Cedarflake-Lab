@@ -14,8 +14,7 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 | `apps/shika` | Next.js status-page prototype. |
 | `packages/focus-orb` | Reusable Focus Orb React package. |
 | `workbench/*` | Local Python utilities and small projects. |
-| `others/userscripts/bilibili-follow-cycle` | Bilibili browser userscript. |
-| `others/github-actions/star-cycle` | Inactive GitHub Actions experiment. |
+| `others/*` | Others. |
 
 ## Commands
 
