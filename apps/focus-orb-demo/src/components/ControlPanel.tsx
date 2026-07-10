@@ -62,7 +62,6 @@ interface ControlPanelProps {
   onMotionChange: (key: MotionControlKey, value: number) => void
   onPaletteChange: (paletteIndex: number) => void
   onPausedChange: (isPaused: boolean) => void
-  onPreviewModeChange: (previewMode: PreviewMode) => void
   onRenderingChange: (key: RenderingNumberKey, value: number) => void
   onRenderingFlagChange: (key: RenderingBooleanKey, value: boolean) => void
   onShaderChange: (key: ShaderControlKey, value: number) => void
@@ -102,7 +101,6 @@ export function ControlPanel({
   onMotionChange,
   onPaletteChange,
   onPausedChange,
-  onPreviewModeChange,
   onRenderingChange,
   onRenderingFlagChange,
   onShaderChange,
@@ -128,30 +126,6 @@ export function ControlPanel({
 
       <details className="control-disclosure" open>
         <ControlSummary label="Common" onReset={onCommonReset} resetLabel="Reset Common" />
-        <div className="control-group">
-          <span className="group-label">Variant</span>
-          <div className="segmented-control" aria-label="Preview variant">
-            <button
-              aria-pressed={previewMode === "button"}
-              onClick={() => {
-                onPreviewModeChange("button")
-              }}
-              type="button"
-            >
-              Button
-            </button>
-            <button
-              aria-pressed={previewMode === "background"}
-              onClick={() => {
-                onPreviewModeChange("background")
-              }}
-              type="button"
-            >
-              Background
-            </button>
-          </div>
-        </div>
-
         <div className="control-group">
           <span className="group-label">State</span>
           <div className="segmented-control" aria-label="Orb state">
@@ -318,7 +292,7 @@ export function ControlPanel({
             />
             <span>Use manual audio input</span>
           </label>
-          <SliderStack definitions={audioControls} onChange={onAudioChange} values={audio} />
+          <SliderStack definitions={audioControls} disabled={!isManualAudio} onChange={onAudioChange} values={audio} />
         </div>
 
         <div className="control-group">

@@ -53,20 +53,24 @@
 
 .hero-copy {
   display: grid;
+  min-width: 0;
   gap: 10px;
   margin-bottom: 28px;
 }
 
 .hero-copy__summary {
+  min-width: 0;
   max-width: 520px;
   margin: 0;
   color: rgb(16 22 21 / 0.66);
   font-size: 16px;
   line-height: 1.55;
+  overflow-wrap: break-word;
 }
 
 .playground-grid {
   display: grid;
+  min-width: 0;
   grid-template-columns: minmax(0, 1fr) 360px;
   gap: 18px;
   align-items: stretch;
@@ -76,6 +80,7 @@
 .control-panel,
 .code-panel,
 .api-panel {
+  min-width: 0;
   border: 1px solid rgb(16 22 21 / 0.12);
   border-radius: 8px;
   background: rgb(255 255 255 / 0.86);

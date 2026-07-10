@@ -1,0 +1,38 @@
+{
+	"name": "personal_email",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"render:email": "pnpm run build:ts && node dist/scripts/renderEmail.js",
+		"render:all": "pnpm run build:ts && node dist/scripts/renderAll.js",
+		"email": "pnpm run build:ts && node dist/scripts/cli.js",
+		"send:email": "pnpm run build:ts && node dist/scripts/sendEmail.js",
+		"build:ts": "tsc -p tsconfig.json",
+		"typecheck:emails": "tsc -p tsconfig.emails.json --noEmit",
+		"typecheck:scripts": "tsc -p tsconfig.scripts.json --noEmit",
+		"typecheck": "pnpm run typecheck:emails && pnpm run typecheck:scripts",
+		"lint": "eslint --ext .ts,.tsx src scripts",
+		"lint:fix": "eslint --ext .ts,.tsx src scripts --fix"
+	},
+	"dependencies": {
+		"@react-email/components": "1.0.10",
+		"@react-email/render": "^2.0.0",
+		"dotenv": "^16.0.0",
+		"nodemailer": "^6.9.0",
+		"prompts": "^2.4.2",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0"
+	},
+	"devDependencies": {
+		"@types/node": "^18.16.19",
+		"@types/nodemailer": "^7.0.11",
+		"@types/react": "^18.2.21",
+		"@types/react-dom": "^18.2.7",
+		"@typescript-eslint/eslint-plugin": "^8.58.0",
+		"@typescript-eslint/parser": "^8.58.0",
+		"eslint": "^10.1.0",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.1.0"
+	}
+}

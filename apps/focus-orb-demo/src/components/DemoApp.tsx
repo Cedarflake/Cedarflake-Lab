@@ -33,6 +33,8 @@ import { PreviewPanel } from "./PreviewPanel"
 import { SiteHeader } from "./SiteHeader"
 import { UsageDetails } from "./UsageDetails"
 
+const defaultTextureToken = "__focusOrbTextureUrl__"
+
 export function DemoApp() {
   const [previewMode, setPreviewMode] = useState<PreviewMode>("button")
   const [fit, setFit] = useState<FocusOrbFit>("contain")
@@ -79,6 +81,7 @@ export function DemoApp() {
   )
   const codeSample = useMemo(() => {
     const componentName = previewMode === "background" ? "FocusOrbBackground" : "FocusOrbButton"
+    const codeTextureSrc = textureChoice === "default" ? defaultTextureToken : textureSrc
     const sharedProps = {
       audio: resolvedAudio,
       colors,
@@ -88,7 +91,7 @@ export function DemoApp() {
       rendering: resolvedRendering,
       shader,
       state,
-      textureSrc,
+      textureSrc: codeTextureSrc,
     }
     const props =
       previewMode === "background"
@@ -105,7 +108,7 @@ export function DemoApp() {
           }
 
     return `<${componentName}
-  {...${JSON.stringify(props, null, 2).replace(/\n/g, "\n  ")}}
+  {...${JSON.stringify(props, null, 2).replace(/\n/g, "\n  ").replace(`"${defaultTextureToken}"`, "focusOrbTextureUrl")}}
 />`
   }, [
     backgroundOrbScale,
@@ -121,8 +124,18 @@ export function DemoApp() {
     resolvedRendering,
     shader,
     state,
+    textureChoice,
     textureSrc,
   ])
+
+  function selectPreviewMode(nextPreviewMode: PreviewMode) {
+    if (nextPreviewMode === previewMode) {
+      return
+    }
+
+    setPreviewMode(nextPreviewMode)
+    setRenderStatus(null)
+  }
 
   function selectState(nextState: FocusOrbState) {
     setState(nextState)
@@ -171,7 +184,7 @@ export function DemoApp() {
     resetMotionControls(essentialMotionControls)
     setIsActive(true)
     setIsPaused(false)
-    setPreviewMode("button")
+    selectPreviewMode("button")
     setState("speak")
   }
 
@@ -200,13 +213,8 @@ export function DemoApp() {
   }
 
   function resetRenderingControls() {
-    setRendering({
-      antialias: focusOrbDefaultRenderingOptions.antialias,
-      canvasSize: focusOrbDefaultRenderingOptions.canvasSize,
-      maxCanvasSize: focusOrbDefaultRenderingOptions.maxCanvasSize,
-      pixelRatioCap: focusOrbDefaultRenderingOptions.pixelRatioCap,
-      premultipliedAlpha: focusOrbDefaultRenderingOptions.premultipliedAlpha,
-    })
+    setRendering({ ...defaultRenderingControls })
+    setRenderStatus(null)
   }
 
   function resetShaderControls(definitions?: readonly SliderDefinition<ShaderControlKey>[]) {
@@ -240,10 +248,12 @@ export function DemoApp() {
 
   function updateRendering(key: RenderingNumberKey, value: number) {
     setRendering((current) => ({ ...current, [key]: value }))
+    setRenderStatus(null)
   }
 
   function updateRenderingFlag(key: RenderingBooleanKey, value: boolean) {
     setRendering((current) => ({ ...current, [key]: value }))
+    setRenderStatus(null)
   }
 
   function updateShader(key: ShaderControlKey, value: number) {
@@ -273,7 +283,7 @@ export function DemoApp() {
             isPaused={isPaused}
             motion={motion}
             onButtonActiveChange={updateButtonActive}
-            onPreviewModeChange={setPreviewMode}
+            onPreviewModeChange={selectPreviewMode}
             onRenderStatusChange={setRenderStatus}
             previewMode={previewMode}
             rendering={resolvedRendering}
@@ -309,7 +319,6 @@ export function DemoApp() {
             onMotionChange={updateMotion}
             onPaletteChange={setPaletteIndex}
             onPausedChange={setIsPaused}
-            onPreviewModeChange={setPreviewMode}
             onRenderingChange={updateRendering}
             onRenderingFlagChange={updateRenderingFlag}
             onShaderChange={updateShader}

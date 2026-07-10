@@ -56,6 +56,10 @@ export function PreviewPanel({
   state,
   textureSrc,
 }: PreviewPanelProps) {
+  const renderStatusLabel = renderStatus
+    ? `Ready ${renderStatus.canvasWidth} x ${renderStatus.canvasHeight}`
+    : "Loading renderer"
+
   return (
     <section className="preview-panel" aria-label="Live component preview">
       <div className="preview-toolbar">
@@ -79,8 +83,8 @@ export function PreviewPanel({
             Background
           </button>
         </div>
-        <span className="status-pill">
-          {renderStatus ? `${renderStatus.canvasWidth}x${renderStatus.canvasHeight}` : "loading"}
+        <span className="status-pill" aria-live="polite">
+          {renderStatusLabel}
         </span>
       </div>
 

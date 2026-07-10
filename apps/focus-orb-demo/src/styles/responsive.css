@@ -29,12 +29,19 @@
 
   .hero-section,
   .details-section {
+    width: 100%;
+    max-width: 100%;
     padding-right: 18px;
     padding-left: 18px;
   }
 
   .hero-section {
     padding-top: 34px;
+  }
+
+  .hero-copy__summary {
+    width: 100%;
+    max-width: 100%;
   }
 
   h1 {
@@ -52,6 +59,7 @@
 
   .segmented-control {
     width: 100%;
+    grid-auto-columns: minmax(0, 1fr);
   }
 
   .preview-stage {

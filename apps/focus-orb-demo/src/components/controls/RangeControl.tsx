@@ -1,6 +1,7 @@
 import { type ChangeEvent, useId } from "react"
 
 interface RangeControlProps {
+  disabled?: boolean
   label: string
   max: number
   min: number
@@ -9,17 +10,18 @@ interface RangeControlProps {
   value: number
 }
 
-export function RangeControl({ label, max, min, onChange, step, value }: RangeControlProps) {
+export function RangeControl({ disabled = false, label, max, min, onChange, step, value }: RangeControlProps) {
   const id = useId()
   const precision = step >= 1 ? 0 : step < 0.001 ? 4 : step < 0.01 ? 3 : 2
 
   return (
-    <label className="control" htmlFor={id}>
+    <label className="control" data-disabled={disabled ? "true" : undefined} htmlFor={id}>
       <span className="control__row">
         <span className="control__label">{label}</span>
         <span className="control__value">{value.toFixed(precision)}</span>
       </span>
       <input
+        disabled={disabled}
         id={id}
         max={max}
         min={min}
