@@ -23,6 +23,7 @@ const projects: readonly ProjectEntry[] = projectCatalog
 const workbenchCategoryKeys = new Set<string>()
 const workbenchCategoryIds = new Set<string>()
 const referencedCoverSources = new Set<string>()
+const coverProjectBySource = new Map<string, string>()
 const catalogProjectPaths = new Set(projects.map((project) => project.path))
 const catalogCoverageExclusions = new Set(["apps/landing"])
 
@@ -111,6 +112,14 @@ function validateCover(projectId: string, cover: ProjectCover) {
   if (!cover.src.startsWith("/covers/")) {
     errors.push(`Project ${projectId} cover must use the public covers directory: ${cover.src}`)
     return
+  }
+
+  const existingProjectId = coverProjectBySource.get(cover.src)
+
+  if (existingProjectId) {
+    errors.push(`Projects ${existingProjectId} and ${projectId} reuse the same cover: ${cover.src}`)
+  } else {
+    coverProjectBySource.set(cover.src, projectId)
   }
 
   referencedCoverSources.add(cover.src)
