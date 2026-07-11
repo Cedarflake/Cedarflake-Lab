@@ -1,0 +1,40 @@
+.project-card__meta,
+.project-card__footer,
+.catalog-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.project-card__meta,
+.catalog-card__topline {
+  color: #746a75;
+  font-family: var(--font-label);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.project-card__title-row,
+.catalog-card__title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.project-card__title-row svg,
+.catalog-card__title-row svg {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  transition: transform 180ms ease;
+}
+
+.project-card:hover .project-card__title-row svg,
+.catalog-card:hover .catalog-card__title-row svg {
+  transform: translate(4px, -4px);
+}

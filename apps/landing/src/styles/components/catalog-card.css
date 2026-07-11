@@ -1,0 +1,116 @@
+.catalog-carousel {
+  --carousel-slide-width: clamp(24rem, 36vw, 34rem);
+}
+
+.catalog-carousel--sparse {
+  --carousel-slide-width: calc((100% - 18px) / 2);
+}
+
+.catalog-carousel .carousel__track {
+  gap: 18px;
+  padding: 0 0 8px;
+}
+
+.catalog-carousel .carousel__slide {
+  border: 1px solid var(--color-ink);
+}
+
+.catalog-carousel .carousel__viewport:focus-visible {
+  border-radius: 0;
+}
+
+.catalog-carousel .catalog-card {
+  height: 100%;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.catalog-carousel .catalog-card a {
+  height: 100%;
+}
+
+.catalog-card {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.catalog-card a {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  min-height: 360px;
+  padding: clamp(24px, 3vw, 38px);
+  background: rgba(255, 255, 255, 0.42);
+  transition: background 180ms ease;
+}
+
+.catalog-card a:hover {
+  background: var(--color-white);
+}
+
+.catalog-card__title-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-top: 52px;
+}
+
+.catalog-card h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: clamp(26px, 3vw, 42px);
+  font-weight: 740;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.catalog-card p {
+  min-width: 0;
+  max-width: 100%;
+  margin-top: 18px;
+  color: #625965;
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.catalog-card code {
+  margin-top: auto;
+  padding-top: 36px;
+}
+
+.catalog-card--muted a {
+  background: rgba(238, 234, 236, 0.58);
+  color: #625965;
+}
+
+@media (max-width: 1040px) {
+  .catalog-carousel {
+    --carousel-slide-width: clamp(20rem, 68vw, 34rem);
+  }
+
+  .catalog-card a {
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 760px) {
+  .catalog-carousel {
+    --carousel-slide-width: calc(100% - 32px);
+  }
+
+  .catalog-carousel .carousel__track {
+    gap: 14px;
+  }
+}
+
+@media (max-width: 430px) {
+  .catalog-carousel {
+    --carousel-slide-width: calc(100% - 24px);
+  }
+
+  .catalog-card a {
+    min-height: 310px;
+  }
+}
