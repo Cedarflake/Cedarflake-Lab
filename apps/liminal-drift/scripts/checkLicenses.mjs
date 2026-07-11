@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 
-const projectRoot = fileURLToPath(new URL("../", import.meta.url))
+const workspaceRoot = fileURLToPath(new URL("../../../", import.meta.url))
 const blockedLicensePatterns = [
   /\bAGPL\b/i,
   /\bBUSL\b/i,
@@ -13,8 +13,8 @@ const blockedLicensePatterns = [
   /^UNLICENSED$/i,
 ]
 
-const result = spawnSync("pnpm", ["licenses", "list", "--filter", ".", "--json"], {
-  cwd: projectRoot,
+const result = spawnSync("pnpm", ["licenses", "list", "--filter", "liminal-drift", "--json"], {
+  cwd: workspaceRoot,
   encoding: "utf8",
   shell: process.platform === "win32",
 })
