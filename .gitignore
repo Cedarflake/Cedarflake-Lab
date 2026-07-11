@@ -31,6 +31,7 @@ lerna-debug.log*
 
 # Local tooling state
 .codex/
+.codex-write-probe
 .agents/
 .vercel/
 
@@ -56,7 +57,7 @@ test-results/
 .venv/
 venv/
 env/
-uv.lock
+/uv.lock
 __pycache__/
 *.py[cod]
 *$py.class
@@ -73,4 +74,8 @@ workbench/**/logs/
 workbench/**/data/
 workbench/**/downloads/
 workbench/**/temp/
+workbench/**/saves/
 workbench/**/CutImage/
+workbench/ai/nya-ai/conversation_history.json
+workbench/files/scan-img-to/example_config.json
+workbench/media/cut-image/cut-image-output/

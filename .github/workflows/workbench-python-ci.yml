@@ -1,0 +1,147 @@
+name: Workbench Python CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "workbench/**"
+      - "pyproject.toml"
+      - ".github/workflows/workbench-python-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "workbench/**"
+      - "pyproject.toml"
+      - ".github/workflows/workbench-python-ci.yml"
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: "1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            workbench/**/requirements.txt
+            workbench/**/uv.lock
+
+      - name: Lint Python sources
+        run: uvx ruff check workbench
+
+      - name: Check Python formatting
+        run: uvx ruff format --check workbench
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            workbench/**/requirements.txt
+            workbench/**/uv.lock
+          python-version: "3.13"
+
+      - name: Test NyaAI
+        working-directory: workbench/ai/nya-ai
+        run: uv run --frozen python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Test AutoCrawler
+        working-directory: workbench/automation/auto-crawler
+        run: uv run --no-project --with-requirements requirements.txt python -m pytest tests -q
+
+      - name: Test clicker
+        working-directory: workbench/automation/clicker
+        run: uv run --no-project python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Test scan-img-to
+        working-directory: workbench/files/scan-img-to
+        run: uv run --no-project --with pillow python -m unittest -v test_scan_img_to.py
+
+      - name: Test sync-multi
+        working-directory: workbench/files/sync-multi
+        run: uv run --no-project python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Test Gomoku
+        working-directory: workbench/games/gomoku
+        run: uv run --no-project python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Test adjust-gif
+        working-directory: workbench/media/adjust-gif
+        run: uv run --no-project --with pillow python -m unittest -v test_adjust_gif.py
+
+      - name: Test ASCII Art
+        working-directory: workbench/media/ascii-art
+        run: uv run --frozen python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Test cut-image
+        working-directory: workbench/media/cut-image
+        run: uv run --no-project --with pillow python -m unittest -v test_cut_image.py
+
+      - name: Test merge-av
+        working-directory: workbench/media/merge-av
+        run: uv run --no-project python -m unittest -v test_merge_av.py
+
+      - name: Test campus-net
+        working-directory: workbench/network/campus-net
+        run: uv run --frozen python -m unittest discover -s tests -p "test_*.py" -v
+
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: NyaAI
+            directory: workbench/ai/nya-ai
+            arguments: .
+          - name: AutoCrawler
+            directory: workbench/automation/auto-crawler
+            arguments: -r requirements.txt
+          - name: ASCII Art
+            directory: workbench/media/ascii-art
+            arguments: .
+          - name: campus-net
+            directory: workbench/network/campus-net
+            arguments: .
+
+    name: Audit ${{ matrix.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            workbench/**/requirements.txt
+            workbench/**/uv.lock
+
+      - name: Audit dependencies
+        working-directory: ${{ matrix.directory }}
+        run: uvx pip-audit --progress-spinner off ${{ matrix.arguments }}
