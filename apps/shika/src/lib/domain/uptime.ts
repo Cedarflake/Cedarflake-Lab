@@ -1,5 +1,6 @@
 import {SEVERITY_ORDER} from "@/lib/constants/severity";
 import {
+  clampIncidentInterval,
   getIncidentAffectsUptime,
   getIncidentIntervals,
   getIntervalMinutes,
@@ -103,7 +104,11 @@ export function calculateSlaSnapshot({
     uptimePercentage,
     severityMinutes,
     impactedIncidentIds: incidents
-      .filter((incident) => getIncidentAffectsUptime(incident))
+      .filter(
+        (incident) =>
+          getIncidentAffectsUptime(incident) &&
+          clampIncidentInterval(incident, startedAt, endedAt) !== null,
+      )
       .map((incident) => incident.id),
     granuleCount: granules.length,
     healthyGranuleCount: granules.length - degradedGranuleCount,
