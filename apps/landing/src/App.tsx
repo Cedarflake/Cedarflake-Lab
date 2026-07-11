@@ -44,7 +44,7 @@ export function App() {
           <div className="hero__wash hero__wash--two" aria-hidden="true" />
           <p className="hero__eyebrow">{siteConfig.hero.eyebrow}</p>
           <h1 className="hero__title" id="hero-title">
-            <span className="sr-only">{siteConfig.hero.brandAlt}</span>
+            <span className="hero__brand-text sr-only">{siteConfig.hero.brandAlt}</span>
             <span
               className="hero__brand-visual"
               style={{ backgroundImage: `url("${siteConfig.hero.brandImage}")` }}
