@@ -107,12 +107,33 @@ async function failSceneChunk(page) {
  */
 async function assertStartupLoadingSequence(page) {
   await page.locator(".scene-loading").waitFor({ state: "visible" })
-  await assertLoadingCakePreloads(page)
-  await assertLoadingCakeCanvas(page)
+  const startupLayers = await page.evaluate(() => {
+    const isVisible = (element) => {
+      if (!(element instanceof HTMLElement)) return false
 
-  if (await page.getByRole("button", { name: "Start driving" }).isVisible()) {
+      const style = window.getComputedStyle(element)
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        element.getClientRects().length > 0
+      )
+    }
+    const startButton = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent?.trim() === "Start driving",
+    )
+
+    return {
+      isLoadingVisible: isVisible(document.querySelector(".scene-loading")),
+      isStartVisible: isVisible(startButton),
+    }
+  })
+
+  if (startupLayers.isLoadingVisible && startupLayers.isStartVisible) {
     throw new Error("Expected start dialog to stay hidden while scene loading is visible")
   }
+
+  await assertLoadingCakePreloads(page)
+  await assertLoadingCakeCanvas(page)
 
   await page.getByRole("dialog", { name: "Start race" }).waitFor()
   await page.getByRole("button", { name: "Start driving" }).waitFor()
