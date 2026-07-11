@@ -13,6 +13,7 @@ interface DeploymentCopy {
   canonicalPath: string
   deployedPath: string
   label: string
+  mustBeSquare?: boolean
 }
 
 const appRoot = fileURLToPath(new URL("../", import.meta.url))
@@ -249,6 +250,7 @@ const deploymentCopies: readonly DeploymentCopy[] = [
     canonicalPath: resolve(repoRoot, "assets/favicon.png"),
     deployedPath: resolve(publicRoot, "favicon.png"),
     label: "Favicon",
+    mustBeSquare: true,
   },
 ]
 
@@ -261,6 +263,25 @@ for (const copy of deploymentCopies) {
   if (!isFile(copy.deployedPath)) {
     errors.push(`${copy.label} deployment copy is missing: ${copy.deployedPath}`)
     continue
+  }
+
+  const canonicalDimensions = readPngDimensions(copy.canonicalPath)
+  const deployedDimensions = readPngDimensions(copy.deployedPath)
+
+  if (!canonicalDimensions) {
+    errors.push(`${copy.label} canonical asset is not a valid PNG`)
+  }
+
+  if (!deployedDimensions) {
+    errors.push(`${copy.label} deployment copy is not a valid PNG`)
+  }
+
+  if (
+    copy.mustBeSquare &&
+    canonicalDimensions &&
+    canonicalDimensions.width !== canonicalDimensions.height
+  ) {
+    errors.push(`${copy.label} canonical asset must be square`)
   }
 
   if (fileHash(copy.canonicalPath) !== fileHash(copy.deployedPath)) {

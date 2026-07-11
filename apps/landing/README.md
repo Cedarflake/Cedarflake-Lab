@@ -48,7 +48,7 @@ Add new imports to the matching block in `src/styles.css`; do not create cross-l
 
 Validation keeps `src/styles.css` import-only, requires every stylesheet to be imported exactly once, enforces the documented layer order and kebab-case filenames, and rejects nested imports. A misplaced or orphaned style file therefore fails locally instead of silently disappearing from the page.
 
-Repository-wide brand assets remain in the root `assets/` directory. The landing app keeps deployment copies in `public/` so a Vercel project rooted at `apps/landing` is self-contained. Refresh those copies when the canonical assets change.
+Repository-wide brand assets remain in the root `assets/` directory. The landing app keeps deployment copies in `public/` so a Vercel project rooted at `apps/landing` is self-contained. Refresh those copies when the canonical assets change. Validation checks their PNG format and byte identity, and requires the favicon source to remain square.
 
 ## Add a project
 
