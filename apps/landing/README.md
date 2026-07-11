@@ -24,6 +24,8 @@ src/
 
 `projectCatalog` is the source of truth. The page derives section lists, the latest-project carousel, workbench groups, repository links, and header counts from it. Duplicate IDs and paths or invalid update dates fail with a clear error.
 
+Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Workbench categories retain the order declared in `src/config/workbench.ts`, while the projects inside each category follow the shared update order.
+
 `src/styles.css` is an import-only entrypoint, ordered from low-level foundations to page-specific composition. Keep rules in the layer that owns them:
 
 - `foundation/` must not own feature layout. It contains shared values, element defaults, accessibility helpers, and reduced-motion policy.

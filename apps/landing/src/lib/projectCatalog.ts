@@ -88,11 +88,11 @@ export function projectUrl(project: ProjectEntry) {
 
 export const showcaseProjects = catalog.filter(hasShowcase).sort(compareByUpdatedAt)
 
-export const buildingProjects = catalog.filter(isBuildingProject)
+export const buildingProjects = catalog.filter(isBuildingProject).sort(compareByUpdatedAt)
 
-export const workbenchProjects = catalog.filter(isWorkbenchProject)
+export const workbenchProjects = catalog.filter(isWorkbenchProject).sort(compareByUpdatedAt)
 
-export const otherProjects = catalog.filter(isOtherProject)
+export const otherProjects = catalog.filter(isOtherProject).sort(compareByUpdatedAt)
 
 export const workbenchGroups: readonly WorkbenchGroupData[] = siteConfig.workbenchCategories
   .map((category) => ({
