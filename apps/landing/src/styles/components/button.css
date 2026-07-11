@@ -4,8 +4,8 @@
   justify-content: center;
   gap: 10px;
   min-height: 50px;
-  padding: 0 20px;
-  border: 0;
+  padding: 0 19px;
+  border: 1px solid transparent;
   border-radius: 999px;
   corner-shape: var(--corner-shape-smooth);
   box-shadow: inset 0 0 0 1px var(--color-ink);
@@ -36,4 +36,11 @@
 .button--ghost:hover {
   background: var(--color-ink);
   color: var(--color-white);
+}
+
+@media (forced-colors: active) {
+  .button {
+    border-color: currentcolor;
+    box-shadow: none;
+  }
 }

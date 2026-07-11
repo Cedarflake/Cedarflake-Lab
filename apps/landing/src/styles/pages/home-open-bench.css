@@ -51,8 +51,8 @@
   align-items: center;
   justify-content: space-between;
   min-height: 56px;
-  padding: 0 19px;
-  border: 0;
+  padding: 0 18px;
+  border: 1px solid transparent;
   border-radius: 999px;
   corner-shape: var(--corner-shape-smooth);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52);
@@ -75,6 +75,13 @@
 
 .open-bench a:focus-visible {
   outline-color: #ff9b9f;
+}
+
+@media (forced-colors: active) {
+  .open-bench > a {
+    border-color: currentcolor;
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 760px) {
