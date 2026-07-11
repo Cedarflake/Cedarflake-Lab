@@ -162,7 +162,7 @@ function AnimatedFlipText({
 
   return (
     <span
-      className="relative inline-grid whitespace-nowrap align-baseline"
+      className="relative inline-grid align-baseline whitespace-nowrap"
       style={{ perspective: "1000px" }}
     >
       {/* Invisible measurement layer reserves max one-line width and height. */}

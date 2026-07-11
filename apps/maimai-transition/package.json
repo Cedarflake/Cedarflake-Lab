@@ -5,13 +5,15 @@
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
+    "check": "pnpm lint && pnpm typecheck",
     "prepare:backgrounds": "node ./scripts/generate-background-manifest.mjs",
     "predev": "pnpm prepare:backgrounds",
     "prebuild": "pnpm prepare:backgrounds",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

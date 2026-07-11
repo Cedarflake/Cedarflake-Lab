@@ -21,16 +21,14 @@
 .image-theme-tint img,
 .image-theme-tint picture,
 .image-theme-tint video {
-  filter:
-    sepia(0.16) saturate(1.28) hue-rotate(158deg) contrast(0.98) brightness(1.06)
+  filter: sepia(0.16) saturate(1.28) hue-rotate(158deg) contrast(0.98) brightness(1.06)
     drop-shadow(0 0 10px rgb(var(--color-accent-100) / 0.34));
 }
 
 [data-theme="dark"] .image-theme-tint img,
 [data-theme="dark"] .image-theme-tint picture,
 [data-theme="dark"] .image-theme-tint video {
-  filter:
-    sepia(0.18) saturate(1.2) hue-rotate(158deg) contrast(1.02) brightness(0.92)
+  filter: sepia(0.18) saturate(1.2) hue-rotate(158deg) contrast(1.02) brightness(0.92)
     drop-shadow(0 0 12px rgb(var(--color-accent-100) / 0.28));
 }
 

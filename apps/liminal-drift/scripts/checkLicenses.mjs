@@ -13,7 +13,7 @@ const blockedLicensePatterns = [
   /^UNLICENSED$/i,
 ]
 
-const result = spawnSync("pnpm", ["licenses", "list", "--json"], {
+const result = spawnSync("pnpm", ["licenses", "list", "--filter", ".", "--json"], {
   cwd: projectRoot,
   encoding: "utf8",
   shell: process.platform === "win32",

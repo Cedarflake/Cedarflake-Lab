@@ -46,7 +46,7 @@ export function FloatingBar({ className }: { className?: string }) {
   useEffect(() => {
     const s2 = document.querySelector('[data-section-id="section-2"]');
     const se =
-      document.querySelector('[data-section-end-card]') ??
+      document.querySelector("[data-section-end-card]") ??
       document.querySelector('[data-section-id="section-end"]');
     setSection2El(s2);
     setSectionEndEl(se);
@@ -125,7 +125,7 @@ export function FloatingBar({ className }: { className?: string }) {
         <div className="flex items-center justify-center gap-2">
           <div className="flex shrink-0 items-center justify-center gap-1 px-2.5">
             {SHOW_LOGO_ICON}
-            <div className="ms-1 shrink-0 text-base-dense-medium leading-none">
+            <div className="text-base-dense-medium ms-1 shrink-0 leading-none">
               {template.brand.name}
             </div>
           </div>
