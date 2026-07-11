@@ -108,6 +108,7 @@ async function failSceneChunk(page) {
 async function assertStartupLoadingSequence(page) {
   await page.locator(".scene-loading").waitFor({ state: "visible" })
   const startupLayers = await page.evaluate(() => {
+    /** @param {Element | null | undefined} element */
     const isVisible = (element) => {
       if (!(element instanceof HTMLElement)) return false
 
