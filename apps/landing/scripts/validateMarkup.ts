@@ -15,6 +15,7 @@ const describedByTargets = [...html.matchAll(/\saria-describedby="([^"]+)"/g)].f
   (match[1] ?? "").split(" "),
 )
 const imageTags = [...html.matchAll(/<img\b[^>]*>/g)].map((match) => match[0])
+const anchorMatches = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)]
 const buttonMatches = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
 const externalLinkTags = [...html.matchAll(/<a\b[^>]*\starget="_blank"[^>]*>/g)].map(
   (match) => match[0],
@@ -24,6 +25,27 @@ const headingLevels = [...html.matchAll(/<h([1-6])\b/g)].map((match) =>
 )
 const errors: string[] = []
 
+function isValidHref(href: string) {
+  if (!href || href !== href.trim() || href === "#") {
+    return false
+  }
+
+  try {
+    const url = new URL(href, "https://landing.invalid")
+
+    return ["http:", "https:", "mailto:", "tel:"].includes(url.protocol)
+  } catch {
+    return false
+  }
+}
+
+function hasExplicitAccessibleName(attributes: string) {
+  const ariaLabel = attributes.match(/\saria-label="([^"]*)"/)?.[1]?.trim()
+  const labelledBy = attributes.match(/\saria-labelledby="([^"]*)"/)?.[1]?.trim()
+
+  return Boolean(ariaLabel || labelledBy)
+}
+
 function findMissingTargets(targets: readonly string[]) {
   return [...new Set(targets.filter((target) => target && !idSet.has(target)))]
 }
@@ -32,11 +54,26 @@ const missingFragments = findMissingTargets(fragmentTargets)
 const missingLabels = findMissingTargets(labelledByTargets)
 const missingDescriptions = findMissingTargets(describedByTargets)
 const imagesWithoutAlt = imageTags.filter((tag) => !/\salt="[^"]*"/.test(tag))
+const anchorsWithoutHref = anchorMatches.filter((match) => !/\shref="[^"]*"/.test(match[1] ?? ""))
+const linkHrefs = anchorMatches.flatMap((match) => {
+  const href = (match[1] ?? "").match(/\shref="([^"]*)"/)?.[1]
+
+  return href === undefined ? [] : [href]
+})
+const invalidLinkHrefs = [...new Set(linkHrefs.filter((href) => !isValidHref(href)))]
+const unnamedLinks = anchorMatches.filter((match) => {
+  const attributes = match[1] ?? ""
+  const content = match[2] ?? ""
+  const textContent = content.replace(/<[^>]+>/g, "").trim()
+  const hasNamedImage = /<img\b[^>]*\salt="[^"]+"[^>]*>/.test(content)
+
+  return !hasExplicitAccessibleName(attributes) && !textContent && !hasNamedImage
+})
 const unnamedButtons = buttonMatches.filter((match) => {
   const attributes = match[1] ?? ""
   const textContent = (match[2] ?? "").replace(/<[^>]+>/g, "").trim()
 
-  return !/\saria-label="[^"]+"/.test(attributes) && !textContent
+  return !hasExplicitAccessibleName(attributes) && !textContent
 })
 const untypedButtons = buttonMatches.filter(
   (match) => !/\stype="(?:button|submit|reset)"/.test(match[1] ?? ""),
@@ -70,6 +107,18 @@ if (imagesWithoutAlt.length > 0) {
   errors.push(`${imagesWithoutAlt.length} images are missing alt text`)
 }
 
+if (anchorsWithoutHref.length > 0) {
+  errors.push(`${anchorsWithoutHref.length} links are missing href attributes`)
+}
+
+if (invalidLinkHrefs.length > 0) {
+  errors.push(`Invalid link destinations: ${invalidLinkHrefs.join(", ")}`)
+}
+
+if (unnamedLinks.length > 0) {
+  errors.push(`${unnamedLinks.length} links are missing an accessible name`)
+}
+
 if (headingLevels.filter((level) => level === 1).length !== 1) {
   errors.push("Static markup must contain exactly one h1")
 }
@@ -95,5 +144,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Validated static markup with ${ids.length} IDs, ${fragmentTargets.length} fragment links, ${headingLevels.length} headings, ${buttonMatches.length} buttons, and ${imageTags.length} images.`,
+  `Validated static markup with ${ids.length} IDs, ${linkHrefs.length} links, ${fragmentTargets.length} fragment targets, ${headingLevels.length} headings, ${buttonMatches.length} buttons, and ${imageTags.length} images.`,
 )
