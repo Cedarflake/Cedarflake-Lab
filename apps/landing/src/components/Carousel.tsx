@@ -48,6 +48,7 @@ export function Carousel<Project extends CarouselItem>({
   const [isAtEnd, setIsAtEnd] = useState(false)
 
   const lastIndex = items.length - 1
+  const shouldShowControls = showControls && items.length > 1
 
   const syncCarouselState = useCallback(() => {
     const viewport = viewportRef.current
@@ -204,7 +205,7 @@ export function Carousel<Project extends CarouselItem>({
       aria-labelledby={labelledBy}
       aria-roledescription="carousel"
     >
-      {showControls ? (
+      {shouldShowControls ? (
         <div className="carousel__toolbar">
           <p className="carousel__hint">{hint}</p>
           <div className="carousel__controls">
@@ -243,7 +244,7 @@ export function Carousel<Project extends CarouselItem>({
       <div
         className="carousel__viewport"
         ref={viewportRef}
-        tabIndex={0}
+        tabIndex={items.length > 1 ? 0 : -1}
         onKeyDown={handleKeyDown}
         onScroll={handleScroll}
       >
