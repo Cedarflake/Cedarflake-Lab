@@ -31,6 +31,15 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Duplicate project path: ${project.path}`)
     }
 
+    const pathSegments = project.path.split("/")
+
+    if (
+      project.path.includes("\\") ||
+      pathSegments.some((segment) => !segment || segment === "." || segment === "..")
+    ) {
+      throw new Error(`Invalid project path: ${project.id}`)
+    }
+
     if (
       !isoTimestampPattern.test(project.updatedAt) ||
       Number.isNaN(Date.parse(project.updatedAt))
@@ -115,8 +124,12 @@ function compareByUpdatedAt(left: ProjectEntry, right: ProjectEntry) {
   return left.title.localeCompare(right.title, "en")
 }
 
+function encodeUrlPath(path: string) {
+  return path.split("/").map(encodeURIComponent).join("/")
+}
+
 export function projectSourceUrl(path: string) {
-  return `${siteConfig.repositoryUrl}/tree/${siteConfig.repositoryBranch}/${path}`
+  return `${siteConfig.repositoryUrl}/tree/${encodeUrlPath(siteConfig.repositoryBranch)}/${encodeUrlPath(path)}`
 }
 
 export function projectUrl(project: ProjectEntry) {

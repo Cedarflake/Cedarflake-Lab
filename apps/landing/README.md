@@ -51,7 +51,7 @@ Add one entry to [`src/config/projects.ts`](./src/config/projects.ts) and choose
 - `catalog` creates a compact card in `building` or `others`.
 - `workbench` places the project in a configured workbench category.
 
-Every entry needs a unique `id`, repository-relative `path`, `title`, `summary`, `kind`, and ISO `updatedAt`. By default, the card links to that path on GitHub. Add `externalUrl` when the preferred destination is a deployed site.
+Every entry needs a unique `id`, repository-relative `path`, `title`, `summary`, `kind`, and ISO `updatedAt`. Paths use portable forward slashes without empty, `.` or `..` segments; URL-sensitive characters inside a segment are encoded automatically. By default, the card links to that path on GitHub. Add `externalUrl` when the preferred destination is a deployed site.
 
 Add a `showcase` object when the project should appear in the latest-project carousel. A showcase needs a label, tags, and a real cover image with alt text and intrinsic dimensions. Any primary presentation can opt in, and the carousel includes every opted-in project without a fixed card limit. It sorts them by `updatedAt` newest first, with the title as a deterministic tie-breaker.
 
