@@ -48,10 +48,12 @@ export function Carousel<Project extends CarouselItem>({
   const [activeIndex, setActiveIndex] = useState(0)
   const [isAtStart, setIsAtStart] = useState(true)
   const [isAtEnd, setIsAtEnd] = useState(false)
+  const [hasOverflow, setHasOverflow] = useState(items.length > 1)
 
   const lastIndex = items.length - 1
   const hasMultipleItems = items.length > 1
-  const shouldShowControls = showControls && hasMultipleItems
+  const isInteractive = hasMultipleItems && hasOverflow
+  const shouldShowControls = showControls && isInteractive
 
   const syncCarouselState = useCallback(() => {
     const viewport = viewportRef.current
@@ -93,6 +95,7 @@ export function Carousel<Project extends CarouselItem>({
     const maximumScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth)
 
     setActiveIndex((currentIndex) => (currentIndex === nextIndex ? currentIndex : nextIndex))
+    setHasOverflow(maximumScrollLeft > 1)
     setIsAtStart(viewport.scrollLeft <= 1)
     setIsAtEnd(viewport.scrollLeft >= maximumScrollLeft - 1)
   }, [items.length])
@@ -208,7 +211,7 @@ export function Carousel<Project extends CarouselItem>({
       aria-labelledby={labelledBy}
       aria-roledescription="carousel"
     >
-      {hasMultipleItems ? (
+      {isInteractive ? (
         <p className="sr-only" id={instructionsId}>
           Focus this carousel, then use the left and right arrow keys to move between projects.
         </p>
@@ -258,8 +261,8 @@ export function Carousel<Project extends CarouselItem>({
         ref={viewportRef}
         role="group"
         aria-label="Project slides"
-        aria-describedby={hasMultipleItems ? instructionsId : undefined}
-        tabIndex={hasMultipleItems ? 0 : -1}
+        aria-describedby={isInteractive ? instructionsId : undefined}
+        tabIndex={isInteractive ? 0 : -1}
         onKeyDown={handleKeyDown}
         onScroll={handleScroll}
       >
