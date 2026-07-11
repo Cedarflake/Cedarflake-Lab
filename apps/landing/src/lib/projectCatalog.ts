@@ -128,7 +128,9 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
   }
 }
 
-validateProjectCatalog(catalog)
+if (import.meta.env?.DEV) {
+  validateProjectCatalog(catalog)
+}
 
 function hasShowcase(project: ProjectEntry): project is ShowcaseProject {
   return project.showcase !== undefined
