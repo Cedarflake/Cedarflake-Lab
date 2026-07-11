@@ -11,12 +11,18 @@ import type {
 } from "../types/project"
 
 const catalog: readonly ProjectEntry[] = projectCatalog
+const isoTimestampPattern =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/
 
 export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
   const ids = new Set<string>()
   const paths = new Set<string>()
 
   for (const project of projects) {
+    if ([project.id, project.title, project.path, project.summary].some((value) => !value.trim())) {
+      throw new Error(`Missing required project text: ${project.id || "unknown project"}`)
+    }
+
     if (ids.has(project.id)) {
       throw new Error(`Duplicate project id: ${project.id}`)
     }
@@ -25,17 +31,48 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Duplicate project path: ${project.path}`)
     }
 
-    if (Number.isNaN(Date.parse(project.updatedAt))) {
+    if (
+      !isoTimestampPattern.test(project.updatedAt) ||
+      Number.isNaN(Date.parse(project.updatedAt))
+    ) {
       throw new Error(`Invalid project updatedAt: ${project.id}`)
     }
 
-    if (
-      project.showcase &&
-      (!project.showcase.cover.src ||
-        project.showcase.cover.width <= 0 ||
-        project.showcase.cover.height <= 0)
-    ) {
-      throw new Error(`Invalid project cover: ${project.id}`)
+    if (project.externalUrl) {
+      try {
+        const externalUrl = new URL(project.externalUrl)
+
+        if (externalUrl.protocol !== "http:" && externalUrl.protocol !== "https:") {
+          throw new Error("Unsupported protocol")
+        }
+      } catch {
+        throw new Error(`Invalid project externalUrl: ${project.id}`)
+      }
+    }
+
+    if (project.showcase) {
+      const { cover, label, tags } = project.showcase
+      const normalizedTags = tags.map((tag) => tag.trim().toLowerCase())
+
+      if (
+        !label.trim() ||
+        !cover.src.trim() ||
+        !cover.alt.trim() ||
+        !Number.isInteger(cover.width) ||
+        !Number.isInteger(cover.height) ||
+        cover.width <= 0 ||
+        cover.height <= 0
+      ) {
+        throw new Error(`Invalid project showcase: ${project.id}`)
+      }
+
+      if (
+        normalizedTags.length === 0 ||
+        normalizedTags.some((tag) => !tag) ||
+        new Set(normalizedTags).size !== normalizedTags.length
+      ) {
+        throw new Error(`Invalid project showcase tags: ${project.id}`)
+      }
     }
 
     ids.add(project.id)
