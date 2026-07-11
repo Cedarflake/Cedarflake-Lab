@@ -41,6 +41,7 @@
   align-items: center;
   gap: 10px;
   width: max-content;
+  min-height: 44px;
   font-family: var(--font-label);
   font-size: 11px;
   font-weight: 700;
@@ -59,6 +60,13 @@
   gap: 32px;
   font-size: 13px;
   font-weight: 650;
+}
+
+.site-header nav a,
+.site-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .site-header nav a,
