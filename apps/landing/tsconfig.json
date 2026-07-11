@@ -1,6 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "types": ["node", "vite/client"]
   },
   "include": ["scripts", "src", "vite.config.ts"]
