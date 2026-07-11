@@ -79,6 +79,7 @@ function validateCover(projectId: string, cover: ProjectCover) {
   }
 
   if (extname(coverPath).toLowerCase() !== ".png") {
+    errors.push(`Project ${projectId} cover must be a PNG: ${cover.src}`)
     return
   }
 
