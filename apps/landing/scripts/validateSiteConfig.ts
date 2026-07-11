@@ -2,12 +2,13 @@ import { siteConfig } from "../src/config/site"
 import type { ProjectKind } from "../src/types/project"
 
 const errors: string[] = []
-const expectedProjectKinds = [
-  "app",
-  "package",
-  "workbench",
-  "other",
-] as const satisfies readonly ProjectKind[]
+const projectKindCoverage = {
+  app: true,
+  package: true,
+  workbench: true,
+  other: true,
+} satisfies Record<ProjectKind, true>
+const expectedProjectKinds = Object.keys(projectKindCoverage) as ProjectKind[]
 
 function validateText(value: unknown, path: string) {
   if (typeof value === "string") {
