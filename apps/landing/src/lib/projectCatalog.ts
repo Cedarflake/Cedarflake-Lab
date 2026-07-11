@@ -177,13 +177,21 @@ export function projectUrl(project: ProjectEntry) {
   return project.externalUrl ?? projectSourceUrl(project.path)
 }
 
-export const showcaseProjects = catalog.filter(hasShowcase).sort(compareByUpdatedAt)
+export const showcaseProjects: readonly ShowcaseProject[] = catalog
+  .filter(hasShowcase)
+  .sort(compareByUpdatedAt)
 
-export const buildingProjects = catalog.filter(isBuildingProject).sort(compareByUpdatedAt)
+export const buildingProjects: readonly CatalogProject[] = catalog
+  .filter(isBuildingProject)
+  .sort(compareByUpdatedAt)
 
-export const workbenchProjects = catalog.filter(isWorkbenchProject).sort(compareByUpdatedAt)
+export const workbenchProjects: readonly WorkbenchProject[] = catalog
+  .filter(isWorkbenchProject)
+  .sort(compareByUpdatedAt)
 
-export const otherProjects = catalog.filter(isOtherProject).sort(compareByUpdatedAt)
+export const otherProjects: readonly CatalogProject[] = catalog
+  .filter(isOtherProject)
+  .sort(compareByUpdatedAt)
 
 export const workbenchGroups: readonly WorkbenchGroupData[] = siteConfig.workbenchCategories
   .map((category) => ({
@@ -193,7 +201,7 @@ export const workbenchGroups: readonly WorkbenchGroupData[] = siteConfig.workben
   }))
   .filter((group) => group.items.length > 0)
 
-export const labStats = siteConfig.stats.map(({ kind, label }) => ({
+export const labStats: readonly LabStat[] = siteConfig.stats.map(({ kind, label }) => ({
   value: countProjects(kind),
   label,
-})) satisfies readonly LabStat[]
+}))
