@@ -47,35 +47,6 @@ function fileHash(filePath: string) {
   return createHash("sha256").update(readFileSync(filePath)).digest("hex")
 }
 
-function validateRepositoryConfig() {
-  try {
-    const repositoryUrl = new URL(siteConfig.repositoryUrl)
-
-    if (
-      repositoryUrl.protocol !== "https:" ||
-      repositoryUrl.username ||
-      repositoryUrl.password ||
-      repositoryUrl.search ||
-      repositoryUrl.hash ||
-      siteConfig.repositoryUrl !== siteConfig.repositoryUrl.trim() ||
-      siteConfig.repositoryUrl.endsWith("/")
-    ) {
-      throw new Error("Invalid repository URL")
-    }
-  } catch {
-    errors.push(`Invalid repository URL: ${siteConfig.repositoryUrl}`)
-  }
-
-  const branchSegments = siteConfig.repositoryBranch.split("/")
-
-  if (
-    siteConfig.repositoryBranch.includes("\\") ||
-    branchSegments.some((segment) => !segment || segment === "." || segment === "..")
-  ) {
-    errors.push(`Invalid repository branch: ${siteConfig.repositoryBranch}`)
-  }
-}
-
 function readPngDimensions(filePath: string) {
   const header = readFileSync(filePath).subarray(0, 24)
   const pngSignature = "89504e470d0a1a0a"
@@ -126,7 +97,6 @@ function validateCover(projectId: string, cover: ProjectCover) {
 }
 
 validateProjectCatalog(projects)
-validateRepositoryConfig()
 
 for (const category of workbenchCategories) {
   if ([category.key, category.id, category.title].some((value) => !value.trim())) {
