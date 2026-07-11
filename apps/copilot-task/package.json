@@ -4,7 +4,9 @@
   "version": "0.0.1",
   "license": "BSD-3-Clause",
   "type": "module",
+  "packageManager": "pnpm@11.7.0",
   "scripts": {
+    "check": "pnpm run format:check && pnpm lint && pnpm typecheck",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --cache --cache-location .cache/eslint",

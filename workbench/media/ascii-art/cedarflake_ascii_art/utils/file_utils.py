@@ -16,22 +16,31 @@ def is_valid_file(file_path, valid_extensions):
 
 
 def get_next_available_filename(directory, base_name="output", extension=".txt"):
-    """生成唯一文件名。"""
+    """原子预留并返回下一个可用的编号文件名。"""
     try:
         os.makedirs(directory, exist_ok=True)
-        existing_files = [
-            f for f in os.listdir(directory) if f.startswith(base_name) and f.endswith(extension)
-        ]
-        next_index = len(existing_files) + 1
-        file_path = os.path.join(directory, f"{base_name}_{next_index:03d}{extension}")
-        return file_path
+        next_index = 1
+        while True:
+            file_path = os.path.join(directory, f"{base_name}_{next_index:03d}{extension}")
+            try:
+                file_descriptor = os.open(
+                    file_path,
+                    os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+                )
+            except FileExistsError:
+                next_index += 1
+                continue
+
+            os.close(file_descriptor)
+            return file_path
     except Exception as e:
         logger.error(f"生成文件名失败：{e}")
-        raise e
+        raise
 
 
 def save_to_file(content, directory, filename_prefix="output", extension=".txt"):
     """将内容保存到指定目录和带编号的文件。"""
+    file_path = None
     try:
         file_path = get_next_available_filename(
             directory, base_name=filename_prefix, extension=extension
@@ -41,7 +50,14 @@ def save_to_file(content, directory, filename_prefix="output", extension=".txt")
         logger.info(f"内容已保存至：{file_path}")
     except Exception as e:
         logger.error(f"保存文件失败：{e}")
-        raise e
+        if file_path:
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
+        raise
+
+    return file_path
 
 
 def resource_path(relative_path):

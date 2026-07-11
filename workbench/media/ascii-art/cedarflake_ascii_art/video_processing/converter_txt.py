@@ -3,7 +3,6 @@ import os
 import cv2
 
 from cedarflake_ascii_art.config import config, logger
-from cedarflake_ascii_art.playback import player
 
 ASCII_CHARS = "@%#*+=-:. "
 
@@ -40,47 +39,47 @@ def video_to_ascii(video_path, output_dir=None, new_width=100):
     if output_dir is None:
         output_dir = config.get("output_directories").get("video", "./output/video")
 
-    # 提取视频名称并创建输出目录
     video_name = os.path.splitext(os.path.basename(video_path))[0]
     video_output_dir = os.path.join(output_dir, video_name)
-    os.makedirs(video_output_dir, exist_ok=True)
 
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        logger.error(f"无法打开视频文件：{video_path}")
-        return
+        cap.release()
+        message = f"无法打开视频文件：{video_path}"
+        logger.error(message)
+        raise RuntimeError(message)
+
+    os.makedirs(video_output_dir, exist_ok=True)
 
     frame_index = 0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     logger.info(f"开始转换视频 {video_path}，总帧数：{total_frames}")
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break  # 视频结束
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        ascii_art = frame_to_ascii(frame, new_width)
-        frame_filename = f"frame_{frame_index:06d}.txt"
-        frame_path = os.path.join(video_output_dir, frame_filename)
-        try:
+            ascii_art = frame_to_ascii(frame, new_width)
+            frame_filename = f"frame_{frame_index:06d}.txt"
+            frame_path = os.path.join(video_output_dir, frame_filename)
             with open(frame_path, "w", encoding="utf-8") as f:
                 f.write(ascii_art)
             logger.debug(f"保存帧 {frame_index}：{frame_path}")
-        except Exception as e:
-            logger.error(f"保存帧 {frame_index} 失败：{e}")
 
-        logger.info(f"处理帧 {frame_index + 1}/{total_frames}")
-        frame_index += 1
+            logger.info(f"处理帧 {frame_index + 1}/{total_frames}")
+            frame_index += 1
+    finally:
+        cap.release()
 
-    cap.release()
+    if frame_index == 0:
+        message = f"视频未解码出任何帧：{video_path}"
+        logger.error(message)
+        raise RuntimeError(message)
+
     logger.info(f"视频转换完成！所有帧已保存至：{video_output_dir}")
-
-    # 自动调用播放模块
-    try:
-        player.play_ascii_video(video_output_dir, fps=config.get_default_setting("video_fps"))
-        logger.info("ASCII视频播放已启动。")
-    except Exception as e:
-        logger.error(f"启动播放模块失败：{e}")
+    return video_output_dir
 
 
 # 如果直接运行该模块，允许用户输入视频路径和宽度

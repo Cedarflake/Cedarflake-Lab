@@ -3,9 +3,11 @@ from __future__ import annotations
 import bisect
 import json
 import logging
+import os
+import tempfile
+import threading
 import time
 from collections.abc import Generator
-from functools import lru_cache
 from pathlib import Path
 
 from openai import APIError, OpenAI
@@ -13,6 +15,7 @@ from openai import APIError, OpenAI
 from .utils import get_float, get_int, get_str, get_str_list
 
 logger = logging.getLogger(__name__)
+VALID_HISTORY_ROLES = {"system", "user", "assistant"}
 
 
 class OpenAICompatibleChat:
@@ -34,6 +37,7 @@ class OpenAICompatibleChat:
         self.relationship_levels = self._get_relationship_levels()
         self.relationship_tones = get_str_list(config, "RELATIONSHIP_TONES")
         self.relationship_emojis = get_str_list(config, "RELATIONSHIP_EMOJIS")
+        self._history_lock = threading.RLock()
         self.client = OpenAI(
             api_key=api_key,
             base_url=self.base_url,
@@ -51,31 +55,77 @@ class OpenAICompatibleChat:
         return [int(value) for value in values]
 
     def load_history(self) -> list[dict[str, object]]:
-        if not self.history_file.exists():
-            return []
+        with self._history_lock:
+            if not self.history_file.exists():
+                return []
 
-        try:
-            history = json.loads(self.history_file.read_text(encoding="utf-8"))
-        except Exception as error:
-            logger.warning("加载历史记录失败：%s", error)
-            return []
+            try:
+                history = json.loads(self.history_file.read_text(encoding="utf-8"))
+            except Exception as error:
+                logger.warning("加载历史记录失败：%s", error)
+                return []
 
-        if isinstance(history, list):
-            return [item for item in history if isinstance(item, dict)]
-        return []
+            if not isinstance(history, list):
+                return []
+
+            validated_history = []
+            for item in history:
+                if not isinstance(item, dict):
+                    continue
+                role = item.get("role")
+                content = item.get("content")
+                if (
+                    not isinstance(role, str)
+                    or role not in VALID_HISTORY_ROLES
+                    or not isinstance(content, str)
+                ):
+                    continue
+                validated_history.append({"role": role, "content": content})
+            return validated_history
 
     def save_history(self) -> None:
-        try:
-            self.history_file.write_text(
-                json.dumps(self.conversation_history, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
-        except Exception as error:
-            logger.exception("保存历史记录失败：%s", error)
+        with self._history_lock:
+            self.history_file.parent.mkdir(parents=True, exist_ok=True)
+            temp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                    mode="w",
+                    encoding="utf-8",
+                    dir=self.history_file.parent,
+                    prefix=f".{self.history_file.name}.",
+                    suffix=".tmp",
+                    delete=False,
+                ) as temp_file:
+                    temp_path = Path(temp_file.name)
+                    json.dump(
+                        self.conversation_history,
+                        temp_file,
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                    temp_file.flush()
+                    os.fsync(temp_file.fileno())
+                os.replace(temp_path, self.history_file)
+                temp_path = None
+            except Exception as error:
+                logger.exception("保存历史记录失败：%s", error)
+                raise
+            finally:
+                if temp_path is not None:
+                    try:
+                        temp_path.unlink()
+                    except FileNotFoundError:
+                        pass
 
     def clear_history(self) -> None:
-        self.conversation_history = [{"role": "system", "content": self.system_prompt}]
-        self.save_history()
+        with self._history_lock:
+            previous_history = self.conversation_history
+            self.conversation_history = [{"role": "system", "content": self.system_prompt}]
+            try:
+                self.save_history()
+            except Exception:
+                self.conversation_history = previous_history
+                raise
         logger.info("历史记录已清空。")
 
     def get_relationship_tone_and_emoji(self, relationship_level: int) -> tuple[str, str]:
@@ -100,8 +150,20 @@ class OpenAICompatibleChat:
         return prompt
 
     def add_message(self, role: str, message: str) -> None:
-        self.conversation_history.append({"role": role, "content": message})
-        self.save_history()
+        if (
+            not isinstance(role, str)
+            or role not in VALID_HISTORY_ROLES
+            or not isinstance(message, str)
+        ):
+            raise ValueError("history message must contain a valid role and string content")
+
+        with self._history_lock:
+            self.conversation_history.append({"role": role, "content": message})
+            try:
+                self.save_history()
+            except Exception:
+                self.conversation_history.pop()
+                raise
 
     def create_completion(
         self,
@@ -159,30 +221,60 @@ class OpenAICompatibleChat:
         stream: bool = False,
     ) -> str | Generator[str, None, None]:
         prompt = self.generate_prompt(message, relationship_level, context_info)
-        self.add_message("user", prompt)
-        response = self.create_completion(self.conversation_history, stream=stream)
         if stream:
-            return self._stream_response(response, message)
+            return self._stream_response(prompt, message)
 
-        reply = response.choices[0].message.content.strip()
-        self.add_message("assistant", reply)
+        with self._history_lock:
+            transaction_start = len(self.conversation_history)
+            self.conversation_history.append({"role": "user", "content": prompt})
+            try:
+                response = self.create_completion(
+                    [item.copy() for item in self.conversation_history],
+                    stream=False,
+                )
+                reply = response.choices[0].message.content.strip()
+                self._commit_reply(transaction_start, reply)
+            except Exception:
+                del self.conversation_history[transaction_start:]
+                raise
+
         logger.info("User: %s -> Assistant: %s...", message, reply[:50])
         return reply
 
-    def _stream_response(self, response: object, message: str) -> Generator[str, None, None]:
-        final_content = ""
+    def _commit_reply(self, transaction_start: int, reply: str) -> None:
+        self.conversation_history.append({"role": "assistant", "content": reply})
         try:
-            for chunk in response:
-                delta = chunk.choices[0].delta
-                content = getattr(delta, "content", None)
-                if content:
-                    final_content += content
-                    yield content
-        finally:
-            self.add_message("assistant", final_content)
-            logger.debug("User: %s -> Assistant: %s...", message, final_content[:200])
+            self.save_history()
+        except Exception:
+            del self.conversation_history[transaction_start:]
+            raise
 
-    @lru_cache(maxsize=100)
+    def _stream_response(self, prompt: str, message: str) -> Generator[str, None, None]:
+        with self._history_lock:
+            transaction_start = len(self.conversation_history)
+            self.conversation_history.append({"role": "user", "content": prompt})
+            final_content = ""
+            try:
+                response = self.create_completion(
+                    [item.copy() for item in self.conversation_history],
+                    stream=True,
+                )
+                for chunk in response:
+                    delta = chunk.choices[0].delta
+                    content = getattr(delta, "content", None)
+                    if content:
+                        final_content += content
+                        yield content
+            except GeneratorExit:
+                self._commit_reply(transaction_start, final_content)
+                raise
+            except BaseException:
+                del self.conversation_history[transaction_start:]
+                raise
+            else:
+                self._commit_reply(transaction_start, final_content)
+                logger.debug("User: %s -> Assistant: %s...", message, final_content[:200])
+
     def get_cached_response(
         self, message: str, relationship_level: int, context_info: str = ""
     ) -> str:

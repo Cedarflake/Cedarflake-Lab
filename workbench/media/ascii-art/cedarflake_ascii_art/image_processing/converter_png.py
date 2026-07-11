@@ -19,7 +19,7 @@ def grayify(image):
 
 def pixels_to_ascii(image):
     """将每个像素映射到对应的ASCII字符(用于单张图片)。"""
-    pixels = image.getdata()
+    pixels = image.get_flattened_data()
     ascii_str = "".join([ASCII_CHARS[min(pixel // 25, len(ASCII_CHARS) - 1)] for pixel in pixels])
     return ascii_str
 
@@ -70,8 +70,9 @@ def save_ascii_to_png(
     if output_directory is None:
         output_directory = config.get("output_directories").get("image_png", "./output/image/png")
     if not ascii_art.strip():
-        logger.error("ASCII字符内容为空，无法生成图片。")
-        return
+        message = "ASCII字符内容为空，无法生成图片。"
+        logger.error(message)
+        raise ValueError(message)
 
     # 设置字体大小
     font_size = 12
@@ -104,16 +105,25 @@ def save_ascii_to_png(
         draw.text((0, y), line, font=font, fill="black")
         y += char_height
 
-    # 保存图片
+    output_path = None
     try:
         output_path = get_next_available_filename(
             output_directory, base_name="ascii_art", extension=".png"
         )
-        os.makedirs(output_directory, exist_ok=True)
         img.save(output_path, format="PNG")
         logger.info(f"ASCII字符画已保存为PNG图片：{output_path}")
     except Exception as e:
         logger.error(f"保存PNG图片时发生错误：{e}")
+        if output_path:
+            try:
+                os.remove(output_path)
+            except OSError:
+                pass
+        raise
+    finally:
+        img.close()
+
+    return output_path
 
 
 def convert_and_save(image_path, target_width=300):
@@ -123,11 +133,14 @@ def convert_and_save(image_path, target_width=300):
     ascii_art, corrected_width, corrected_height = convert_image_to_ascii(
         image_path, target_width=target_width
     )
-    if ascii_art:
-        save_ascii_to_png(ascii_art, corrected_width, corrected_height)
-        logger.info("ASCII PNG生成完成。")
-    else:
-        logger.error("ASCII字符转换失败。")
+    if not ascii_art:
+        message = "ASCII字符转换失败。"
+        logger.error(message)
+        raise RuntimeError(message)
+
+    output_path = save_ascii_to_png(ascii_art, corrected_width, corrected_height)
+    logger.info("ASCII PNG生成完成。")
+    return output_path
 
 
 # --------------------- 以下为从 converter_video.py 移动过来的函数 --------------------- #
@@ -161,7 +174,7 @@ def load_picture(filename):
     try:
         img = Image.open(clean_filename).convert("L")
         x, y = img.size
-        pixels = list(img.getdata())
+        pixels = list(img.get_flattened_data())
         img.close()
         logger.info(f"已加载并转换图片为灰度图：{clean_filename}")
         return pixels, x, y

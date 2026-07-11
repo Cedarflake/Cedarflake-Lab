@@ -3,9 +3,27 @@ name: CodeQL
 on:
   workflow_dispatch:
   pull_request:
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "others/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.base.json"
+      - ".github/workflows/codeql.yml"
   push:
     branches:
       - main
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "others/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "tsconfig.base.json"
+      - ".github/workflows/codeql.yml"
   schedule:
     - cron: "24 3 * * 1"
 
@@ -30,17 +48,10 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
+          build-mode: none
           languages: javascript-typescript
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4
         with:
-          output: codeql-results
-          upload: never
-
-      - name: Upload CodeQL SARIF
-        uses: actions/upload-artifact@v7
-        with:
-          name: codeql-sarif
-          path: codeql-results/
-          if-no-files-found: error
+          category: "/language:javascript-typescript"

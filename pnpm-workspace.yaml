@@ -8,6 +8,7 @@ minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 
 overrides:
+  postcss: 8.5.16
   use-sync-external-store: 1.4.0
 
 allowBuilds:

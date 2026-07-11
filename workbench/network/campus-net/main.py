@@ -72,6 +72,9 @@ def build_runtime_from_config(cfg: dict[str, Any]):
     if not isinstance(user_cookies, dict):
         raise TypeError("cookies 必须是 JSON 对象")
     cookies = {**default_cookies, **user_cookies}
+    user_group = str(cfg.get("user_group", "")).strip()
+    if user_group and "EPORTAL_USER_GROUP" not in user_cookies:
+        cookies["EPORTAL_USER_GROUP"] = user_group
 
     configured_headers = cfg.get("headers", {})
     if not isinstance(configured_headers, dict):
@@ -93,6 +96,12 @@ def build_runtime_from_config(cfg: dict[str, Any]):
     return login_url, portal_url, connectivity_check_url, headers, cookies, service
 
 
+def is_network_available(status, response_text, redirect_location, portal_host):
+    if portal_host in response_text or portal_host in redirect_location:
+        return False
+    return 200 <= status < 400
+
+
 async def check_network_status(session, connectivity_check_url, portal_host):
     try:
         timeout = aiohttp.ClientTimeout(total=8)
@@ -101,10 +110,11 @@ async def check_network_status(session, connectivity_check_url, portal_host):
             allow_redirects=False,
             timeout=timeout,
         ) as response:
+            status = response.status
             response_text = await response.text(errors="ignore")
             redirect_location = response.headers.get("Location", "")
 
-        if portal_host in response_text or portal_host in redirect_location:
+        if not is_network_available(status, response_text, redirect_location, portal_host):
             print("未连接校园网，需要登录")
             return False
         print("已连接校园网，无需登录")

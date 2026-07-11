@@ -12,7 +12,7 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 | `apps/maimai-transition` | Vite/React transition experience. |
 | `apps/personal-email` | React Email templates and mail scripts. |
 | `apps/shika` | Next.js status-page prototype. |
-| `packages/focus-orb` | Reusable Focus Orb React package. |
+| `packages/*` | Reusable frontend packages. |
 | `workbench/*` | Local Python utilities and small projects. |
 | `others/*` | Others. |
 

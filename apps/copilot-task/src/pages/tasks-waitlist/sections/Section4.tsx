@@ -101,8 +101,7 @@ function WideCarousel({ scrollYProgress }: WideCarouselProps) {
   ];
 
   const imageSrcs = useMemo(
-    () =>
-      template.carousel.images.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
+    () => template.carousel.images.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
     [template.carousel.images, theme],
   );
 
@@ -456,8 +455,7 @@ function NarrowCarousel() {
   const theme = useThemeValue();
 
   const imageSrcs = useMemo(
-    () =>
-      template.carousel.images.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
+    () => template.carousel.images.map((img) => (theme === "dark" ? img.srcDark : img.srcLight)),
     [template.carousel.images, theme],
   );
 

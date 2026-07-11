@@ -26,7 +26,11 @@ import { getDiagonalIndex, getMaxDiagonalIndex } from "../data/rolodexItems";
 import { useRolodexAnimation } from "../hooks/useRolodexAnimation";
 import { useOverflowDetection } from "../hooks/useOverflowDetection";
 import { useScrollProgress } from "../hooks/useScrollProgress";
-import type { RolodexItem as RolodexItemData, RolodexLayout, RolodexItemWithStagger } from "../types";
+import type {
+  RolodexItem as RolodexItemData,
+  RolodexLayout,
+  RolodexItemWithStagger,
+} from "../types";
 
 const CONTENT_TEXT_CLASSES = cn(
   "font-display-agent",

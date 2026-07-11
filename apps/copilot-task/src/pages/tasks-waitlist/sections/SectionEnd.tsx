@@ -54,10 +54,7 @@ export function SectionEnd() {
 
             {/* Logo */}
             <div className="relative w-full px-4">
-              <CopilotTasksLogo
-                className="h-auto w-full"
-                title={template.brand.name}
-              />
+              <CopilotTasksLogo className="h-auto w-full" title={template.brand.name} />
             </div>
 
             {/* CTA */}
