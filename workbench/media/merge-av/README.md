@@ -9,7 +9,7 @@
 ## 运行
 
 ```powershell
-python merge_av.py --video input.mp4 --audio input.mp3 --output output.mp4
+python merge_av.py input.mp4 input.mp3 output.mp4
 ```
 
-脚本也支持交互模式，按提示输入路径即可。
+脚本也支持 `python merge_av.py --interactive` 交互模式，按提示输入路径即可。

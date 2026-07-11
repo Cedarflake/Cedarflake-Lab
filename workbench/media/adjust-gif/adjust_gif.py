@@ -1,7 +1,7 @@
 import atexit
 import os
 import signal
-import sys
+import tempfile
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
@@ -21,6 +21,9 @@ class GifSpeedAdjuster:
         self.processing_thread: Optional[threading.Thread] = None
         self.should_cancel = False
         self._shutdown_initiated = False
+        self._temp_output_path: Optional[str] = None
+        self._processing_state_lock = threading.Lock()
+        self._output_committed = False
 
         # 注册清理函数
         atexit.register(self._cleanup_on_exit)
@@ -48,8 +51,48 @@ class GifSpeedAdjuster:
             # 在某些环境下可能无法设置信号处理器
             pass
 
+    def _begin_processing_state(self):
+        """重置一次处理任务的取消和提交状态"""
+        with self._processing_state_lock:
+            self.should_cancel = False
+            self._output_committed = False
+
+    def _request_cancel(self) -> bool:
+        """在线性化提交前请求取消"""
+        with self._processing_state_lock:
+            if self._output_committed:
+                return False
+            self.should_cancel = True
+            return True
+
+    def _is_cancel_requested(self) -> bool:
+        with self._processing_state_lock:
+            return self.should_cancel
+
+    def _is_output_committed(self) -> bool:
+        with self._processing_state_lock:
+            return self._output_committed
+
+    def _commit_temp_output(self, temp_output_path: str, output_path: str):
+        """以取消状态和原子替换为同一个提交临界区"""
+        with self._processing_state_lock:
+            if self.should_cancel:
+                raise InterruptedError("用户取消操作")
+            os.replace(temp_output_path, output_path)
+            self._output_committed = True
+
+    def _schedule_ui(self, callback, *args):
+        """仅在界面仍存活时调度主线程更新"""
+        if self._shutdown_initiated:
+            return
+
+        try:
+            self.root.after(0, callback, *args)
+        except (RuntimeError, tk.TclError):
+            pass
+
     def _graceful_shutdown(self):
-        """优雅关闭应用程序"""
+        """等待工作线程完成清理后关闭应用程序"""
         if self._shutdown_initiated:
             return
 
@@ -57,13 +100,23 @@ class GifSpeedAdjuster:
 
         if self.is_processing:
             print("正在取消处理任务...")
-            self.should_cancel = True
+            self._request_cancel()
             self.status_label.config(text="正在关闭...")
 
-            # 等待处理线程结束
-            if self.processing_thread and self.processing_thread.is_alive():
-                self.processing_thread.join(timeout=2.0)
+        self._wait_for_processing_before_shutdown()
 
+    def _wait_for_processing_before_shutdown(self):
+        if self.processing_thread and self.processing_thread.is_alive():
+            try:
+                self.root.after(50, self._wait_for_processing_before_shutdown)
+            except (RuntimeError, tk.TclError):
+                self.processing_thread.join()
+                self._finish_shutdown()
+            return
+
+        self._finish_shutdown()
+
+    def _finish_shutdown(self):
         self._cleanup_resources()
 
         try:
@@ -78,21 +131,27 @@ class GifSpeedAdjuster:
 
     def _cleanup_resources(self):
         """清理资源"""
+        self._cleanup_temp_output(getattr(self, "_temp_output_path", None))
+
+    def _cleanup_temp_output(self, temp_output_path: Optional[str]):
+        """清理本次处理创建的临时文件"""
+        if not temp_output_path:
+            return
+
         try:
-            # 清理临时文件
-            if self.output_path and os.path.exists(self.output_path) and self.is_processing:
-                try:
-                    os.remove(self.output_path)
-                    print(f"已清理临时文件: {self.output_path}")
-                except Exception:
-                    pass
-        except Exception:
+            os.remove(temp_output_path)
+            print(f"已清理临时文件: {temp_output_path}")
+        except FileNotFoundError:
             pass
+        except OSError:
+            return
+
+        if getattr(self, "_temp_output_path", None) == temp_output_path:
+            self._temp_output_path = None
 
     def _cleanup_on_exit(self):
         """程序退出时的清理函数"""
-        if not self._shutdown_initiated:
-            self._cleanup_resources()
+        self._cleanup_resources()
 
     def setup_ui(self):
         """初始化用户界面"""
@@ -321,39 +380,38 @@ class GifSpeedAdjuster:
             return
 
         self.is_processing = True
-        self.should_cancel = False
+        self._begin_processing_state()
         self.process_button.config(state="disabled")
         self.cancel_button.config(state="normal")
         self.progress.start()
         self.status_label.config(text="正在处理...")
 
         # 在新线程中处理，避免界面冻结
-        self.processing_thread = threading.Thread(target=self.process_gif)
-        self.processing_thread.daemon = True
+        self.processing_thread = threading.Thread(target=self.process_gif, daemon=False)
         self.processing_thread.start()
 
     def process_gif(self):
         """处理GIF文件"""
         try:
             self.adjust_gif_speed(self.input_path, self.output_path, self.target_duration)
-
-            if not self.should_cancel:
-                # 在主线程中更新UI
-                self.root.after(0, self.processing_completed, True, "处理完成！")
-            else:
-                self.root.after(0, self.processing_completed, False, "操作已取消")
-
+        except InterruptedError:
+            self._schedule_ui(self.processing_completed, False, "操作已取消")
         except Exception as e:
-            if not self.should_cancel:
-                error_msg = f"处理失败: {str(e)}"
-                self.root.after(0, self.processing_completed, False, error_msg)
+            if self._is_cancel_requested() and not self._is_output_committed():
+                self._schedule_ui(self.processing_completed, False, "操作已取消")
             else:
-                self.root.after(0, self.processing_completed, False, "操作已取消")
+                error_msg = f"处理失败: {str(e)}"
+                self._schedule_ui(self.processing_completed, False, error_msg)
+        else:
+            if self._is_output_committed():
+                self._schedule_ui(self.processing_completed, True, "处理完成！")
+            else:
+                self._schedule_ui(self.processing_completed, False, "处理失败: 输出未提交")
 
     def processing_completed(self, success: bool, message: str):
         """处理完成后的UI更新"""
         self.is_processing = False
-        self.should_cancel = False
+        self._begin_processing_state()
         self.progress.stop()
         self.process_button.config(state="normal")
         self.cancel_button.config(state="disabled")
@@ -372,151 +430,82 @@ class GifSpeedAdjuster:
     def adjust_gif_speed(self, input_path: str, output_path: str, target_duration: float):
         """调整GIF速度的核心方法"""
         temp_output_path = None
+        frames = []
         try:
-            # 使用临时文件避免覆盖原文件
-            temp_output_path = output_path + ".tmp"
-
             with Image.open(input_path) as im:
                 if not hasattr(im, "n_frames") or im.n_frames <= 1:
                     raise ValueError("输入文件不是有效的动画GIF")
 
-                frames = []
                 durations = []
+                disposals = []
                 target_duration_ms = max(10, int(target_duration * 1000))
 
                 print(f"处理 {im.n_frames} 帧，目标持续时间: {target_duration_ms}ms")
 
-                # 获取原始GIF的基本信息
-                original_mode = im.mode
-                original_size = im.size
-                transparency = im.info.get("transparency")
+                loop = im.info.get("loop")
 
-                # 提取和处理所有帧
                 for i in range(im.n_frames):
-                    # 检查是否需要取消
-                    if self.should_cancel:
+                    if self._is_cancel_requested():
                         raise InterruptedError("用户取消操作")
 
                     im.seek(i)
 
-                    # 更新状态
-                    if not self.should_cancel:
+                    if not self._is_cancel_requested():
                         progress_text = f"正在处理第 {i + 1}/{im.n_frames} 帧..."
-                        self.root.after(
-                            0, lambda text=progress_text: self.status_label.config(text=text)
+                        self._schedule_ui(
+                            lambda text=progress_text: self.status_label.config(text=text)
                         )
 
-                    # 获取当前帧的信息
-                    current_frame = im.copy()
-                    disposal = im.disposal_method if hasattr(im, "disposal_method") else 0
-
-                    # 转换为RGBA模式进行处理
-                    if current_frame.mode != "RGBA":
-                        if current_frame.mode == "P":
-                            # 处理调色板模式
-                            if transparency is not None:
-                                current_frame = current_frame.convert("RGBA")
-                            else:
-                                current_frame = current_frame.convert("RGB").convert("RGBA")
-                        else:
-                            current_frame = current_frame.convert("RGBA")
-
-                    # 确保帧大小一致
-                    if current_frame.size != original_size:
-                        # 创建背景并粘贴帧
-                        background = Image.new("RGBA", original_size, (255, 255, 255, 0))
-                        background.paste(current_frame, (0, 0))
-                        current_frame = background
-
-                    # 根据原始disposal方法处理帧
-                    if i == 0:
-                        # 第一帧作为基础
-                        processed_frame = current_frame.copy()
-                    else:
-                        # 处理后续帧
-                        if disposal == 1:  # 不处置（保留前一帧）
-                            # 在前一帧基础上叠加当前帧
-                            processed_frame = frames[-1].copy()
-                            processed_frame.paste(current_frame, (0, 0), current_frame)
-                        elif disposal == 2:  # 恢复到背景色
-                            # 使用当前帧，不叠加
-                            processed_frame = current_frame.copy()
-                        else:  # disposal == 0 或其他，默认处理
-                            # 使用当前帧
-                            processed_frame = current_frame.copy()
-
-                    # 转换回合适的模式进行保存
-                    if original_mode == "P":
-                        # 转换回调色板模式
-                        processed_frame = processed_frame.convert("RGB").convert(
-                            "P", palette=Image.ADAPTIVE
-                        )
-                        if transparency is not None:
-                            # 重新设置透明色
-                            processed_frame.info["transparency"] = 0
-                    elif original_mode in ("L", "RGB"):
-                        processed_frame = processed_frame.convert(original_mode)
-
-                    frames.append(processed_frame)
+                    current_frame = im.convert("RGBA")
+                    current_frame.load()
+                    frames.append(current_frame)
                     durations.append(target_duration_ms)
+                    disposals.append(getattr(im, "disposal_method", 0))
 
-                # 最后检查一次是否取消
-                if self.should_cancel:
-                    raise InterruptedError("用户取消操作")
+            if self._is_cancel_requested():
+                raise InterruptedError("用户取消操作")
 
-                # 更新状态
-                if not self.should_cancel:
-                    self.root.after(0, lambda: self.status_label.config(text="正在保存文件..."))
+            if not self._is_cancel_requested():
+                self._schedule_ui(lambda: self.status_label.config(text="正在保存文件..."))
 
-                # 保存到临时文件
-                save_kwargs = {
-                    "save_all": True,
-                    "append_images": frames[1:] if len(frames) > 1 else [],
-                    "duration": durations,
-                    "loop": 0,
-                    "optimize": False,
-                    "disposal": 2,
-                }
+            save_kwargs = {
+                "save_all": True,
+                "append_images": frames[1:] if len(frames) > 1 else [],
+                "duration": durations,
+                "optimize": False,
+                "disposal": disposals,
+            }
 
-                if transparency is not None and original_mode == "P":
-                    save_kwargs["transparency"] = 0
-                    save_kwargs["palette"] = frames[0].palette
+            if loop is not None:
+                save_kwargs["loop"] = loop
 
-                frames[0].save(temp_output_path, **save_kwargs)
+            output_directory = os.path.dirname(os.path.abspath(output_path))
+            os.makedirs(output_directory, exist_ok=True)
+            if self._is_cancel_requested():
+                raise InterruptedError("用户取消操作")
 
-                # 检查是否被取消
-                if self.should_cancel:
-                    raise InterruptedError("用户取消操作")
+            temp_file_descriptor, temp_output_path = tempfile.mkstemp(
+                dir=output_directory,
+                prefix=f".{os.path.basename(output_path)}.",
+                suffix=".gif",
+            )
+            os.close(temp_file_descriptor)
+            self._temp_output_path = temp_output_path
 
-                # 移动临时文件到最终位置
-                if os.path.exists(output_path):
-                    os.remove(output_path)
-                os.rename(temp_output_path, output_path)
-                temp_output_path = None  # 成功移动后，不需要清理临时文件
+            frames[0].save(temp_output_path, format="GIF", **save_kwargs)
 
-        except InterruptedError:
-            # 用户取消，清理临时文件
-            if temp_output_path and os.path.exists(temp_output_path):
-                try:
-                    os.remove(temp_output_path)
-                except Exception:
-                    pass
-            raise InterruptedError("用户取消操作")
-        except Exception as e:
-            # 其他错误，清理临时文件
-            if temp_output_path and os.path.exists(temp_output_path):
-                try:
-                    os.remove(temp_output_path)
-                except Exception:
-                    pass
-            raise e
+            if self._is_cancel_requested():
+                raise InterruptedError("用户取消操作")
+
+            self._commit_temp_output(temp_output_path, output_path)
+            if self._temp_output_path == temp_output_path:
+                self._temp_output_path = None
+            temp_output_path = None
+
         finally:
-            # 确保清理临时文件
-            if temp_output_path and os.path.exists(temp_output_path):
-                try:
-                    os.remove(temp_output_path)
-                except Exception:
-                    pass
+            self._cleanup_temp_output(temp_output_path)
+            for frame in frames:
+                frame.close()
 
     def on_closing(self):
         """处理窗口关闭事件"""
@@ -530,27 +519,11 @@ class GifSpeedAdjuster:
             if not result:
                 return
 
-            # 取消处理并等待
-            self.should_cancel = True
-            self.status_label.config(text="正在关闭...")
-
-            # 给处理线程一些时间完成清理
-            self.root.after(100, self._force_close)
-        else:
-            self._graceful_shutdown()
-
-    def _force_close(self):
-        """强制关闭应用程序"""
-        if self.processing_thread and self.processing_thread.is_alive():
-            # 再等待一小段时间
-            self.processing_thread.join(timeout=1.0)
-
         self._graceful_shutdown()
 
     def cancel_processing(self):
         """取消正在进行的处理"""
-        if self.is_processing and not self.should_cancel:
-            self.should_cancel = True
+        if self.is_processing and self._request_cancel():
             self.status_label.config(text="正在取消...")
             self.cancel_button.config(state="disabled")
 
@@ -565,11 +538,11 @@ class GifSpeedAdjuster:
             print(f"应用程序发生错误: {e}")
             self._graceful_shutdown()
         finally:
-            # 确保程序能够退出
-            try:
-                sys.exit(0)
-            except SystemExit:
-                os._exit(0)
+            if self.processing_thread and self.processing_thread.is_alive():
+                self._shutdown_initiated = True
+                self._request_cancel()
+                self.processing_thread.join()
+            self._cleanup_resources()
 
 
 def main():

@@ -14,16 +14,18 @@ from cedarflake_ascii_art.utils.file_utils import resource_path
 
 def start_convert():
     """主流程：将视频转换为ASCII视频。"""
-    # 隐藏Tkinter主窗口
-    Tk().withdraw()
+    dialog_root = Tk()
+    dialog_root.withdraw()
+    try:
+        src_file = filedialog.askopenfilename(
+            title="选择一个视频文件", filetypes=[("视频文件", "*.mp4")]
+        )
+    finally:
+        dialog_root.destroy()
 
-    # 选择视频文件
-    src_file = filedialog.askopenfilename(
-        title="选择一个视频文件", filetypes=[("视频文件", "*.mp4")]
-    )
     if not src_file:
         logger.warning("未选择视频文件，程序退出。")
-        return
+        return None
 
     # 确定FFmpeg路径
     if getattr(sys, "frozen", False):  # 检测是否是打包后的环境
@@ -39,10 +41,10 @@ def start_convert():
 
     # 检查FFmpeg路径
     if not os.path.isfile(ffmpeg_path):
-        logger.error(f"未找到FFmpeg！请确认路径是否正确：{ffmpeg_path}")
-        return
-    else:
-        logger.info(f"FFmpeg路径确认：{ffmpeg_path}")
+        message = f"未找到FFmpeg！请确认路径是否正确：{ffmpeg_path}"
+        logger.error(message)
+        raise FileNotFoundError(message)
+    logger.info(f"FFmpeg路径确认：{ffmpeg_path}")
 
     # 设置输出目录
     video_name = os.path.splitext(os.path.basename(src_file))[0]
@@ -109,12 +111,17 @@ def start_convert():
             check=True,
         )
 
+        if not os.path.isfile(output_video):
+            raise RuntimeError(f"FFmpeg未生成预期输出文件：{output_video}")
+
         logger.info(f"字符视频生成完成：{output_video}")
 
     except subprocess.CalledProcessError as e:
         logger.error(f"FFmpeg命令执行失败：{e}")
+        raise
     except Exception as e:
         logger.error(f"转换过程中出现错误：{e}")
+        raise
     finally:
         # 清理临时文件夹
         def safe_rmtree(directory):
@@ -128,6 +135,8 @@ def start_convert():
         safe_rmtree(temp_pic_dir)
         safe_rmtree(temp_thum_dir)
         safe_rmtree(temp_ascii_dir)
+
+    return output_video
 
 
 # 如果直接运行该模块，执行主流程

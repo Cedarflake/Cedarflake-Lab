@@ -21,7 +21,7 @@ def grayify(image):
 
 def pixels_to_ascii(image):
     """将每个像素映射到对应的ASCII字符。"""
-    pixels = image.getdata()
+    pixels = image.get_flattened_data()
     ascii_str = "".join([ASCII_CHARS[min(pixel // 25, len(ASCII_CHARS) - 1)] for pixel in pixels])
     return ascii_str
 

@@ -106,12 +106,8 @@ def handle_video_processing():
         video_path = input("请输入视频路径 :").strip()
         if is_valid_file(video_path, [".mp4", ".avi", ".mkv"]):
             try:
-                video_converter_txt.video_to_ascii(
+                video_output_dir = video_converter_txt.video_to_ascii(
                     video_path, new_width=config.get_default_setting("ascii_width_txt")
-                )
-                video_name = os.path.splitext(os.path.basename(video_path))[0]
-                video_output_dir = os.path.join(
-                    config.get("output_directories").get("video"), video_name
                 )
                 player.play_ascii_video(
                     video_output_dir, fps=config.get_default_setting("video_fps")
@@ -126,7 +122,10 @@ def handle_video_processing():
         # video 模式
         click.echo("即将启动完整 ASCII 视频生成模块 (无需路径)...")
         try:
-            converter_video.start_convert()
+            output_video = converter_video.start_convert()
+            if output_video is None:
+                click.echo("未选择视频，已取消转换。")
+                return
             click.echo(
                 f"ASCII 视频生成成功！结果已保存至 {config.get('output_directories').get('video')}/"
             )

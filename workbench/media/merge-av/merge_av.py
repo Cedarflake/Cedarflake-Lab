@@ -18,7 +18,6 @@ import atexit
 import logging
 import re
 import shutil
-import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -121,6 +120,15 @@ def cleanup_temp_files():
 atexit.register(cleanup_temp_files)
 
 
+def terminate_process(process: subprocess.Popen, grace_period: int = 5):
+    process.terminate()
+    try:
+        process.wait(timeout=grace_period)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
 def merge_av(
     input_video: Path,
     input_audio: Path,
@@ -178,9 +186,9 @@ def merge_av(
     )
     try:
         proc.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        proc.send_signal(signal.SIGINT)
-        raise TimeoutError("FFmpeg 合并超时已中断")
+    except subprocess.TimeoutExpired as error:
+        terminate_process(proc)
+        raise TimeoutError("FFmpeg 合并超时已中断") from error
     if proc.returncode != 0:
         raise subprocess.CalledProcessError(proc.returncode, ff_cmd)
     logging.info(f"合并成功 👉 {output_video}")
