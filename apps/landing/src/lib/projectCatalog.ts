@@ -69,8 +69,14 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
   const paths = new Set<string>()
 
   for (const project of projects) {
-    if ([project.id, project.title, project.path, project.summary].some((value) => !value.trim())) {
+    const requiredProjectText = [project.id, project.title, project.path, project.summary]
+
+    if (requiredProjectText.some((value) => !value.trim())) {
       throw new Error(`Missing required project text: ${project.id || "unknown project"}`)
+    }
+
+    if (requiredProjectText.some((value) => value !== value.trim())) {
+      throw new Error(`Project text has surrounding whitespace: ${project.id.trim()}`)
     }
 
     if (ids.has(project.id)) {
@@ -103,8 +109,14 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Workbench category does not match its path: ${project.id}`)
     }
 
-    if (project.presentation === "catalog" && !project.status.trim()) {
-      throw new Error(`Missing catalog project status: ${project.id}`)
+    if (project.presentation === "catalog") {
+      if (!project.status.trim()) {
+        throw new Error(`Missing catalog project status: ${project.id}`)
+      }
+
+      if (project.status !== project.status.trim()) {
+        throw new Error(`Catalog project status has surrounding whitespace: ${project.id}`)
+      }
     }
 
     if (!isValidIsoTimestamp(project.updatedAt)) {
@@ -113,10 +125,14 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
 
     if (project.externalUrl !== undefined) {
       try {
+        if (project.externalUrl !== project.externalUrl.trim()) {
+          throw new Error("Surrounding whitespace")
+        }
+
         const externalUrl = new URL(project.externalUrl)
 
-        if (externalUrl.protocol !== "http:" && externalUrl.protocol !== "https:") {
-          throw new Error("Unsupported protocol")
+        if (externalUrl.protocol !== "https:" || externalUrl.username || externalUrl.password) {
+          throw new Error("Unsafe URL")
         }
       } catch {
         throw new Error(`Invalid project externalUrl: ${project.id}`)
@@ -124,7 +140,14 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
     }
 
     if (project.showcase) {
-      const { cover, label, tags } = project.showcase
+      const { cover, label, note, tags } = project.showcase
+      const showcaseText = [
+        label,
+        cover.src,
+        cover.alt,
+        ...tags,
+        ...(note === undefined ? [] : [note]),
+      ]
       const normalizedTags = tags.map((tag) => tag.trim().toLowerCase())
 
       if (
@@ -137,6 +160,14 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
         cover.height <= 0
       ) {
         throw new Error(`Invalid project showcase: ${project.id}`)
+      }
+
+      if (showcaseText.some((value) => value !== value.trim())) {
+        throw new Error(`Project showcase text has surrounding whitespace: ${project.id}`)
+      }
+
+      if (note !== undefined && !note.trim()) {
+        throw new Error(`Invalid project showcase note: ${project.id}`)
       }
 
       if (

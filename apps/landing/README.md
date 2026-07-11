@@ -55,7 +55,7 @@ Add one entry to [`src/config/projects.ts`](./src/config/projects.ts) and choose
 - `catalog` creates a compact card in `building` or `others`.
 - `workbench` places the project in a configured workbench category.
 
-Every entry needs a unique `id`, repository-relative `path`, `title`, `summary`, `kind`, and ISO `updatedAt`. Paths use portable forward slashes without empty, `.` or `..` segments; URL-sensitive characters inside a segment are encoded automatically. By default, the card links to that path on GitHub. Add `externalUrl` when the preferred destination is a deployed site.
+Every entry needs a unique `id`, repository-relative `path`, `title`, `summary`, `kind`, and ISO `updatedAt`. Text values must not contain surrounding whitespace. Paths use portable forward slashes without empty, `.` or `..` segments; URL-sensitive characters inside a segment are encoded automatically. By default, the card links to that path on GitHub. Add a credential-free HTTPS `externalUrl` when the preferred destination is a deployed site.
 
 Keep the path taxonomy consistent with the entry: `app` uses `apps/`, `package` uses `packages/`, `workbench` uses `workbench/`, and `other` uses `others/`. The primary section must match that root, and a workbench project's category must match the second path segment. Validation rejects mismatches before they can produce incorrect groups or counts.
 
