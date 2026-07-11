@@ -28,7 +28,7 @@ src/
 └── components/        # Presentation only
 ```
 
-`projectCatalog` is the source of truth. The page derives section lists, the latest-project carousel, workbench groups, repository links, and header counts from it. Duplicate IDs and paths or invalid update dates fail with a clear error.
+`projectCatalog` is the source of truth. The page derives section lists, the latest-project carousel, workbench groups, repository links, and header counts from it. Validation scans the established `apps`, `packages`, `workbench`, and `others` taxonomy so a new project directory cannot be omitted accidentally; only the landing index itself is excluded. Duplicate IDs and paths or invalid update dates fail with a clear error.
 
 Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Workbench categories retain the order declared in `src/config/workbench.ts`, while the projects inside each category follow the shared update order.
 

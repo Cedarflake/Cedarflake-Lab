@@ -23,6 +23,8 @@ const projects: readonly ProjectEntry[] = projectCatalog
 const workbenchCategoryKeys = new Set<string>()
 const workbenchCategoryIds = new Set<string>()
 const referencedCoverSources = new Set<string>()
+const catalogProjectPaths = new Set(projects.map((project) => project.path))
+const catalogCoverageExclusions = new Set(["apps/landing"])
 
 function resolveWithin(root: string, relativePath: string, label: string) {
   const targetPath = resolve(root, relativePath)
@@ -58,6 +60,37 @@ function listFiles(directoryPath: string): string[] {
 
     return entry.isFile() ? [entryPath] : []
   })
+}
+
+function listDirectories(directoryPath: string) {
+  if (!isDirectory(directoryPath)) {
+    errors.push(`Project collection directory is missing: ${directoryPath}`)
+    return []
+  }
+
+  return readdirSync(directoryPath, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => resolve(directoryPath, entry.name))
+}
+
+function toRepositoryPath(directoryPath: string) {
+  return relative(repoRoot, directoryPath).split(sep).join("/")
+}
+
+function discoverProjectPaths() {
+  const discoveredPaths: string[] = []
+
+  for (const collection of ["apps", "packages"]) {
+    discoveredPaths.push(...listDirectories(resolve(repoRoot, collection)).map(toRepositoryPath))
+  }
+
+  for (const collection of ["workbench", "others"]) {
+    for (const categoryPath of listDirectories(resolve(repoRoot, collection))) {
+      discoveredPaths.push(...listDirectories(categoryPath).map(toRepositoryPath))
+    }
+  }
+
+  return discoveredPaths
 }
 
 function readPngDimensions(filePath: string) {
@@ -113,6 +146,14 @@ function validateCover(projectId: string, cover: ProjectCover) {
 }
 
 validateProjectCatalog(projects)
+
+const discoveredProjectPaths = discoverProjectPaths()
+
+for (const projectPath of discoveredProjectPaths) {
+  if (!catalogProjectPaths.has(projectPath) && !catalogCoverageExclusions.has(projectPath)) {
+    errors.push(`Unlisted project directory: ${projectPath}`)
+  }
+}
 
 for (const category of workbenchCategories) {
   if ([category.key, category.id, category.title].some((value) => !value.trim())) {
@@ -207,5 +248,5 @@ if (errors.length > 0) {
 const coverCount = projects.filter((project) => project.showcase).length
 
 console.log(
-  `Validated ${projects.length} projects, ${workbenchCategories.length} workbench categories, ${coverCount} covers, and ${deploymentCopies.length} deployment copies.`,
+  `Validated ${projects.length} catalog projects across ${discoveredProjectPaths.length} directories, ${workbenchCategories.length} workbench categories, ${coverCount} covers, and ${deploymentCopies.length} deployment copies.`,
 )
