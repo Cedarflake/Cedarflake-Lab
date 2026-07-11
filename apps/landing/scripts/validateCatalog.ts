@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url"
 
 import { projectCatalog } from "../src/config/projects"
 import { siteConfig } from "../src/config/site"
+import { workbenchCategories } from "../src/config/workbench"
 import { validateProjectCatalog } from "../src/lib/projectCatalog"
 import type { ProjectCover, ProjectEntry } from "../src/types/project"
 
@@ -19,6 +20,8 @@ const publicRoot = resolve(appRoot, "public")
 const repoRoot = resolve(appRoot, "../..")
 const errors: string[] = []
 const projects: readonly ProjectEntry[] = projectCatalog
+const workbenchCategoryKeys = new Set<string>()
+const workbenchCategoryIds = new Set<string>()
 
 function resolveWithin(root: string, relativePath: string, label: string) {
   const targetPath = resolve(root, relativePath)
@@ -95,6 +98,23 @@ function validateCover(projectId: string, cover: ProjectCover) {
 
 validateProjectCatalog(projects)
 
+for (const category of workbenchCategories) {
+  if ([category.key, category.id, category.title].some((value) => !value.trim())) {
+    errors.push(`Workbench category has missing text: ${category.key || "unknown category"}`)
+  }
+
+  if (workbenchCategoryKeys.has(category.key)) {
+    errors.push(`Duplicate workbench category key: ${category.key}`)
+  }
+
+  if (workbenchCategoryIds.has(category.id)) {
+    errors.push(`Duplicate workbench category id: ${category.id}`)
+  }
+
+  workbenchCategoryKeys.add(category.key)
+  workbenchCategoryIds.add(category.id)
+}
+
 for (const project of projects) {
   const projectPath = resolveWithin(repoRoot, project.path, `Project ${project.id} path`)
 
@@ -104,6 +124,10 @@ for (const project of projects) {
 
   if (project.showcase) {
     validateCover(project.id, project.showcase.cover)
+  }
+
+  if (project.presentation === "workbench" && !workbenchCategoryKeys.has(project.category)) {
+    errors.push(`Project ${project.id} uses an unknown workbench category: ${project.category}`)
   }
 }
 
@@ -153,5 +177,5 @@ if (errors.length > 0) {
 const coverCount = projects.filter((project) => project.showcase).length
 
 console.log(
-  `Validated ${projects.length} projects, ${coverCount} covers, and ${deploymentCopies.length} deployment copies.`,
+  `Validated ${projects.length} projects, ${workbenchCategories.length} workbench categories, ${coverCount} covers, and ${deploymentCopies.length} deployment copies.`,
 )

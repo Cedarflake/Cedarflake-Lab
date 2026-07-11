@@ -61,7 +61,7 @@ No component or count changes are needed for a new project. TypeScript reports m
 
 ## Add a workbench category
 
-Add the category once in [`src/config/workbench.ts`](./src/config/workbench.ts), then use its `key` on workbench project entries. The category type and rendered groups are derived automatically.
+Add the category once in [`src/config/workbench.ts`](./src/config/workbench.ts), then use its `key` on workbench project entries. The category type and rendered groups are derived automatically. Empty category text, duplicate keys or IDs, and project references to unknown categories fail validation.
 
 ## Change site copy
 
