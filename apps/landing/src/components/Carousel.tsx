@@ -43,6 +43,7 @@ export function Carousel<Project extends CarouselItem>({
   const viewportId = useId()
   const viewportRef = useRef<HTMLDivElement>(null)
   const slideRefs = useRef<Array<HTMLDivElement | null>>([])
+  const scrollFrameRef = useRef<number | null>(null)
   const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isProgrammaticScrollRef = useRef(false)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -118,6 +119,11 @@ export function Carousel<Project extends CarouselItem>({
 
       isProgrammaticScrollRef.current = true
 
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current)
+        scrollFrameRef.current = null
+      }
+
       if (scrollEndTimerRef.current) {
         clearTimeout(scrollEndTimerRef.current)
       }
@@ -139,7 +145,13 @@ export function Carousel<Project extends CarouselItem>({
 
   const handleScroll = useCallback(() => {
     if (!isProgrammaticScrollRef.current) {
-      syncCarouselState()
+      if (scrollFrameRef.current === null) {
+        scrollFrameRef.current = window.requestAnimationFrame(() => {
+          scrollFrameRef.current = null
+          syncCarouselState()
+        })
+      }
+
       return
     }
 
@@ -174,8 +186,14 @@ export function Carousel<Project extends CarouselItem>({
     return () => {
       resizeObserver.disconnect()
 
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current)
+        scrollFrameRef.current = null
+      }
+
       if (scrollEndTimerRef.current) {
         clearTimeout(scrollEndTimerRef.current)
+        scrollEndTimerRef.current = null
       }
     }
   }, [syncCarouselState])
