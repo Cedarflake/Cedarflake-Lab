@@ -12,7 +12,7 @@
     "format:check": "prettier . --check",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "validate": "tsx ./scripts/validateCatalog.ts"
+    "validate": "tsx ./scripts/validate.ts"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.2.8",

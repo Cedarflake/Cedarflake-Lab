@@ -1,0 +1,2 @@
+import "./validateCatalog"
+import "./validateMarkup"
