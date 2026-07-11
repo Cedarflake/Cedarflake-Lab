@@ -40,6 +40,10 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Invalid project path: ${project.id}`)
     }
 
+    if (project.presentation === "catalog" && !project.status.trim()) {
+      throw new Error(`Missing catalog project status: ${project.id}`)
+    }
+
     if (
       !isoTimestampPattern.test(project.updatedAt) ||
       Number.isNaN(Date.parse(project.updatedAt))
