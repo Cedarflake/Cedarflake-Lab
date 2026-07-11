@@ -12,6 +12,8 @@ src/
 │   └── workbench.ts   # Workbench category definitions
 ├── lib/
 │   └── projectCatalog.ts # Filtering, grouping, sorting, counts, source links
+├── scripts/
+│   └── validateCatalog.ts # Local path, cover, dimension, and asset-copy checks
 ├── styles/
 │   ├── foundation/       # Tokens, reset, typography, accessibility, motion policy
 │   ├── layout/           # Site shell and reusable page-section geometry
@@ -25,6 +27,8 @@ src/
 `projectCatalog` is the source of truth. The page derives section lists, the latest-project carousel, workbench groups, repository links, and header counts from it. Duplicate IDs and paths or invalid update dates fail with a clear error.
 
 Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Workbench categories retain the order declared in `src/config/workbench.ts`, while the projects inside each category follow the shared update order.
+
+`pnpm validate` executes the catalog invariants before checking repository paths, public covers, declared PNG dimensions, and canonical asset copies. It runs automatically as part of this app's existing `check` and `build` commands; no separate CI workflow is required.
 
 `src/styles.css` is an import-only entrypoint, ordered from low-level foundations to page-specific composition. Keep rules in the layer that owns them:
 
@@ -68,6 +72,7 @@ From the repository root:
 ```sh
 pnpm install
 pnpm dev:landing
+pnpm --filter @cedarflake/landing validate
 pnpm --filter @cedarflake/landing check
 pnpm --filter @cedarflake/landing build
 ```

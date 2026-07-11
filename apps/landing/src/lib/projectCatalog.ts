@@ -12,7 +12,7 @@ import type {
 
 const catalog: readonly ProjectEntry[] = projectCatalog
 
-function assertUniqueProjects(projects: readonly ProjectEntry[]) {
+export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
   const ids = new Set<string>()
   const paths = new Set<string>()
 
@@ -43,7 +43,7 @@ function assertUniqueProjects(projects: readonly ProjectEntry[]) {
   }
 }
 
-assertUniqueProjects(catalog)
+validateProjectCatalog(catalog)
 
 function hasShowcase(project: ProjectEntry): project is ShowcaseProject {
   return project.showcase !== undefined
