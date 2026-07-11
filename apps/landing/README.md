@@ -11,6 +11,7 @@ The landing app is a configuration-driven index for the projects in this monorep
 │   ├── validateCatalog.ts     # Taxonomy, paths, covers, and asset-copy checks
 │   ├── validateSiteConfig.ts  # Copy, IDs, locale, and repository metadata
 │   ├── validateCollections.ts # Rendered membership, ordering, groups, and stats
+│   ├── validateStyles.ts      # Import coverage, layers, and stylesheet ownership
 │   ├── validateDocument.ts    # Language, metadata, resources, and app mount point
 │   └── validateMarkup.ts      # Static IDs, links, ARIA, images, and headings
 └── src/
@@ -34,7 +35,7 @@ The landing app is a configuration-driven index for the projects in this monorep
 
 Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Workbench categories retain the order declared in `src/config/workbench.ts`, while the projects inside each category follow the shared update order.
 
-`pnpm validate` checks catalog taxonomy, repository paths, public covers, declared PNG dimensions, canonical asset copies, site configuration, derived collection membership and ordering, the static document shell, and the server-rendered markup relationships. It runs automatically as part of this app's existing `check` and `build` commands; no separate CI workflow is required.
+`pnpm validate` checks catalog taxonomy, repository paths, public covers, declared PNG dimensions, canonical asset copies, site configuration, derived collection membership and ordering, stylesheet ownership, the static document shell, and the server-rendered markup relationships. It runs automatically as part of this app's existing `check` and `build` commands; no separate CI workflow is required.
 
 `src/styles.css` is an import-only entrypoint, ordered from low-level foundations to page-specific composition. Keep rules in the layer that owns them:
 
@@ -44,6 +45,8 @@ Every rendered project collection is ordered by `updatedAt` from newest to oldes
 - `pages/` composes components for this landing page. It may position a component contextually, but must not redefine that component's base contract.
 
 Add new imports to the matching block in `src/styles.css`; do not create cross-layer imports or return to a flat `styles/` directory.
+
+Validation keeps `src/styles.css` import-only, requires every stylesheet to be imported exactly once, enforces the documented layer order and kebab-case filenames, and rejects nested imports. A misplaced or orphaned style file therefore fails locally instead of silently disappearing from the page.
 
 Repository-wide brand assets remain in the root `assets/` directory. The landing app keeps deployment copies in `public/` so a Vercel project rooted at `apps/landing` is self-contained. Refresh those copies when the canonical assets change.
 
