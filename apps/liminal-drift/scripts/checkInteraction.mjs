@@ -67,6 +67,28 @@ async function waitForProgressAboveZero(page, label, timeoutMs) {
 
 /**
  * @param {import("playwright").Page} page
+ * @param {string} label
+ * @param {number} limit
+ * @param {number} timeoutMs
+ */
+async function waitForMetricBelow(page, label, limit, timeoutMs) {
+  const startedAt = Date.now()
+  let value = readMetric(await page.locator("body").innerText(), label)
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (value < limit) {
+      return value
+    }
+
+    await page.waitForTimeout(120)
+    value = readMetric(await page.locator("body").innerText(), label)
+  }
+
+  return value
+}
+
+/**
+ * @param {import("playwright").Page} page
  */
 async function installMockGamepad(page) {
   await page.addInitScript(() => {
@@ -240,10 +262,7 @@ try {
     }
 
     await page.keyboard.up("w")
-    await page.waitForTimeout(1000)
-
-    const resumedText = await page.locator("body").innerText()
-    const resumedSpeed = readMetric(resumedText, "SPEED")
+    const resumedSpeed = await waitForMetricBelow(page, "SPEED", heldResumeSpeed - 4, 4000)
 
     if (resumedSpeed >= heldResumeSpeed - 4) {
       throw new Error(
