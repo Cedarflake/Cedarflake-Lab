@@ -134,11 +134,6 @@
     margin-right: 0;
   }
 
-  .carousel__controls button {
-    width: 42px;
-    height: 42px;
-  }
-
   .featured-carousel {
     --carousel-slide-width: calc(100% - 32px);
   }
