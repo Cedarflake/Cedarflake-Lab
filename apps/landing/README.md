@@ -36,7 +36,7 @@ The landing app is a configuration-driven index for the projects in this monorep
 
 Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Workbench categories retain the order declared in `src/config/workbench.ts`, while the projects inside each category follow the shared update order.
 
-`pnpm validate` checks catalog taxonomy, repository paths, public covers, declared PNG dimensions, canonical asset copies, site configuration, derived collection membership and ordering, stylesheet ownership, Vercel deployment configuration, the static document shell, and the server-rendered markup relationships. It runs automatically as part of this app's existing `check` and `build` commands; no separate CI workflow is required.
+`pnpm validate` checks catalog taxonomy, repository paths, public covers, declared PNG dimensions, canonical asset copies, site configuration, derived collection membership and ordering, stylesheet ownership, Vercel deployment configuration, the static document shell, and the server-rendered markup relationships. It runs automatically before `dev` and as part of this app's existing `check` and `build` commands; no separate CI workflow is required.
 
 `src/styles.css` is an import-only entrypoint, ordered from low-level foundations to page-specific composition. Keep rules in the layer that owns them:
 
