@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url"
 const appRoot = fileURLToPath(new URL("../", import.meta.url))
 const configPath = resolve(appRoot, "vercel.json")
 const appPackagePath = resolve(appRoot, "package.json")
+const appWorkspacePath = resolve(appRoot, "pnpm-workspace.yaml")
 const rootPackagePath = resolve(appRoot, "../../package.json")
 const expectedSchema = "https://openapi.vercel.sh/vercel.json"
 const packageManagerPattern = /^pnpm@\d+\.\d+\.\d+$/
@@ -28,6 +29,39 @@ function readJsonObject(filePath: string, label: string) {
   }
 
   return null
+}
+
+function readTextFile(filePath: string, label: string) {
+  try {
+    return readFileSync(filePath, "utf8")
+  } catch {
+    errors.push(`${label} must be readable`)
+    return null
+  }
+}
+
+function allowsDependencyBuild(config: string, packageName: string) {
+  const lines = config.split(/\r?\n/)
+  let isInAllowBuilds = false
+
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+
+    if (trimmedLine.length === 0 || trimmedLine.startsWith("#")) {
+      continue
+    }
+
+    if (line === trimmedLine) {
+      isInAllowBuilds = trimmedLine === "allowBuilds:"
+      continue
+    }
+
+    if (isInAllowBuilds && trimmedLine === `${packageName}: true`) {
+      return true
+    }
+  }
+
+  return false
 }
 
 function readPackageManager(packageJson: Record<string, unknown>, label: string) {
@@ -55,6 +89,7 @@ function readNodeEngine(packageJson: Record<string, unknown>, label: string) {
 
 const config = readJsonObject(configPath, "vercel.json")
 const appPackage = readJsonObject(appPackagePath, "Landing package.json")
+const appWorkspaceConfig = readTextFile(appWorkspacePath, "Landing pnpm-workspace.yaml")
 const rootPackage = readJsonObject(rootPackagePath, "Root package.json")
 
 if (config) {
@@ -89,8 +124,14 @@ if (rootNodeEngine && appNodeEngine && rootNodeEngine !== appNodeEngine) {
   errors.push("Landing package.json must use the root Node.js engine range")
 }
 
+if (appWorkspaceConfig && !allowsDependencyBuild(appWorkspaceConfig, "esbuild")) {
+  errors.push("Landing pnpm-workspace.yaml must allow esbuild dependency scripts")
+}
+
 if (errors.length > 0) {
   throw new Error(`Landing deployment validation failed:\n- ${errors.join("\n- ")}`)
 }
 
-console.log("Validated Vercel deployment config, app runtime, and direct pnpm install command.")
+console.log(
+  "Validated Vercel deployment config, app runtime, dependency builds, and direct pnpm install command.",
+)
