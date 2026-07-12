@@ -1,13 +1,9 @@
 ::selection {
-  background: rgba(255, 112, 118, 0.5);
-  color: inherit;
-}
-
-h1::selection,
-h2::selection,
-h3::selection {
   background: transparent;
-  color: var(--selection-heading-color, var(--color-coral-deep));
+  color: var(--color-selection-text);
+  text-decoration-line: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.08em;
 }
 
 .sr-only {

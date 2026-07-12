@@ -1,5 +1,5 @@
 .open-bench {
-  --selection-heading-color: #ff9b9f;
+  --color-selection-text: #ff9b9f;
 
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
@@ -65,6 +65,8 @@
 }
 
 .open-bench > a:hover {
+  --color-selection-text: var(--color-coral-deep);
+
   background: var(--color-coral);
   color: var(--color-ink);
 }
