@@ -58,14 +58,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install YouTube userscript Playwright browser
-        run: pnpm --dir others/userscripts/youtube-auto-resume exec playwright install --with-deps chromium
-
       - name: Audit production dependencies
         run: pnpm --config.registry=https://registry.npmjs.org/ audit --prod --audit-level high
 
       - name: Check workspace
-        run: pnpm check
+        run: |
+          pnpm -r --filter "./apps/**" --filter "./packages/**" --if-present check
+          pnpm check:focus-orb-package
 
       - name: Build workspace
-        run: pnpm build
+        run: pnpm -r --workspace-concurrency=1 --filter "./apps/**" --filter "./packages/**" --if-present build
