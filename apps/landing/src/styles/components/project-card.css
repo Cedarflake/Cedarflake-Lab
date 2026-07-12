@@ -146,8 +146,8 @@
   width: max-content;
   max-width: 100%;
   margin-top: 16px;
-  padding-left: 9px;
-  border-left: 2px solid currentcolor;
+  padding-right: 9px;
+  border-right: 2px solid currentcolor;
   color: #7b4450;
   font-family: var(--font-label);
   font-size: 9px;
@@ -156,12 +156,23 @@
 }
 
 @media (max-width: 900px) {
+  .featured-carousel .carousel__track {
+    align-items: stretch;
+  }
+
+  .featured-carousel .carousel__slide {
+    display: flex;
+  }
+
   .project-card {
+    width: 100%;
     height: auto;
   }
 
   .project-card__link {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
     min-height: 0;
   }
 
@@ -173,7 +184,6 @@
   }
 
   .project-card__body {
-    height: 400px;
     min-height: 0;
   }
 
@@ -198,7 +208,6 @@
   }
 
   .project-card__body {
-    height: 430px;
     padding: 22px;
   }
 
