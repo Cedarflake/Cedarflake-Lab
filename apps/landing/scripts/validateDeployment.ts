@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
 
-const appRoot = fileURLToPath(new URL("../", import.meta.url))
+import { appRoot, repositoryRoot, validationContext } from "./repositoryContext"
+
 const configPath = resolve(appRoot, "vercel.json")
 const appPackagePath = resolve(appRoot, "package.json")
 const appWorkspacePath = resolve(appRoot, "pnpm-workspace.yaml")
-const rootPackagePath = resolve(appRoot, "../../package.json")
+const typescriptConfigPath = resolve(appRoot, "tsconfig.json")
+const rootPackagePath = repositoryRoot ? resolve(repositoryRoot, "package.json") : null
 const expectedSchema = "https://openapi.vercel.sh/vercel.json"
 const packageManagerPattern = /^pnpm@\d+\.\d+\.\d+$/
 const errors: string[] = []
@@ -90,7 +91,8 @@ function readNodeEngine(packageJson: Record<string, unknown>, label: string) {
 const config = readJsonObject(configPath, "vercel.json")
 const appPackage = readJsonObject(appPackagePath, "Landing package.json")
 const appWorkspaceConfig = readTextFile(appWorkspacePath, "Landing pnpm-workspace.yaml")
-const rootPackage = readJsonObject(rootPackagePath, "Root package.json")
+const typescriptConfig = readJsonObject(typescriptConfigPath, "Landing tsconfig.json")
+const rootPackage = rootPackagePath ? readJsonObject(rootPackagePath, "Root package.json") : null
 
 if (config) {
   if (config["$schema"] !== expectedSchema) {
@@ -108,6 +110,30 @@ if (config) {
     errors.push("Vercel build environment configuration is missing")
   } else if (buildEnvironment["ENABLE_EXPERIMENTAL_COREPACK"] !== "1") {
     errors.push("Vercel must enable Corepack for the workspace pnpm version")
+  }
+}
+
+if (typescriptConfig) {
+  if (typescriptConfig["extends"] !== undefined) {
+    errors.push("Landing tsconfig.json must be self-contained for isolated Vercel builds")
+  }
+
+  const compilerOptions = typescriptConfig["compilerOptions"]
+
+  if (!isRecord(compilerOptions)) {
+    errors.push("Landing tsconfig.json compilerOptions are missing")
+  } else {
+    if (compilerOptions["jsx"] !== "react-jsx") {
+      errors.push("Landing tsconfig.json must use the automatic React JSX runtime")
+    }
+
+    if (compilerOptions["moduleResolution"] !== "Bundler") {
+      errors.push("Landing tsconfig.json must use Bundler module resolution")
+    }
+
+    if (compilerOptions["strict"] !== true || compilerOptions["noEmit"] !== true) {
+      errors.push("Landing tsconfig.json must keep strict no-emit type checking")
+    }
   }
 }
 
@@ -133,5 +159,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  "Validated Vercel deployment config, app runtime, dependency builds, and direct pnpm install command.",
+  `Validated Vercel deployment config in ${validationContext} context, app runtime, dependency builds, and direct pnpm install command.`,
 )

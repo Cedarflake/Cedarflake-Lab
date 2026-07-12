@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto"
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs"
 import { extname, isAbsolute, relative, resolve, sep } from "node:path"
-import { fileURLToPath } from "node:url"
 import { inflateSync } from "node:zlib"
 
 import { projectCatalog } from "../src/config/projects"
@@ -9,17 +8,17 @@ import { workbenchCategories } from "../src/config/projects/workbench"
 import { siteConfig } from "../src/config/site"
 import { validateProjectCatalog } from "../src/lib/projectCatalog"
 import type { ProjectCover, ProjectEntry } from "../src/types/project"
+import { appRoot, repositoryRoot, validationContext } from "./repositoryContext"
 
 interface DeploymentCopy {
-  canonicalPath: string
+  canonicalRelativePath: string
   deployedPath: string
   label: string
   mustBeSquare?: boolean
 }
 
-const appRoot = fileURLToPath(new URL("../", import.meta.url))
 const publicRoot = resolve(appRoot, "public")
-const repoRoot = resolve(appRoot, "../..")
+const projectPathRoot = repositoryRoot ?? appRoot
 const errors: string[] = []
 const projects: readonly ProjectEntry[] = projectCatalog
 const workbenchCategoryKeys = new Set<string>()
@@ -78,18 +77,24 @@ function listDirectories(directoryPath: string) {
 }
 
 function toRepositoryPath(directoryPath: string) {
-  return relative(repoRoot, directoryPath).split(sep).join("/")
+  return relative(projectPathRoot, directoryPath).split(sep).join("/")
 }
 
 function discoverProjectPaths() {
   const discoveredPaths: string[] = []
 
+  if (!repositoryRoot) {
+    return discoveredPaths
+  }
+
   for (const collection of ["apps", "packages"]) {
-    discoveredPaths.push(...listDirectories(resolve(repoRoot, collection)).map(toRepositoryPath))
+    discoveredPaths.push(
+      ...listDirectories(resolve(repositoryRoot, collection)).map(toRepositoryPath),
+    )
   }
 
   for (const collection of ["workbench", "others"]) {
-    for (const categoryPath of listDirectories(resolve(repoRoot, collection))) {
+    for (const categoryPath of listDirectories(resolve(repositoryRoot, collection))) {
       discoveredPaths.push(...listDirectories(categoryPath).map(toRepositoryPath))
     }
   }
@@ -324,9 +329,9 @@ for (const category of workbenchCategories) {
 }
 
 for (const project of projects) {
-  const projectPath = resolveWithin(repoRoot, project.path, `Project ${project.id} path`)
+  const projectPath = resolveWithin(projectPathRoot, project.path, `Project ${project.id} path`)
 
-  if (projectPath && !isDirectory(projectPath)) {
+  if (repositoryRoot && projectPath && !isDirectory(projectPath)) {
     errors.push(`Project ${project.id} path is missing: ${project.path}`)
   }
 
@@ -385,12 +390,12 @@ if (!brandPath) {
 
 const deploymentCopies: readonly DeploymentCopy[] = [
   {
-    canonicalPath: resolve(repoRoot, "assets/Lab.png"),
+    canonicalRelativePath: "assets/Lab.png",
     deployedPath: resolve(publicRoot, "Lab.png"),
     label: "Canonical Lab artwork",
   },
   {
-    canonicalPath: resolve(repoRoot, "assets/favicon.png"),
+    canonicalRelativePath: "assets/favicon.png",
     deployedPath: resolve(publicRoot, "favicon.png"),
     label: "Favicon",
     mustBeSquare: true,
@@ -398,36 +403,43 @@ const deploymentCopies: readonly DeploymentCopy[] = [
 ]
 
 for (const copy of deploymentCopies) {
-  if (!isFile(copy.canonicalPath)) {
-    errors.push(`${copy.label} canonical asset is missing: ${copy.canonicalPath}`)
-    continue
-  }
-
   if (!isFile(copy.deployedPath)) {
     errors.push(`${copy.label} deployment copy is missing: ${copy.deployedPath}`)
     continue
   }
 
-  const canonicalDimensions = readPngDimensions(copy.canonicalPath)
   const deployedDimensions = readPngDimensions(copy.deployedPath)
-
-  if (!canonicalDimensions) {
-    errors.push(`${copy.label} canonical asset is not a valid PNG`)
-  }
 
   if (!deployedDimensions) {
     errors.push(`${copy.label} deployment copy is not a valid PNG`)
   }
 
-  if (
-    copy.mustBeSquare &&
-    canonicalDimensions &&
-    canonicalDimensions.width !== canonicalDimensions.height
-  ) {
+  if (copy.mustBeSquare && deployedDimensions?.width !== deployedDimensions?.height) {
+    errors.push(`${copy.label} deployment copy must be square`)
+  }
+
+  if (!repositoryRoot) {
+    continue
+  }
+
+  const canonicalPath = resolve(repositoryRoot, copy.canonicalRelativePath)
+
+  if (!isFile(canonicalPath)) {
+    errors.push(`${copy.label} canonical asset is missing: ${canonicalPath}`)
+    continue
+  }
+
+  const canonicalDimensions = readPngDimensions(canonicalPath)
+
+  if (!canonicalDimensions) {
+    errors.push(`${copy.label} canonical asset is not a valid PNG`)
+  }
+
+  if (copy.mustBeSquare && canonicalDimensions?.width !== canonicalDimensions?.height) {
     errors.push(`${copy.label} canonical asset must be square`)
   }
 
-  if (fileHash(copy.canonicalPath) !== fileHash(copy.deployedPath)) {
+  if (fileHash(canonicalPath) !== fileHash(copy.deployedPath)) {
     errors.push(`${copy.label} deployment copy does not match its canonical asset`)
   }
 }
@@ -439,5 +451,5 @@ if (errors.length > 0) {
 const coverCount = projects.filter((project) => project.showcase).length
 
 console.log(
-  `Validated ${projects.length} catalog projects across ${discoveredProjectPaths.length} directories, ${workbenchCategories.length} workbench categories, ${coverCount} covers, and ${deploymentCopies.length} deployment copies.`,
+  `Validated ${projects.length} catalog projects in ${validationContext} context across ${discoveredProjectPaths.length} repository directories, ${workbenchCategories.length} workbench categories, ${coverCount} covers, and ${deploymentCopies.length} deployment assets.`,
 )
