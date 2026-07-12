@@ -53,6 +53,12 @@ function hasExplicitAccessibleName(attributes: string) {
   return Boolean(ariaLabel || labelledBy)
 }
 
+function hasRenderedText(content: string) {
+  return [...content.matchAll(/(?:^|>)([^<]*)(?=<|$)/g)].some((match) =>
+    Boolean((match[1] ?? "").trim()),
+  )
+}
+
 function findMissingTargets(targets: readonly string[]) {
   return [...new Set(targets.filter((target) => target && !idSet.has(target)))]
 }
@@ -77,16 +83,15 @@ const invalidLinkHrefs = [...new Set(linkHrefs.filter((href) => !isValidHref(hre
 const unnamedLinks = anchorMatches.filter((match) => {
   const attributes = match[1] ?? ""
   const content = match[2] ?? ""
-  const textContent = content.replace(/<[^>]+>/g, "").trim()
   const hasNamedImage = /<img\b[^>]*\salt="[^"]+"[^>]*>/.test(content)
 
-  return !hasExplicitAccessibleName(attributes) && !textContent && !hasNamedImage
+  return !hasExplicitAccessibleName(attributes) && !hasRenderedText(content) && !hasNamedImage
 })
 const unnamedButtons = buttonMatches.filter((match) => {
   const attributes = match[1] ?? ""
-  const textContent = (match[2] ?? "").replace(/<[^>]+>/g, "").trim()
+  const content = match[2] ?? ""
 
-  return !hasExplicitAccessibleName(attributes) && !textContent
+  return !hasExplicitAccessibleName(attributes) && !hasRenderedText(content)
 })
 const untypedButtons = buttonMatches.filter(
   (match) => !/\stype="(?:button|submit|reset)"/.test(match[1] ?? ""),
