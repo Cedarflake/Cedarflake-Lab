@@ -3,6 +3,13 @@
   color: inherit;
 }
 
+h1::selection,
+h2::selection,
+h3::selection {
+  background: transparent;
+  color: var(--selection-heading-color, var(--color-coral-deep));
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
