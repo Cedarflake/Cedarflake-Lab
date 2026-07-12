@@ -20,7 +20,6 @@
 
 .workbench-intro .section-heading__marker {
   margin-bottom: 44px;
-  line-height: 1;
 }
 
 .workbench-intro .section-heading__copy {
@@ -43,7 +42,7 @@
 }
 
 .workbench-groups {
-  margin-top: 12px;
+  margin-top: 5px;
   border-top: 1px solid var(--color-ink);
 }
 
