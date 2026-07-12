@@ -7,6 +7,7 @@ import { SectionHeading } from "./components/SectionHeading"
 import { WorkbenchGroup } from "./components/WorkbenchGroup"
 import { siteConfig } from "./config/site"
 import { useEntranceReveal } from "./hooks/useEntranceReveal"
+import { useImageLoadState } from "./hooks/useImageLoadState"
 import {
   buildingProjects,
   labStats,
@@ -23,6 +24,7 @@ function preventLinkDrag(event: DragEvent<HTMLElement>) {
 
 export function App() {
   const heroBrand = siteConfig.hero.brand
+  const heroBrandLoadState = useImageLoadState(heroBrand.src)
   const siteShellRef = useEntranceReveal()
 
   return (
@@ -62,11 +64,16 @@ export function App() {
               className="hero__brand-visual"
               style={{
                 aspectRatio: `${heroBrand.width} / ${heroBrand.height}`,
-                backgroundImage: `url("${heroBrand.src}")`,
+                backgroundImage:
+                  heroBrandLoadState === "ready" ? `url("${heroBrand.src}")` : undefined,
               }}
-              data-reveal
+              data-load-state={heroBrandLoadState}
               aria-hidden="true"
-            />
+            >
+              {heroBrandLoadState === "error" ? (
+                <span className="hero__brand-fallback">{heroBrand.alt}</span>
+              ) : null}
+            </span>
           </h1>
           <div className="hero__content" data-reveal>
             <p className="hero__statement">{siteConfig.hero.statement}</p>
