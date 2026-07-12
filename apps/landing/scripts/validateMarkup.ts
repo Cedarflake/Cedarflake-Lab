@@ -21,6 +21,9 @@ const imageTags = [...html.matchAll(/<img\b[^>]*>/g)].map((match) => match[0])
 const projectImageTags = imageTags.filter((tag) => /\ssrc="\/covers\//.test(tag))
 const anchorMatches = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)]
 const buttonMatches = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
+const carouselButtonMatches = buttonMatches.filter((match) =>
+  /\saria-controls="[^"]+"/.test(match[1] ?? ""),
+)
 const externalLinkTags = [...html.matchAll(/<a\b[^>]*\starget="_blank"[^>]*>/g)].map(
   (match) => match[0],
 )
@@ -87,6 +90,12 @@ const unnamedButtons = buttonMatches.filter((match) => {
 })
 const untypedButtons = buttonMatches.filter(
   (match) => !/\stype="(?:button|submit|reset)"/.test(match[1] ?? ""),
+)
+const carouselButtonsWithoutAriaDisabled = carouselButtonMatches.filter(
+  (match) => !/\saria-disabled="(?:true|false)"/.test(match[1] ?? ""),
+)
+const nativelyDisabledCarouselButtons = carouselButtonMatches.filter((match) =>
+  /\sdisabled(?:=|\s|$)/.test(match[1] ?? ""),
 )
 const unsafeExternalLinks = externalLinkTags.filter(
   (tag) => !/\srel="[^"]*\bnoreferrer\b[^"]*"/.test(tag),
@@ -159,6 +168,18 @@ if (unnamedButtons.length > 0) {
 
 if (untypedButtons.length > 0) {
   errors.push(`${untypedButtons.length} buttons are missing an explicit type`)
+}
+
+if (carouselButtonsWithoutAriaDisabled.length > 0) {
+  errors.push(
+    `${carouselButtonsWithoutAriaDisabled.length} carousel buttons are missing an ARIA disabled state`,
+  )
+}
+
+if (nativelyDisabledCarouselButtons.length > 0) {
+  errors.push(
+    `${nativelyDisabledCarouselButtons.length} carousel buttons use native disabled state`,
+  )
 }
 
 if (unsafeExternalLinks.length > 0) {
