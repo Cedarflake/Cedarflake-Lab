@@ -18,6 +18,7 @@ const controlledTargets = [...html.matchAll(/\saria-controls="([^"]+)"/g)].flatM
   (match[1] ?? "").split(" "),
 )
 const imageTags = [...html.matchAll(/<img\b[^>]*>/g)].map((match) => match[0])
+const projectImageTags = imageTags.filter((tag) => /\ssrc="\/covers\//.test(tag))
 const anchorMatches = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)]
 const buttonMatches = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
 const externalLinkTags = [...html.matchAll(/<a\b[^>]*\starget="_blank"[^>]*>/g)].map(
@@ -58,6 +59,11 @@ const missingLabels = findMissingTargets(labelledByTargets)
 const missingDescriptions = findMissingTargets(describedByTargets)
 const missingControls = findMissingTargets(controlledTargets)
 const imagesWithoutAlt = imageTags.filter((tag) => !/\salt="[^"]*"/.test(tag))
+const imagesWithoutDimensions = imageTags.filter(
+  (tag) => !/\swidth="[1-9]\d*"/.test(tag) || !/\sheight="[1-9]\d*"/.test(tag),
+)
+const eagerlyLoadedImages = projectImageTags.filter((tag) => !/\sloading="lazy"/.test(tag))
+const synchronouslyDecodedImages = projectImageTags.filter((tag) => !/\sdecoding="async"/.test(tag))
 const anchorsWithoutHref = anchorMatches.filter((match) => !/\shref="[^"]*"/.test(match[1] ?? ""))
 const linkHrefs = anchorMatches.flatMap((match) => {
   const href = (match[1] ?? "").match(/\shref="([^"]*)"/)?.[1]
@@ -113,6 +119,18 @@ if (missingControls.length > 0) {
 
 if (imagesWithoutAlt.length > 0) {
   errors.push(`${imagesWithoutAlt.length} images are missing alt text`)
+}
+
+if (imagesWithoutDimensions.length > 0) {
+  errors.push(`${imagesWithoutDimensions.length} images are missing intrinsic dimensions`)
+}
+
+if (eagerlyLoadedImages.length > 0) {
+  errors.push(`${eagerlyLoadedImages.length} project images are not lazy-loaded`)
+}
+
+if (synchronouslyDecodedImages.length > 0) {
+  errors.push(`${synchronouslyDecodedImages.length} project images do not use async decoding`)
 }
 
 if (anchorsWithoutHref.length > 0) {
