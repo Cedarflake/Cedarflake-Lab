@@ -2,28 +2,39 @@ import type { CatalogProject } from "../../types/project"
 
 export const otherProjectEntries = [
   {
-    id: "O-01",
     title: "Bilibili Follow Cycle",
     path: "others/userscripts/bilibili-follow-cycle",
     updatedAt: "2026-07-11T01:01:23+08:00",
     summary:
       "A browser userscript for controlled follow and unfollow cycles with interval and log panels.",
-    status: "Userscript",
+    label: "Userscript",
+    lifecycle: "archived",
     kind: "other",
     presentation: "catalog",
     section: "others",
   },
   {
-    id: "O-02",
     title: "GitHub Star Cycle",
     path: "others/github-actions/star-cycle",
     updatedAt: "2026-07-11T01:01:23+08:00",
     summary:
       "A retired Star and Unstar workflow experiment preserved as an intentionally inactive archive.",
-    status: "Archive",
+    label: "GitHub action",
+    lifecycle: "archived",
     kind: "other",
     presentation: "catalog",
     section: "others",
-    isMuted: true,
+  },
+  {
+    title: "Google AI Mode Aurora Study",
+    path: "others/interface-studies/google-ai-mode-aurora",
+    updatedAt: "2026-07-12T22:02:53+08:00",
+    summary:
+      "A static forensic study and dependency-free reproduction of Google Search's cursor-following Aurora edge glow.",
+    label: "Interface study",
+    lifecycle: "active",
+    kind: "other",
+    presentation: "catalog",
+    section: "others",
   },
 ] as const satisfies readonly CatalogProject[]

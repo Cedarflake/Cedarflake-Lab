@@ -21,10 +21,14 @@ Live site: [https://test.i0c.cc/](https://test.i0c.cc/)
 └── src/
     ├── components/            # Presentation only
     ├── config/
-    │   ├── projects.ts        # Single project manifest
+    │   ├── projects.ts        # Project-module aggregation
+    │   ├── projects/
+    │   │   ├── building.ts    # Building-block catalog entries
+    │   │   ├── featured.ts    # Featured showcase entries
+    │   │   ├── others.ts      # Other entries and lifecycle state
+    │   │   └── workbench.ts   # Workbench categories and entries
     │   ├── seo.ts             # Canonical identity, search metadata, and social preview
-    │   ├── site.ts            # Navigation, copy, repository metadata
-    │   └── workbench.ts       # Workbench category definitions
+    │   └── site.ts            # Navigation, copy, repository metadata
     ├── lib/
     │   ├── projectCatalog.ts  # Validation, grouping, sorting, counts, source links
     │   └── seo.ts             # Metadata templates, JSON-LD, robots, and sitemap generation
@@ -37,9 +41,9 @@ Live site: [https://test.i0c.cc/](https://test.i0c.cc/)
         └── project.ts         # Discriminated project entry types
 ```
 
-`projectCatalog` is the source of truth. The page derives section lists, the latest-project carousel, workbench groups, repository links, and header counts from it. Validation scans the established `apps`, `packages`, `workbench`, and `others` taxonomy so a new project directory cannot be omitted accidentally; only the landing index itself is excluded. Duplicate IDs, paths, or visible titles and invalid update dates fail with a clear error.
+`projectCatalog` is the source of truth. The page derives section lists, the latest-project carousel, workbench groups, repository links, and header counts from it. Validation scans the established `apps`, `packages`, `workbench`, and `others` taxonomy so a new project directory cannot be omitted accidentally; only the landing index itself is excluded. Duplicate paths or visible titles and invalid update dates fail with a clear error.
 
-Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Workbench categories retain the order declared in `src/config/workbench.ts`, while the projects inside each category follow the shared update order.
+Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Catalog card numbers are generated from that final order, so adding or updating a project never requires renumbering the manifest. Workbench categories retain the order declared in `src/config/projects/workbench.ts`, while the projects inside each category follow the shared update order.
 
 `pnpm validate` checks catalog taxonomy, repository paths, public covers, declared PNG dimensions, canonical asset copies, site and SEO configuration, derived collection membership and ordering, stylesheet ownership, Vercel deployment configuration, the static document shell, structured data, crawl assets, and server-rendered markup relationships. It runs automatically before `dev` and as part of this app's existing `check` and `build` commands; no separate CI workflow is required. The build then runs `validateBuild.ts` against `dist/` so an empty app shell, unresolved SEO token, or stale robots and sitemap output cannot ship.
 
@@ -64,13 +68,16 @@ Repository-wide brand assets remain in the root `assets/` directory. The landing
 
 ## Add a project
 
-Add one entry to [`src/config/projects.ts`](./src/config/projects.ts) and choose its primary `presentation`:
+Add one entry to the configuration module that owns its primary `presentation`:
 
-- `featured` places a visual project in the main project section.
-- `catalog` creates a compact card in `building` or `others`.
-- `workbench` places the project in a configured workbench category.
+- [`featured.ts`](./src/config/projects/featured.ts) owns visual projects in the main project section.
+- [`building.ts`](./src/config/projects/building.ts) owns compact building-block cards.
+- [`workbench.ts`](./src/config/projects/workbench.ts) owns workbench categories and their projects.
+- [`others.ts`](./src/config/projects/others.ts) owns the remaining compact cards.
 
-Every entry needs a unique `id`, repository-relative `path`, `title`, `summary`, `kind`, and ISO `updatedAt`. Text values must not contain surrounding whitespace. Paths use portable forward slashes without empty, `.` or `..` segments; URL-sensitive characters inside a segment are encoded automatically. By default, the card links to that path on GitHub. Add a credential-free HTTPS `externalUrl` when the preferred destination is a deployed site.
+[`src/config/projects.ts`](./src/config/projects.ts) only aggregates those modules, so routine project additions do not require editing it.
+
+Every entry needs a unique repository-relative `path`, `title`, `summary`, `kind`, and ISO `updatedAt`. The path is the stable project identity and React key; visible card numbers are derived automatically after sorting. Catalog entries also declare a visible format `label` and an explicit `lifecycle` of `active` or `archived`; archived styling and the `Archived` badge are both derived from that lifecycle instead of separate presentation flags. Text values must not contain surrounding whitespace. Paths use portable forward slashes without empty, `.` or `..` segments; URL-sensitive characters inside a segment are encoded automatically. By default, the card links to that path on GitHub. Add a credential-free HTTPS `externalUrl` when the preferred destination is a deployed site.
 
 Keep the path taxonomy consistent with the entry: `app` uses `apps/`, `package` uses `packages/`, `workbench` uses `workbench/`, and `other` uses `others/`. The primary section must match that root, and a workbench project's category must match the second path segment. Validation rejects mismatches before they can produce incorrect groups or counts.
 
@@ -82,7 +89,7 @@ No component or count changes are needed for a new project. TypeScript reports m
 
 ## Add a workbench category
 
-Add the category once in [`src/config/workbench.ts`](./src/config/workbench.ts), then use its `key` on workbench project entries. The category type and rendered groups are derived automatically. Empty category text, duplicate keys or IDs, and project references to unknown categories fail validation.
+Add the category once in [`src/config/projects/workbench.ts`](./src/config/projects/workbench.ts), then use its `key` on workbench project entries. The category type and rendered groups are derived automatically. Empty category text, duplicate keys, and project references to unknown categories fail validation.
 
 ## Change site copy
 

@@ -51,9 +51,20 @@
   padding-top: 36px;
 }
 
-.catalog-card--muted a {
+.catalog-card[data-lifecycle="archived"] a {
   background: rgba(238, 234, 236, 0.58);
   color: #625965;
+}
+
+.catalog-card__archive {
+  padding: 5px 9px;
+  border-radius: 999px;
+  corner-shape: var(--corner-shape-smooth);
+  background: var(--color-coral-deep);
+  color: var(--color-white);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1;
 }
 
 @media (max-width: 1040px) {

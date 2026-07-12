@@ -1,5 +1,4 @@
 import { projectCatalog } from "../src/config/projects"
-import type { WorkbenchCategory } from "../src/config/projects/workbench"
 import { siteConfig } from "../src/config/site"
 import {
   buildingProjects,
@@ -11,7 +10,7 @@ import {
 } from "../src/lib/projectCatalog"
 
 interface OrderedProject {
-  id: string
+  path: string
   title: string
   updatedAt: string
 }
@@ -33,27 +32,27 @@ function findDuplicates(values: readonly string[]) {
   return [...duplicates]
 }
 
-function validateSameIds(
-  expectedIds: readonly string[],
-  actualIds: readonly string[],
+function validateSamePaths(
+  expectedPaths: readonly string[],
+  actualPaths: readonly string[],
   label: string,
 ) {
-  const expectedSet = new Set(expectedIds)
-  const actualSet = new Set(actualIds)
-  const missingIds = expectedIds.filter((id) => !actualSet.has(id))
-  const unexpectedIds = actualIds.filter((id) => !expectedSet.has(id))
-  const duplicateIds = findDuplicates(actualIds)
+  const expectedSet = new Set(expectedPaths)
+  const actualSet = new Set(actualPaths)
+  const missingPaths = expectedPaths.filter((path) => !actualSet.has(path))
+  const unexpectedPaths = actualPaths.filter((path) => !expectedSet.has(path))
+  const duplicatePaths = findDuplicates(actualPaths)
 
-  if (missingIds.length > 0) {
-    errors.push(`${label} is missing projects: ${missingIds.join(", ")}`)
+  if (missingPaths.length > 0) {
+    errors.push(`${label} is missing projects: ${missingPaths.join(", ")}`)
   }
 
-  if (unexpectedIds.length > 0) {
-    errors.push(`${label} contains unexpected projects: ${unexpectedIds.join(", ")}`)
+  if (unexpectedPaths.length > 0) {
+    errors.push(`${label} contains unexpected projects: ${unexpectedPaths.join(", ")}`)
   }
 
-  if (duplicateIds.length > 0) {
-    errors.push(`${label} contains duplicate projects: ${duplicateIds.join(", ")}`)
+  if (duplicatePaths.length > 0) {
+    errors.push(`${label} contains duplicate projects: ${duplicatePaths.join(", ")}`)
   }
 }
 
@@ -70,7 +69,7 @@ function validateNewestFirst(projects: readonly OrderedProject[], label: string)
     const titleDifference = previousProject.title.localeCompare(project.title, siteConfig.locale)
 
     if (dateDifference < 0 || (dateDifference === 0 && titleDifference > 0)) {
-      errors.push(`${label} is not newest-first at project ${project.id}`)
+      errors.push(`${label} is not newest-first at project ${project.path}`)
     }
   }
 }
@@ -85,19 +84,19 @@ const primaryProjects = [
 ]
 const configuredShowcaseProjects = projectCatalog.filter((project) => "showcase" in project)
 
-validateSameIds(
-  projectCatalog.map((project) => project.id),
-  primaryProjects.map((project) => project.id),
+validateSamePaths(
+  projectCatalog.map((project) => project.path),
+  primaryProjects.map((project) => project.path),
   "Primary project collections",
 )
-validateSameIds(
-  configuredShowcaseProjects.map((project) => project.id),
-  showcaseProjects.map((project) => project.id),
+validateSamePaths(
+  configuredShowcaseProjects.map((project) => project.path),
+  showcaseProjects.map((project) => project.path),
   "Showcase collection",
 )
-validateSameIds(
-  workbenchProjects.map((project) => project.id),
-  groupedWorkbenchProjects.map((project) => project.id),
+validateSamePaths(
+  workbenchProjects.map((project) => project.path),
+  groupedWorkbenchProjects.map((project) => project.path),
   "Workbench groups",
 )
 
@@ -105,33 +104,29 @@ validateNewestFirst(showcaseProjects, "Showcase collection")
 validateNewestFirst(buildingProjects, "Building collection")
 validateNewestFirst(otherProjects, "Other collection")
 
-const categoryKeyById = new Map<string, WorkbenchCategory>(
-  siteConfig.workbenchCategories.map((category) => [category.id, category.key] as const),
-)
-const expectedGroupIds = siteConfig.workbenchCategories
+const categoryKeys = new Set<string>(siteConfig.workbenchCategories.map((category) => category.key))
+const expectedGroupKeys = siteConfig.workbenchCategories
   .filter((category) => workbenchProjects.some((project) => project.category === category.key))
-  .map((category) => category.id)
-const actualGroupIds = workbenchGroups.map((group) => group.id)
+  .map((category) => category.key)
+const actualGroupKeys = workbenchGroups.map((group) => group.key)
 
-if (expectedGroupIds.join("\0") !== actualGroupIds.join("\0")) {
+if (expectedGroupKeys.join("\0") !== actualGroupKeys.join("\0")) {
   errors.push("Workbench groups do not follow the configured category order")
 }
 
 for (const group of workbenchGroups) {
-  const categoryKey = categoryKeyById.get(group.id)
-
-  if (!categoryKey) {
-    errors.push(`Workbench group has no configured category: ${group.id}`)
+  if (!categoryKeys.has(group.key)) {
+    errors.push(`Workbench group has no configured category: ${group.key}`)
     continue
   }
 
   for (const project of group.items) {
-    if (project.category !== categoryKey) {
-      errors.push(`Workbench project ${project.id} is in the wrong group: ${group.id}`)
+    if (project.category !== group.key) {
+      errors.push(`Workbench project ${project.path} is in the wrong group: ${group.key}`)
     }
   }
 
-  validateNewestFirst(group.items, `Workbench group ${group.id}`)
+  validateNewestFirst(group.items, `Workbench group ${group.key}`)
 }
 
 if (labStats.length !== siteConfig.stats.length) {

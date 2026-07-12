@@ -151,7 +151,7 @@ export function App() {
           </div>
           <div className="workbench-groups">
             {workbenchGroups.map((group) => (
-              <WorkbenchGroup key={group.id} group={group} />
+              <WorkbenchGroup key={group.key} group={group} />
             ))}
           </div>
         </section>

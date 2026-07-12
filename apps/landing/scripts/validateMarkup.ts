@@ -2,6 +2,8 @@ import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
 
 import { App } from "../src/App"
+import { CatalogCard } from "../src/components/CatalogCard"
+import { buildingProjects, catalogProjectNumber, otherProjects } from "../src/lib/projectCatalog"
 
 const html = renderToStaticMarkup(createElement(App))
 const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1] ?? "")
@@ -30,6 +32,37 @@ const externalLinkTags = [...html.matchAll(/<a\b[^>]*\starget="_blank"[^>]*>/g)]
 const headingLevels = [...html.matchAll(/<h([1-6])\b/g)].map((match) =>
   Number.parseInt(match[1] ?? "0", 10),
 )
+const renderedCatalogNumbers = [
+  ...html.matchAll(/<div class="catalog-card__topline"><span>([BO]-\d{2})<\/span>/g),
+].map((match) => match[1] ?? "")
+const expectedCatalogNumbers = [
+  ...buildingProjects.map(catalogProjectNumber),
+  ...otherProjects.map(catalogProjectNumber),
+]
+const catalogCardCases = [buildingProjects, otherProjects].flatMap((projects) =>
+  projects.map((project, index) => ({
+    markup: renderToStaticMarkup(
+      createElement(CatalogCard, {
+        displayNumber: catalogProjectNumber(project, index),
+        project,
+      }),
+    ),
+    project,
+  })),
+)
+const cardsWithInvalidLifecycle = catalogCardCases.filter(({ markup, project }) => {
+  const renderedLifecycle = markup.match(/\sdata-lifecycle="([^"]+)"/)?.[1]
+
+  return renderedLifecycle !== project.lifecycle
+})
+const cardsWithInvalidArchiveBadge = catalogCardCases.filter(({ markup, project }) => {
+  const badgeCount = [
+    ...markup.matchAll(/<strong class="catalog-card__archive">Archived<\/strong>/g),
+  ].length
+  const expectedBadgeCount = project.lifecycle === "archived" ? 1 : 0
+
+  return badgeCount !== expectedBadgeCount
+})
 const errors: string[] = []
 
 function isValidHref(href: string) {
@@ -114,6 +147,26 @@ const headingJumps = headingLevels.filter((level, index) => {
 
 if (duplicateIds.length > 0) {
   errors.push(`Duplicate IDs: ${duplicateIds.join(", ")}`)
+}
+
+if (renderedCatalogNumbers.join("\0") !== expectedCatalogNumbers.join("\0")) {
+  errors.push("Catalog card numbers do not follow their rendered collection order")
+}
+
+if (cardsWithInvalidLifecycle.length > 0) {
+  errors.push(
+    `Catalog card lifecycle markup does not match configuration: ${cardsWithInvalidLifecycle
+      .map(({ project }) => project.path)
+      .join(", ")}`,
+  )
+}
+
+if (cardsWithInvalidArchiveBadge.length > 0) {
+  errors.push(
+    `Catalog card Archived badges do not match lifecycle configuration: ${cardsWithInvalidArchiveBadge
+      .map(({ project }) => project.path)
+      .join(", ")}`,
+  )
 }
 
 if (missingFragments.length > 0) {

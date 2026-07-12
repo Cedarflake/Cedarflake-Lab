@@ -1,4 +1,5 @@
 import type { CatalogProject } from "../types/project"
+import { catalogProjectNumber } from "../lib/projectCatalog"
 import { Carousel } from "./Carousel"
 import { CatalogCard } from "./CatalogCard"
 
@@ -17,7 +18,9 @@ export function CatalogCarousel({ hint, labelledBy, projects }: CatalogCarouselP
       hint={hint}
       items={projects}
       labelledBy={labelledBy}
-      renderItem={(project) => <CatalogCard project={project} />}
+      renderItem={(project, index) => (
+        <CatalogCard displayNumber={catalogProjectNumber(project, index)} project={project} />
+      )}
     />
   )
 }

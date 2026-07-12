@@ -25,6 +25,10 @@ const projectRootsBySection = {
   workbench: new Set(["workbench"]),
   others: new Set(["others"]),
 } satisfies Record<ProjectEntry["section"], ReadonlySet<string>>
+const catalogProjectPrefixBySection = {
+  building: "B",
+  others: "O",
+} satisfies Record<CatalogProject["section"], string>
 
 function isValidIsoTimestamp(value: string) {
   const match = isoTimestampPattern.exec(value)
@@ -65,23 +69,19 @@ function isValidIsoTimestamp(value: string) {
 }
 
 export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
-  const ids = new Set<string>()
   const paths = new Set<string>()
   const titles = new Set<string>()
 
   for (const project of projects) {
-    const requiredProjectText = [project.id, project.title, project.path, project.summary]
+    const projectLabel = project.path.trim() || project.title.trim() || "unknown project"
+    const requiredProjectText = [project.title, project.path, project.summary]
 
     if (requiredProjectText.some((value) => !value.trim())) {
-      throw new Error(`Missing required project text: ${project.id || "unknown project"}`)
+      throw new Error(`Missing required project text: ${projectLabel}`)
     }
 
     if (requiredProjectText.some((value) => value !== value.trim())) {
-      throw new Error(`Project text has surrounding whitespace: ${project.id.trim()}`)
-    }
-
-    if (ids.has(project.id)) {
-      throw new Error(`Duplicate project id: ${project.id}`)
+      throw new Error(`Project text has surrounding whitespace: ${projectLabel}`)
     }
 
     if (paths.has(project.path)) {
@@ -101,33 +101,37 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       project.path.includes("\\") ||
       pathSegments.some((segment) => !segment || segment === "." || segment === "..")
     ) {
-      throw new Error(`Invalid project path: ${project.id}`)
+      throw new Error(`Invalid project path: ${projectLabel}`)
     }
 
     if (projectRoot !== projectRootByKind[project.kind]) {
-      throw new Error(`Project kind does not match its path: ${project.id}`)
+      throw new Error(`Project kind does not match its path: ${projectLabel}`)
     }
 
     if (!projectRootsBySection[project.section].has(projectRoot)) {
-      throw new Error(`Project section does not match its path: ${project.id}`)
+      throw new Error(`Project section does not match its path: ${projectLabel}`)
     }
 
     if (project.presentation === "workbench" && pathSegments[1] !== project.category) {
-      throw new Error(`Workbench category does not match its path: ${project.id}`)
+      throw new Error(`Workbench category does not match its path: ${projectLabel}`)
     }
 
     if (project.presentation === "catalog") {
-      if (!project.status.trim()) {
-        throw new Error(`Missing catalog project status: ${project.id}`)
+      if (!project.label.trim()) {
+        throw new Error(`Missing catalog project label: ${projectLabel}`)
       }
 
-      if (project.status !== project.status.trim()) {
-        throw new Error(`Catalog project status has surrounding whitespace: ${project.id}`)
+      if (project.label !== project.label.trim()) {
+        throw new Error(`Catalog project label has surrounding whitespace: ${projectLabel}`)
+      }
+
+      if (project.lifecycle !== "active" && project.lifecycle !== "archived") {
+        throw new Error(`Invalid catalog project lifecycle: ${projectLabel}`)
       }
     }
 
     if (!isValidIsoTimestamp(project.updatedAt)) {
-      throw new Error(`Invalid project updatedAt: ${project.id}`)
+      throw new Error(`Invalid project updatedAt: ${projectLabel}`)
     }
 
     if (project.externalUrl !== undefined) {
@@ -142,7 +146,7 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
           throw new Error("Unsafe URL")
         }
       } catch {
-        throw new Error(`Invalid project externalUrl: ${project.id}`)
+        throw new Error(`Invalid project externalUrl: ${projectLabel}`)
       }
     }
 
@@ -166,15 +170,15 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
         cover.width <= 0 ||
         cover.height <= 0
       ) {
-        throw new Error(`Invalid project showcase: ${project.id}`)
+        throw new Error(`Invalid project showcase: ${projectLabel}`)
       }
 
       if (showcaseText.some((value) => value !== value.trim())) {
-        throw new Error(`Project showcase text has surrounding whitespace: ${project.id}`)
+        throw new Error(`Project showcase text has surrounding whitespace: ${projectLabel}`)
       }
 
       if (note !== undefined && !note.trim()) {
-        throw new Error(`Invalid project showcase note: ${project.id}`)
+        throw new Error(`Invalid project showcase note: ${projectLabel}`)
       }
 
       if (
@@ -182,11 +186,10 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
         normalizedTags.some((tag) => !tag) ||
         new Set(normalizedTags).size !== normalizedTags.length
       ) {
-        throw new Error(`Invalid project showcase tags: ${project.id}`)
+        throw new Error(`Invalid project showcase tags: ${projectLabel}`)
       }
     }
 
-    ids.add(project.id)
     paths.add(project.path)
     titles.add(normalizedTitle)
   }
@@ -241,6 +244,12 @@ export function projectUrl(project: ProjectEntry) {
   return project.externalUrl ?? projectSourceUrl(project.path)
 }
 
+export function catalogProjectNumber(project: CatalogProject, index: number) {
+  const prefix = catalogProjectPrefixBySection[project.section]
+
+  return `${prefix}-${String(index + 1).padStart(2, "0")}`
+}
+
 export const showcaseProjects: readonly ShowcaseProject[] = catalog
   .filter(hasShowcase)
   .sort(compareByUpdatedAt)
@@ -259,7 +268,7 @@ export const otherProjects: readonly CatalogProject[] = catalog
 
 export const workbenchGroups: readonly WorkbenchGroupData[] = siteConfig.workbenchCategories
   .map((category) => ({
-    id: category.id,
+    key: category.key,
     icon: category.icon,
     title: category.title,
     items: workbenchProjects.filter((project) => project.category === category.key),

@@ -22,7 +22,6 @@ const projectPathRoot = repositoryRoot ?? appRoot
 const errors: string[] = []
 const projects: readonly ProjectEntry[] = projectCatalog
 const workbenchCategoryKeys = new Set<string>()
-const workbenchCategoryIds = new Set<string>()
 const workbenchCategoryTitles = new Set<string>()
 const referencedCoverSources = new Set<string>()
 const coverProjectBySource = new Map<string, string>()
@@ -248,48 +247,50 @@ function hasTransparentRgbaPixel(filePath: string) {
   }
 }
 
-function validateCover(projectId: string, cover: ProjectCover) {
+function validateCover(projectPath: string, cover: ProjectCover) {
   if (!cover.src.startsWith("/covers/")) {
-    errors.push(`Project ${projectId} cover must use the public covers directory: ${cover.src}`)
+    errors.push(`Project ${projectPath} cover must use the public covers directory: ${cover.src}`)
     return
   }
 
-  const existingProjectId = coverProjectBySource.get(cover.src)
+  const existingProjectPath = coverProjectBySource.get(cover.src)
 
-  if (existingProjectId) {
-    errors.push(`Projects ${existingProjectId} and ${projectId} reuse the same cover: ${cover.src}`)
+  if (existingProjectPath) {
+    errors.push(
+      `Projects ${existingProjectPath} and ${projectPath} reuse the same cover: ${cover.src}`,
+    )
   } else {
-    coverProjectBySource.set(cover.src, projectId)
+    coverProjectBySource.set(cover.src, projectPath)
   }
 
   referencedCoverSources.add(cover.src)
 
-  const coverPath = resolveWithin(publicRoot, cover.src.slice(1), `Project ${projectId} cover`)
+  const coverPath = resolveWithin(publicRoot, cover.src.slice(1), `Project ${projectPath} cover`)
 
   if (!coverPath) {
     return
   }
 
   if (!isFile(coverPath)) {
-    errors.push(`Project ${projectId} cover is missing: ${cover.src}`)
+    errors.push(`Project ${projectPath} cover is missing: ${cover.src}`)
     return
   }
 
   if (extname(coverPath).toLowerCase() !== ".png") {
-    errors.push(`Project ${projectId} cover must be a PNG: ${cover.src}`)
+    errors.push(`Project ${projectPath} cover must be a PNG: ${cover.src}`)
     return
   }
 
   const dimensions = readPngDimensions(coverPath)
 
   if (!dimensions) {
-    errors.push(`Project ${projectId} cover is not a valid PNG: ${cover.src}`)
+    errors.push(`Project ${projectPath} cover is not a valid PNG: ${cover.src}`)
     return
   }
 
   if (dimensions.width !== cover.width || dimensions.height !== cover.height) {
     errors.push(
-      `Project ${projectId} cover dimensions are ${dimensions.width}x${dimensions.height}, expected ${cover.width}x${cover.height}`,
+      `Project ${projectPath} cover dimensions are ${dimensions.width}x${dimensions.height}, expected ${cover.width}x${cover.height}`,
     )
   }
 }
@@ -307,7 +308,7 @@ for (const projectPath of discoveredProjectPaths) {
 for (const category of workbenchCategories) {
   const normalizedTitle = category.title.trim().toLowerCase()
 
-  if ([category.key, category.id, category.title].some((value) => !value.trim())) {
+  if ([category.key, category.title].some((value) => !value.trim())) {
     errors.push(`Workbench category has missing text: ${category.key || "unknown category"}`)
   }
 
@@ -315,32 +316,31 @@ for (const category of workbenchCategories) {
     errors.push(`Duplicate workbench category key: ${category.key}`)
   }
 
-  if (workbenchCategoryIds.has(category.id)) {
-    errors.push(`Duplicate workbench category id: ${category.id}`)
-  }
-
   if (workbenchCategoryTitles.has(normalizedTitle)) {
     errors.push(`Duplicate workbench category title: ${category.title}`)
   }
 
   workbenchCategoryKeys.add(category.key)
-  workbenchCategoryIds.add(category.id)
   workbenchCategoryTitles.add(normalizedTitle)
 }
 
 for (const project of projects) {
-  const projectPath = resolveWithin(projectPathRoot, project.path, `Project ${project.id} path`)
+  const resolvedProjectPath = resolveWithin(
+    projectPathRoot,
+    project.path,
+    `Project ${project.path} path`,
+  )
 
-  if (repositoryRoot && projectPath && !isDirectory(projectPath)) {
-    errors.push(`Project ${project.id} path is missing: ${project.path}`)
+  if (repositoryRoot && resolvedProjectPath && !isDirectory(resolvedProjectPath)) {
+    errors.push(`Project path is missing: ${project.path}`)
   }
 
   if (project.showcase) {
-    validateCover(project.id, project.showcase.cover)
+    validateCover(project.path, project.showcase.cover)
   }
 
   if (project.presentation === "workbench" && !workbenchCategoryKeys.has(project.category)) {
-    errors.push(`Project ${project.id} uses an unknown workbench category: ${project.category}`)
+    errors.push(`Project ${project.path} uses an unknown workbench category: ${project.category}`)
   }
 }
 

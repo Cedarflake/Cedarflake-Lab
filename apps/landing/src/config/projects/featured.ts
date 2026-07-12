@@ -2,7 +2,6 @@ import type { FeaturedProject } from "../../types/project"
 
 export const featuredProjectEntries = [
   {
-    id: "01",
     title: "Copilot Task Study",
     path: "apps/copilot-task",
     updatedAt: "2026-07-11T11:20:33+08:00",
@@ -24,7 +23,6 @@ export const featuredProjectEntries = [
     },
   },
   {
-    id: "02",
     title: "Liminal Drift",
     path: "apps/liminal-drift",
     updatedAt: "2026-07-11T12:40:45+08:00",
@@ -45,7 +43,6 @@ export const featuredProjectEntries = [
     },
   },
   {
-    id: "03",
     title: "Maimai Transition",
     path: "apps/maimai-transition",
     updatedAt: "2026-07-11T11:20:33+08:00",
@@ -67,7 +64,6 @@ export const featuredProjectEntries = [
     },
   },
   {
-    id: "04",
     title: "Shika",
     path: "apps/shika",
     updatedAt: "2026-07-11T10:08:42+08:00",

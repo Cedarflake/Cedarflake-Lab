@@ -1,15 +1,14 @@
 import type { WorkbenchIconName, WorkbenchProject } from "../../types/project"
 
 export const workbenchCategories = [
-  { key: "ai", id: "AI", icon: "brain-circuit", title: "Artificial intelligence" },
-  { key: "automation", id: "AU", icon: "workflow", title: "Automation" },
-  { key: "files", id: "FI", icon: "folder-open", title: "Files" },
-  { key: "games", id: "GA", icon: "gamepad-2", title: "Games" },
-  { key: "media", id: "ME", icon: "images", title: "Media" },
-  { key: "network", id: "NE", icon: "network", title: "Network" },
+  { key: "ai", icon: "brain-circuit", title: "Artificial intelligence" },
+  { key: "automation", icon: "workflow", title: "Automation" },
+  { key: "files", icon: "folder-open", title: "Files" },
+  { key: "games", icon: "gamepad-2", title: "Games" },
+  { key: "media", icon: "images", title: "Media" },
+  { key: "network", icon: "network", title: "Network" },
 ] as const satisfies readonly {
   key: string
-  id: string
   icon: WorkbenchIconName
   title: string
 }[]
@@ -18,7 +17,6 @@ export type WorkbenchCategory = (typeof workbenchCategories)[number]["key"]
 
 export const workbenchProjectEntries = [
   {
-    id: "W-01",
     title: "NyaAI",
     path: "workbench/ai/nya-ai",
     updatedAt: "2026-07-11T10:05:30+08:00",
@@ -29,7 +27,6 @@ export const workbenchProjectEntries = [
     category: "ai",
   },
   {
-    id: "W-02",
     title: "Auto Crawler",
     path: "workbench/automation/auto-crawler",
     updatedAt: "2026-07-11T10:05:44+08:00",
@@ -40,7 +37,6 @@ export const workbenchProjectEntries = [
     category: "automation",
   },
   {
-    id: "W-03",
     title: "Clicker",
     path: "workbench/automation/clicker",
     updatedAt: "2026-07-11T10:05:44+08:00",
@@ -51,7 +47,6 @@ export const workbenchProjectEntries = [
     category: "automation",
   },
   {
-    id: "W-04",
     title: "Scan Image To",
     path: "workbench/files/scan-img-to",
     updatedAt: "2026-07-11T10:06:01+08:00",
@@ -62,7 +57,6 @@ export const workbenchProjectEntries = [
     category: "files",
   },
   {
-    id: "W-05",
     title: "Sync Multi",
     path: "workbench/files/sync-multi",
     updatedAt: "2026-07-11T10:06:01+08:00",
@@ -73,7 +67,6 @@ export const workbenchProjectEntries = [
     category: "files",
   },
   {
-    id: "W-06",
     title: "Gomoku",
     path: "workbench/games/gomoku",
     updatedAt: "2026-07-11T10:06:17+08:00",
@@ -84,7 +77,6 @@ export const workbenchProjectEntries = [
     category: "games",
   },
   {
-    id: "W-07",
     title: "Adjust GIF",
     path: "workbench/media/adjust-gif",
     updatedAt: "2026-07-11T10:06:42+08:00",
@@ -95,7 +87,6 @@ export const workbenchProjectEntries = [
     category: "media",
   },
   {
-    id: "W-08",
     title: "Cedarflake ASCII Art",
     path: "workbench/media/ascii-art",
     updatedAt: "2026-07-11T17:48:28+08:00",
@@ -106,7 +97,6 @@ export const workbenchProjectEntries = [
     category: "media",
   },
   {
-    id: "W-09",
     title: "Cut Image",
     path: "workbench/media/cut-image",
     updatedAt: "2026-07-11T10:06:42+08:00",
@@ -117,7 +107,6 @@ export const workbenchProjectEntries = [
     category: "media",
   },
   {
-    id: "W-10",
     title: "Merge AV",
     path: "workbench/media/merge-av",
     updatedAt: "2026-07-11T10:06:42+08:00",
@@ -128,7 +117,6 @@ export const workbenchProjectEntries = [
     category: "media",
   },
   {
-    id: "W-11",
     title: "Campus Net",
     path: "workbench/network/campus-net",
     updatedAt: "2026-07-11T10:07:05+08:00",

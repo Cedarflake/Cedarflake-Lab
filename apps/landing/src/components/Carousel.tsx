@@ -3,7 +3,7 @@ import type { ReactNode } from "react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
 interface CarouselItem {
-  id: string
+  path: string
   title: string
 }
 
@@ -288,7 +288,7 @@ export function Carousel<Project extends CarouselItem>({
           {items.map((item, index) => (
             <div
               className="carousel__slide"
-              key={item.id}
+              key={item.path}
               ref={(element) => {
                 slideRefs.current[index] = element
               }}

@@ -1,4 +1,5 @@
 export type ProjectKind = "app" | "package" | "workbench" | "other"
+export type ProjectLifecycle = "active" | "archived"
 export type WorkbenchIconName =
   "brain-circuit" | "workflow" | "folder-open" | "gamepad-2" | "images" | "network"
 
@@ -17,7 +18,6 @@ export interface ProjectShowcase {
 }
 
 interface ProjectBase {
-  id: string
   title: string
   path: string
   updatedAt: string
@@ -36,8 +36,8 @@ export interface FeaturedProject extends ProjectBase {
 export interface CatalogProject extends ProjectBase {
   presentation: "catalog"
   section: "building" | "others"
-  status: string
-  isMuted?: boolean
+  label: string
+  lifecycle: ProjectLifecycle
 }
 
 export interface WorkbenchProject<Category extends string = string> extends ProjectBase {
@@ -51,7 +51,7 @@ export type ProjectEntry = FeaturedProject | CatalogProject | WorkbenchProject
 export type ShowcaseProject = ProjectEntry & { showcase: ProjectShowcase }
 
 export interface WorkbenchGroupData {
-  id: string
+  key: string
   icon: WorkbenchIconName
   title: string
   items: readonly WorkbenchProject[]
