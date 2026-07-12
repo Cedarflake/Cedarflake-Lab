@@ -33,8 +33,6 @@
 }
 
 .button--ghost:hover {
-  --color-selection-text: #ff9b9f;
-
   background: var(--color-ink);
   color: var(--color-white);
 }
