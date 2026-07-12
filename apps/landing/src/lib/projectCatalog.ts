@@ -67,6 +67,7 @@ function isValidIsoTimestamp(value: string) {
 export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
   const ids = new Set<string>()
   const paths = new Set<string>()
+  const titles = new Set<string>()
 
   for (const project of projects) {
     const requiredProjectText = [project.id, project.title, project.path, project.summary]
@@ -85,6 +86,12 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
 
     if (paths.has(project.path)) {
       throw new Error(`Duplicate project path: ${project.path}`)
+    }
+
+    const normalizedTitle = project.title.toLowerCase()
+
+    if (titles.has(normalizedTitle)) {
+      throw new Error(`Duplicate project title: ${project.title}`)
     }
 
     const pathSegments = project.path.split("/")
@@ -181,6 +188,7 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
 
     ids.add(project.id)
     paths.add(project.path)
+    titles.add(normalizedTitle)
   }
 }
 

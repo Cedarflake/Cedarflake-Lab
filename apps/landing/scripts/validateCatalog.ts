@@ -23,6 +23,7 @@ const errors: string[] = []
 const projects: readonly ProjectEntry[] = projectCatalog
 const workbenchCategoryKeys = new Set<string>()
 const workbenchCategoryIds = new Set<string>()
+const workbenchCategoryTitles = new Set<string>()
 const referencedCoverSources = new Set<string>()
 const coverProjectBySource = new Map<string, string>()
 const catalogProjectPaths = new Set(projects.map((project) => project.path))
@@ -166,6 +167,8 @@ for (const projectPath of discoveredProjectPaths) {
 }
 
 for (const category of workbenchCategories) {
+  const normalizedTitle = category.title.trim().toLowerCase()
+
   if ([category.key, category.id, category.title].some((value) => !value.trim())) {
     errors.push(`Workbench category has missing text: ${category.key || "unknown category"}`)
   }
@@ -178,8 +181,13 @@ for (const category of workbenchCategories) {
     errors.push(`Duplicate workbench category id: ${category.id}`)
   }
 
+  if (workbenchCategoryTitles.has(normalizedTitle)) {
+    errors.push(`Duplicate workbench category title: ${category.title}`)
+  }
+
   workbenchCategoryKeys.add(category.key)
   workbenchCategoryIds.add(category.id)
+  workbenchCategoryTitles.add(normalizedTitle)
 }
 
 for (const project of projects) {
