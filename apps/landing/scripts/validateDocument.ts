@@ -18,57 +18,77 @@ function getAttribute(tag: string, name: string) {
   return match?.[1] ?? match?.[2]
 }
 
-function findTagByAttribute(tags: readonly string[], name: string, value: string) {
-  return tags.find((tag) => getAttribute(tag, name)?.toLowerCase() === value.toLowerCase())
+function findTagsByAttribute(tags: readonly string[], name: string, value: string) {
+  return tags.filter((tag) => getAttribute(tag, name)?.toLowerCase() === value.toLowerCase())
 }
 
-const htmlTag = getTags("html")[0]
+const htmlTags = getTags("html")
+const headTags = getTags("head")
+const bodyTags = getTags("body")
+const htmlTag = htmlTags[0]
 const titleMatches = [...html.matchAll(/<title>([\s\S]*?)<\/title>/gi)]
 const title = titleMatches[0]?.[1]?.trim() ?? ""
 const metaTags = getTags("meta")
 const linkTags = getTags("link")
 const scriptTags = getTags("script")
 const rootTags = getTags("div").filter((tag) => getAttribute(tag, "id") === "root")
-const charsetMeta = metaTags.find((tag) => getAttribute(tag, "charset")?.toLowerCase() === "utf-8")
-const descriptionMeta = findTagByAttribute(metaTags, "name", "description")
-const viewportMeta = findTagByAttribute(metaTags, "name", "viewport")
-const themeColorMeta = findTagByAttribute(metaTags, "name", "theme-color")
-const faviconLink = linkTags.find((tag) =>
+const charsetMetas = metaTags.filter((tag) => getAttribute(tag, "charset") !== undefined)
+const descriptionMetas = findTagsByAttribute(metaTags, "name", "description")
+const viewportMetas = findTagsByAttribute(metaTags, "name", "viewport")
+const themeColorMetas = findTagsByAttribute(metaTags, "name", "theme-color")
+const faviconLinks = linkTags.filter((tag) =>
   (getAttribute(tag, "rel") ?? "").toLowerCase().split(/\s+/).includes("icon"),
 )
-const heroPreload = linkTags.find(
+const heroPreloads = linkTags.filter(
   (tag) =>
     (getAttribute(tag, "rel") ?? "").toLowerCase().split(/\s+/).includes("preload") &&
     getAttribute(tag, "as")?.toLowerCase() === "image" &&
     getAttribute(tag, "href") === siteConfig.hero.brand.src,
 )
-const entryScript = scriptTags.find((tag) => getAttribute(tag, "src") === "/src/main.tsx")
+const entryScripts = scriptTags.filter((tag) => getAttribute(tag, "src") === "/src/main.tsx")
+const descriptionMeta = descriptionMetas[0]
+const viewportMeta = viewportMetas[0]
+const themeColorMeta = themeColorMetas[0]
+const faviconLink = faviconLinks[0]
+const heroPreload = heroPreloads[0]
+const entryScript = entryScripts[0]
 
-if (!htmlTag || getAttribute(htmlTag, "lang") !== siteConfig.locale) {
+if (htmlTags.length !== 1 || !htmlTag || getAttribute(htmlTag, "lang") !== siteConfig.locale) {
   errors.push(`Document language must match the site locale: ${siteConfig.locale}`)
+}
+
+if (headTags.length !== 1 || bodyTags.length !== 1) {
+  errors.push("Document must contain exactly one head and one body")
 }
 
 if (titleMatches.length !== 1 || !title || !title.includes(siteConfig.name)) {
   errors.push(`Document must contain one branded title: ${siteConfig.name}`)
 }
 
-if (!charsetMeta) {
-  errors.push("Document is missing its UTF-8 charset declaration")
+if (
+  charsetMetas.length !== 1 ||
+  getAttribute(charsetMetas[0] ?? "", "charset")?.toLowerCase() !== "utf-8"
+) {
+  errors.push("Document must contain exactly one UTF-8 charset declaration")
 }
 
-if (!descriptionMeta || !getAttribute(descriptionMeta, "content")?.trim()) {
-  errors.push("Document is missing its description metadata")
-}
-
-if (!viewportMeta || !getAttribute(viewportMeta, "content")?.includes("width=device-width")) {
-  errors.push("Document is missing its responsive viewport metadata")
-}
-
-if (!themeColorMeta || !getAttribute(themeColorMeta, "content")?.trim()) {
-  errors.push("Document is missing its theme color metadata")
+if (descriptionMetas.length !== 1 || !getAttribute(descriptionMeta ?? "", "content")?.trim()) {
+  errors.push("Document must contain exactly one description metadata tag")
 }
 
 if (
+  viewportMetas.length !== 1 ||
+  !getAttribute(viewportMeta ?? "", "content")?.includes("width=device-width")
+) {
+  errors.push("Document must contain exactly one responsive viewport metadata tag")
+}
+
+if (themeColorMetas.length !== 1 || !getAttribute(themeColorMeta ?? "", "content")?.trim()) {
+  errors.push("Document must contain exactly one theme color metadata tag")
+}
+
+if (
+  faviconLinks.length !== 1 ||
   !faviconLink ||
   getAttribute(faviconLink, "href") !== "/favicon.png" ||
   getAttribute(faviconLink, "type") !== "image/png"
@@ -77,6 +97,7 @@ if (
 }
 
 if (
+  heroPreloads.length !== 1 ||
   !heroPreload ||
   getAttribute(heroPreload, "type") !== "image/png" ||
   getAttribute(heroPreload, "fetchpriority") !== "high"
@@ -88,8 +109,8 @@ if (rootTags.length !== 1) {
   errors.push("Document must contain exactly one #root mount point")
 }
 
-if (!entryScript || getAttribute(entryScript, "type") !== "module") {
-  errors.push("Document is missing its module entry script")
+if (entryScripts.length !== 1 || !entryScript || getAttribute(entryScript, "type") !== "module") {
+  errors.push("Document must contain exactly one module entry script")
 }
 
 if (errors.length > 0) {
