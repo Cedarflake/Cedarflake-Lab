@@ -1,6 +1,6 @@
 ::selection {
-  background: var(--color-coral);
-  color: var(--color-ink);
+  background: rgba(255, 112, 118, 0.5);
+  color: inherit;
 }
 
 .sr-only {
