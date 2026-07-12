@@ -2,6 +2,8 @@
 
 The landing app is a configuration-driven index for the projects in this monorepo. Project data, site copy, derived data, and presentation are deliberately separated so that routine catalog updates do not require component changes.
 
+Live site: [https://test.i0c.cc/](https://test.i0c.cc/)
+
 ## Architecture
 
 ```text

@@ -4,6 +4,8 @@
 
 原版是 **gfdfdxc** 的 [https://github.com/gfdfdxc/maimai-transition](https://github.com/gfdfdxc/maimai-transition)
 
+在线演示：[https://7gkp.test.i0c.cc/](https://7gkp.test.i0c.cc/)
+
 这个项目目前包含两部分内容：
 
 - **Demo 站**：用于展示根路由 `/` 与 `/music` 之间的页面切换转场效果。

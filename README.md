@@ -8,18 +8,18 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 
 ## Workspaces
 
-| Path | Project |
-| --- | --- |
-| `apps/copilot-task` | Vite/React AI Agent preview site. |
-| `apps/focus-orb-demo` | Demo app for the Focus Orb package. |
-| `apps/landing` | Landing page for the Cedarflake Lab project index. |
-| `apps/liminal-drift` | Vite/React game project. |
-| `apps/maimai-transition` | Vite/React transition experience. |
-| `apps/personal-email` | React Email templates and mail scripts. |
-| `apps/shika` | Next.js status-page prototype. |
-| `packages/*` | Reusable frontend packages. |
-| `workbench/*` | Local Python utilities and small projects. |
-| `others/*` | Others. |
+| Path | Project | Live |
+| --- | --- | --- |
+| `apps/copilot-task` | Vite/React AI Agent preview site. | [3kf1.test.i0c.cc](https://3kf1.test.i0c.cc/) |
+| `apps/focus-orb-demo` | Demo app for the Focus Orb package. | — |
+| `apps/landing` | Landing page for the Cedarflake Lab project index. | [test.i0c.cc](https://test.i0c.cc/) |
+| `apps/liminal-drift` | Vite/React game project. | [4po7.test.i0c.cc](https://4po7.test.i0c.cc/) |
+| `apps/maimai-transition` | Vite/React transition experience. | [7gkp.test.i0c.cc](https://7gkp.test.i0c.cc/) |
+| `apps/personal-email` | React Email templates and mail scripts. | — |
+| `apps/shika` | Next.js status-page prototype. | — |
+| `packages/*` | Reusable frontend packages. | — |
+| `workbench/*` | Local Python utilities and small projects. | — |
+| `others/*` | Others. | — |
 
 ## Commands
 

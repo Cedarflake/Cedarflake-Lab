@@ -4,6 +4,8 @@ A dreamcore 3D driving game built with React 19, TypeScript, Vite, Three.js, Rea
 
 Drive through a soft, empty highway made of pastel road plates, pool-blue edges, floating mall signs, memory shards, signal boost gates, near misses, and checkpoints that feel like half-remembered exits.
 
+Play online: [https://4po7.test.i0c.cc/](https://4po7.test.i0c.cc/)
+
 ## Project Notes
 
 - [An agent's project notes on Liminal Drift](docs/agent-project-summary.md) records the technical decisions, product iterations, rendering choices, and remaining limitations behind the game.
