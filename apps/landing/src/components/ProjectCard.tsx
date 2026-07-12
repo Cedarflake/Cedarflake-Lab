@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowUpRight } from "lucide-react"
 
 import { siteConfig } from "../config/site"
@@ -20,13 +20,30 @@ const projectDateFormatter = new Intl.DateTimeFormat(siteConfig.locale, {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const [coverLoadState, setCoverLoadState] = useState<CoverLoadState>("loading")
+  const coverImageRef = useRef<HTMLImageElement>(null)
   const { cover, label, note, tags } = project.showcase
+
+  useEffect(() => {
+    const image = coverImageRef.current
+
+    if (!image) {
+      return
+    }
+
+    if (!image.complete) {
+      setCoverLoadState("loading")
+      return
+    }
+
+    setCoverLoadState(image.naturalWidth > 0 ? "ready" : "error")
+  }, [cover.src])
 
   return (
     <article className="project-card">
       <a className="project-card__link" href={projectUrl(project)} rel="noreferrer" target="_blank">
         <div className="project-card__cover" data-load-state={coverLoadState}>
           <img
+            ref={coverImageRef}
             src={cover.src}
             alt={cover.alt}
             width={cover.width}

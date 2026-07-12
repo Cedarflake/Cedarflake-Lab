@@ -19,7 +19,6 @@
   text-transform: uppercase;
 }
 
-.project-card__meta time,
 .catalog-card__topline span:last-child {
   margin-left: auto;
   text-align: right;

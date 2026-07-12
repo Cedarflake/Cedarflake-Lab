@@ -4,16 +4,12 @@
   visibility: hidden;
   opacity: 0;
   transform: translate3d(0, var(--reveal-distance), 0);
-  transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--reveal-delay);
 }
 
 [data-motion-root] [data-reveal][data-reveal-state="visible"] {
   visibility: visible;
   opacity: 1;
-  transform: translate3d(0, 0, 0);
+  transform: none;
 }
 
 .site-header[data-reveal] {
@@ -36,6 +32,47 @@
   --reveal-delay: 320ms;
 }
 
+.page-section[data-reveal],
+.open-bench[data-reveal] {
+  transform: none;
+}
+
+@keyframes entrance-reveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--reveal-distance), 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes entrance-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-brand-reveal {
+  from {
+    opacity: 0;
+    filter: blur(28px);
+    transform: translate3d(0, 18px, 0) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
 .hero__brand-visual[data-load-state="loading"] {
   opacity: 0;
 }
@@ -46,15 +83,20 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  [data-motion-root] [data-reveal][data-reveal-state="visible"] {
+    animation: entrance-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: var(--reveal-delay);
+  }
+
+  [data-motion-root] .page-section[data-reveal][data-reveal-state="visible"],
+  [data-motion-root] .open-bench[data-reveal][data-reveal-state="visible"] {
+    animation-name: entrance-fade;
+  }
+
   .hero__brand-visual[data-load-state] {
     opacity: 0;
     filter: blur(28px);
     transform: translate3d(0, 18px, 0) scale(0.985);
-    transition:
-      opacity 800ms cubic-bezier(0.22, 1, 0.36, 1),
-      filter 900ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: 80ms;
   }
 
   .hero__brand-visual[data-load-state="ready"],
@@ -62,6 +104,7 @@
     opacity: 1;
     filter: blur(0);
     transform: translate3d(0, 0, 0) scale(1);
+    animation: hero-brand-reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
   }
 }
 

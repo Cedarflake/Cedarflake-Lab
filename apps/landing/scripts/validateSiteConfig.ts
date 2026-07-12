@@ -1,4 +1,5 @@
 import { siteConfig } from "../src/config/site"
+import { seoConfig } from "../src/config/seo"
 import type { ProjectKind } from "../src/types/project"
 
 const errors: string[] = []
@@ -120,8 +121,43 @@ function validateRepositoryConfig() {
   }
 }
 
+function validateSeoConfig() {
+  try {
+    const siteUrl = new URL(seoConfig.siteUrl)
+
+    if (
+      siteUrl.protocol !== "https:" ||
+      siteUrl.username ||
+      siteUrl.password ||
+      siteUrl.pathname !== "/" ||
+      siteUrl.search ||
+      siteUrl.hash ||
+      siteUrl.href !== seoConfig.siteUrl
+    ) {
+      errors.push(`SEO site URL must be a canonical HTTPS root URL: ${seoConfig.siteUrl}`)
+    }
+  } catch {
+    errors.push(`Invalid SEO site URL: ${seoConfig.siteUrl}`)
+  }
+
+  if (!seoConfig.title.includes(seoConfig.name)) {
+    errors.push(`SEO title must include the site name: ${seoConfig.name}`)
+  }
+
+  if (
+    siteConfig.name !== seoConfig.name ||
+    siteConfig.url !== seoConfig.siteUrl ||
+    siteConfig.locale !== seoConfig.language ||
+    siteConfig.repositoryUrl !== seoConfig.repositoryUrl
+  ) {
+    errors.push("Site and SEO identity configuration must remain aligned")
+  }
+}
+
 validateText(siteConfig, "siteConfig")
+validateText(seoConfig, "seoConfig")
 validateRepositoryConfig()
+validateSeoConfig()
 
 try {
   new Intl.DateTimeFormat(siteConfig.locale, { timeZone: siteConfig.timeZone })

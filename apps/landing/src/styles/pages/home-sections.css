@@ -13,6 +13,13 @@
   align-self: start;
 }
 
+@media (min-width: 1041px) and (min-height: 680px) {
+  .workbench-intro {
+    position: sticky;
+    top: clamp(24px, 5vh, 48px);
+  }
+}
+
 .workbench-intro .section-heading {
   display: block;
   margin-bottom: 0;

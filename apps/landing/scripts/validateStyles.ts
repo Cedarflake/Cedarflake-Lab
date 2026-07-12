@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url"
 const appRoot = fileURLToPath(new URL("../", import.meta.url))
 const stylesEntryPath = resolve(appRoot, "src/styles.css")
 const stylesRoot = resolve(appRoot, "src/styles")
+const motionStylePath = resolve(stylesRoot, "foundation/motion.css")
+const readinessStylePath = resolve(stylesRoot, "foundation/readiness.css")
 const styleLayers = ["foundation", "layout", "components", "pages"] as const
 const importPattern = /^@import\s+["']([^"']+)["'];\s*$/gm
 const commentPattern = /\/\*[\s\S]*?\*\//g
@@ -92,6 +94,29 @@ for (const importSource of importSources) {
 }
 
 const styleFiles = isDirectory(stylesRoot) ? listStyles(stylesRoot).sort() : []
+const motionStyleSource = isFile(motionStylePath)
+  ? readFileSync(motionStylePath, "utf8").replace(commentPattern, "")
+  : ""
+const readinessStyleSource = isFile(readinessStylePath)
+  ? readFileSync(readinessStylePath, "utf8").replace(commentPattern, "")
+  : ""
+
+if (
+  !/--landing-root-visibility\s*:\s*visible\s*;/.test(readinessStyleSource) ||
+  !/--landing-style-readiness\s*:\s*ready\s*;/.test(readinessStyleSource)
+) {
+  errors.push("Style readiness layer must reveal the root and unlock entrance motion")
+}
+
+if (
+  !/@keyframes\s+entrance-reveal\b/.test(motionStyleSource) ||
+  !/@keyframes\s+entrance-fade\b/.test(motionStyleSource) ||
+  !/@keyframes\s+hero-brand-reveal\b/.test(motionStyleSource)
+) {
+  errors.push(
+    "Motion layer must use deterministic keyframes for detail, section, and hero entrance states",
+  )
+}
 
 for (const styleFile of styleFiles) {
   const pathFromStylesRoot = relative(stylesRoot, styleFile)

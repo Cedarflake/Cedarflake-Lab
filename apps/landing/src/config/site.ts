@@ -1,7 +1,8 @@
 import type { ProjectKind } from "../types/project"
 import { workbenchCategories } from "./projects/workbench"
+import { seoConfig } from "./seo"
 
-const siteLocale = "en"
+const siteLocale = seoConfig.language
 const siteTimeZone = "Asia/Shanghai"
 const currentYear = new Intl.DateTimeFormat(siteLocale, {
   timeZone: siteTimeZone,
@@ -9,10 +10,11 @@ const currentYear = new Intl.DateTimeFormat(siteLocale, {
 }).format(new Date())
 
 export const siteConfig = {
-  name: "Cedarflake Lab",
+  name: seoConfig.name,
+  url: seoConfig.siteUrl,
   locale: siteLocale,
   timeZone: siteTimeZone,
-  repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Lab",
+  repositoryUrl: seoConfig.repositoryUrl,
   repositoryBranch: "main",
   stats: [
     { kind: "app", label: "Apps" },

@@ -9,7 +9,7 @@
     "node": ">=22 <25"
   },
   "scripts": {
-    "build": "pnpm validate && tsc -p tsconfig.json --noEmit && vite build",
+    "build": "pnpm validate && tsc -p tsconfig.json --noEmit && vite build && tsx ./scripts/validateBuild.ts",
     "check": "pnpm format:check && pnpm typecheck && pnpm validate",
     "dev": "pnpm validate && vite --host 127.0.0.1",
     "format": "prettier . --write",

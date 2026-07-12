@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react"
 
+const styleReadinessProperty = "--landing-style-readiness"
+
 export function useEntranceReveal() {
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -11,6 +13,10 @@ export function useEntranceReveal() {
     }
 
     const targets = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"))
+    let observer: IntersectionObserver | null = null
+    let readinessFrame: number | null = null
+    let revealFrame: number | null = null
+    let isDisposed = false
 
     function revealAll() {
       for (const target of targets) {
@@ -18,38 +24,73 @@ export function useEntranceReveal() {
       }
     }
 
-    if (
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      typeof IntersectionObserver === "undefined"
-    ) {
-      revealAll()
-      return
-    }
+    function startReveal() {
+      if (isDisposed) {
+        return
+      }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) {
-            continue
+      if (
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        typeof IntersectionObserver === "undefined"
+      ) {
+        revealAll()
+        return
+      }
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) {
+              continue
+            }
+
+            const target = entry.target as HTMLElement
+            target.dataset["revealState"] = "visible"
+            observer?.unobserve(target)
           }
+        },
+        {
+          rootMargin: "0px 0px -48px 0px",
+          threshold: 0,
+        },
+      )
 
-          const target = entry.target as HTMLElement
-          target.dataset["revealState"] = "visible"
-          observer.unobserve(target)
-        }
-      },
-      {
-        rootMargin: "0px 0px -48px 0px",
-        threshold: 0,
-      },
-    )
-
-    for (const target of targets) {
-      observer.observe(target)
+      for (const target of targets) {
+        observer.observe(target)
+      }
     }
+
+    function waitForStyles() {
+      if (isDisposed) {
+        return
+      }
+
+      const readiness = getComputedStyle(document.documentElement)
+        .getPropertyValue(styleReadinessProperty)
+        .trim()
+
+      if (readiness !== "ready") {
+        readinessFrame = requestAnimationFrame(waitForStyles)
+        return
+      }
+
+      revealFrame = requestAnimationFrame(startReveal)
+    }
+
+    readinessFrame = requestAnimationFrame(waitForStyles)
 
     return () => {
-      observer.disconnect()
+      isDisposed = true
+
+      if (readinessFrame !== null) {
+        cancelAnimationFrame(readinessFrame)
+      }
+
+      if (revealFrame !== null) {
+        cancelAnimationFrame(revealFrame)
+      }
+
+      observer?.disconnect()
     }
   }, [])
 

@@ -260,6 +260,7 @@ export const otherProjects: readonly CatalogProject[] = catalog
 export const workbenchGroups: readonly WorkbenchGroupData[] = siteConfig.workbenchCategories
   .map((category) => ({
     id: category.id,
+    icon: category.icon,
     title: category.title,
     items: workbenchProjects.filter((project) => project.category === category.key),
   }))

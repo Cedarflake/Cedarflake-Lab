@@ -1,13 +1,18 @@
-import type { WorkbenchProject } from "../../types/project"
+import type { WorkbenchIconName, WorkbenchProject } from "../../types/project"
 
 export const workbenchCategories = [
-  { key: "ai", id: "AI", title: "Artificial intelligence" },
-  { key: "automation", id: "AU", title: "Automation" },
-  { key: "files", id: "FI", title: "Files" },
-  { key: "games", id: "GA", title: "Games" },
-  { key: "media", id: "ME", title: "Media" },
-  { key: "network", id: "NE", title: "Network" },
-] as const
+  { key: "ai", id: "AI", icon: "brain-circuit", title: "Artificial intelligence" },
+  { key: "automation", id: "AU", icon: "workflow", title: "Automation" },
+  { key: "files", id: "FI", icon: "folder-open", title: "Files" },
+  { key: "games", id: "GA", icon: "gamepad-2", title: "Games" },
+  { key: "media", id: "ME", icon: "images", title: "Media" },
+  { key: "network", id: "NE", icon: "network", title: "Network" },
+] as const satisfies readonly {
+  key: string
+  id: string
+  icon: WorkbenchIconName
+  title: string
+}[]
 
 export type WorkbenchCategory = (typeof workbenchCategories)[number]["key"]
 

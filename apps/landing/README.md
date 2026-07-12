@@ -15,18 +15,21 @@ Live site: [https://test.i0c.cc/](https://test.i0c.cc/)
 │   ├── validateCollections.ts # Rendered membership, ordering, groups, and stats
 │   ├── validateStyles.ts      # Import coverage, layers, and stylesheet ownership
 │   ├── validateDeployment.ts  # Vercel schema, Corepack, and direct pnpm install
-│   ├── validateDocument.ts    # Language, metadata, resources, and app mount point
-│   └── validateMarkup.ts      # Static IDs, links, ARIA, images, and headings
+│   ├── validateDocument.ts    # Metadata, structured data, crawl assets, and document shell
+│   ├── validateMarkup.ts      # Static IDs, links, ARIA, images, and headings
+│   └── validateBuild.ts       # Pre-rendered HTML, canonical metadata, robots, and sitemap
 └── src/
     ├── components/            # Presentation only
     ├── config/
     │   ├── projects.ts        # Single project manifest
+    │   ├── seo.ts             # Canonical identity, search metadata, and social preview
     │   ├── site.ts            # Navigation, copy, repository metadata
     │   └── workbench.ts       # Workbench category definitions
     ├── lib/
-    │   └── projectCatalog.ts  # Validation, grouping, sorting, counts, source links
+    │   ├── projectCatalog.ts  # Validation, grouping, sorting, counts, source links
+    │   └── seo.ts             # Metadata templates, JSON-LD, robots, and sitemap generation
     ├── styles/
-    │   ├── foundation/        # Tokens, reset, typography, accessibility, motion policy
+    │   ├── foundation/        # Tokens, reset, typography, accessibility, motion, style readiness
     │   ├── layout/            # Site shell and reusable page-section geometry
     │   ├── components/        # Buttons, carousels, cards, headings, workbench
     │   └── pages/             # Home-page composition and page-only sections
@@ -38,7 +41,9 @@ Live site: [https://test.i0c.cc/](https://test.i0c.cc/)
 
 Every rendered project collection is ordered by `updatedAt` from newest to oldest, with the title as a deterministic tie-breaker. Workbench categories retain the order declared in `src/config/workbench.ts`, while the projects inside each category follow the shared update order.
 
-`pnpm validate` checks catalog taxonomy, repository paths, public covers, declared PNG dimensions, canonical asset copies, site configuration, derived collection membership and ordering, stylesheet ownership, Vercel deployment configuration, the static document shell, and the server-rendered markup relationships. It runs automatically before `dev` and as part of this app's existing `check` and `build` commands; no separate CI workflow is required.
+`pnpm validate` checks catalog taxonomy, repository paths, public covers, declared PNG dimensions, canonical asset copies, site and SEO configuration, derived collection membership and ordering, stylesheet ownership, Vercel deployment configuration, the static document shell, structured data, crawl assets, and server-rendered markup relationships. It runs automatically before `dev` and as part of this app's existing `check` and `build` commands; no separate CI workflow is required. The build then runs `validateBuild.ts` against `dist/` so an empty app shell, unresolved SEO token, or stale robots and sitemap output cannot ship.
+
+The Vite document plugin pre-renders the React page into `index.html` and the client hydrates that markup instead of replacing an empty root. Search crawlers and link unfurlers therefore receive the page title, project copy, links, canonical metadata, and JSON-LD in the initial response without waiting for JavaScript. A minimal inline guard keeps the root hidden until the imported readiness stylesheet applies, preventing pre-rendered content from flashing without its styles in development and production without tying visibility to hydration or a timer.
 
 `src/styles.css` is an import-only entrypoint, ordered from low-level foundations to page-specific composition. Keep rules in the layer that owns them:
 
@@ -51,7 +56,7 @@ Add new imports to the matching block in `src/styles.css`; do not create cross-l
 
 Validation keeps `src/styles.css` import-only, requires every stylesheet to be imported exactly once, enforces the documented layer order and kebab-case filenames, and rejects nested imports. A misplaced or orphaned style file therefore fails locally instead of silently disappearing from the page.
 
-Viewport entrance motion is opt-in through `data-reveal`. `useEntranceReveal` observes each target once and disconnects on unmount, while the shared motion stylesheet owns timing and stagger values. Keep reveal effects limited to opacity and transforms so they do not shift carousel geometry. Reduced-motion users and browsers without `IntersectionObserver` receive the final visible state immediately.
+Viewport entrance motion is opt-in through `data-reveal`. `useEntranceReveal` waits for the stylesheet readiness signal and one painted frame before observing each target, then disconnects on unmount; this preserves the initial motion state even with fast hydration or cached assets. The shared motion stylesheet owns timing and stagger values. Keep reveal effects limited to opacity and transforms so they do not shift carousel geometry. Reduced-motion users and browsers without `IntersectionObserver` receive the final visible state after styles are ready.
 
 Showcase covers expose an explicit loading state: successful images fade from a soft loading treatment, while failed images become visible immediately so alternative text is not hidden. Keep intrinsic dimensions on every cover to prevent the transition from introducing layout shift.
 
@@ -82,6 +87,10 @@ Add the category once in [`src/config/workbench.ts`](./src/config/workbench.ts),
 ## Change site copy
 
 Edit [`src/config/site.ts`](./src/config/site.ts) for the locale, time zone, navigation, headings, hero copy and artwork metadata, repository commands, and footer text. Project content should remain in the project manifest. The document language, project-date formatter, and deterministic title sorting all consume the shared locale configuration. Declared hero artwork dimensions are validated against the deployed PNG and drive its layout ratio. Source links require a canonical `https://github.com/<owner>/<repository>` URL and a portable Git branch name because the catalog derives GitHub tree URLs from them.
+
+## Change SEO metadata
+
+Edit [`src/config/seo.ts`](./src/config/seo.ts) for the canonical site URL, document title, description, crawl policy, locale, theme color, repository identity, and social preview. The Vite build derives the canonical, Open Graph, Twitter, JSON-LD, `robots.txt`, and `sitemap.xml` output from this single configuration. Keep the social image in `public/` and update its declared dimensions when replacing it; validation rejects missing, escaping, or mismatched PNG assets.
 
 ## Development
 

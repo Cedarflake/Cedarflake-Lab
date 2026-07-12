@@ -1,4 +1,6 @@
 export type ProjectKind = "app" | "package" | "workbench" | "other"
+export type WorkbenchIconName =
+  "brain-circuit" | "workflow" | "folder-open" | "gamepad-2" | "images" | "network"
 
 export interface ProjectCover {
   src: `/covers/${string}.png`
@@ -50,6 +52,7 @@ export type ShowcaseProject = ProjectEntry & { showcase: ProjectShowcase }
 
 export interface WorkbenchGroupData {
   id: string
+  icon: WorkbenchIconName
   title: string
   items: readonly WorkbenchProject[]
 }
