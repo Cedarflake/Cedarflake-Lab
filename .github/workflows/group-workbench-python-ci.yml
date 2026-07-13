@@ -83,11 +83,11 @@ jobs:
 
       - name: Test sync-multi
         working-directory: workbench/files/sync-multi
-        run: uv run --no-project python -m unittest discover -s tests -p "test_*.py" -v
+        run: uv run --no-project --with-requirements requirements.txt python -m unittest discover -s tests -p "test_*.py" -v
 
       - name: Test Gomoku
         working-directory: workbench/games/gomoku
-        run: uv run --no-project python -m unittest discover -s tests -p "test_*.py" -v
+        run: uv run --no-project --with-requirements requirements.txt python -m unittest discover -s tests -p "test_*.py" -v
 
       - name: Test adjust-gif
         working-directory: workbench/media/adjust-gif
@@ -121,6 +121,12 @@ jobs:
             arguments: .
           - name: AutoCrawler
             directory: workbench/automation/auto-crawler
+            arguments: -r requirements.txt
+          - name: sync-multi
+            directory: workbench/files/sync-multi
+            arguments: -r requirements.txt
+          - name: Gomoku
+            directory: workbench/games/gomoku
             arguments: -r requirements.txt
           - name: ASCII Art
             directory: workbench/media/ascii-art

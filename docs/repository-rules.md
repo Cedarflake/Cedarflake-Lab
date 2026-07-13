@@ -89,7 +89,7 @@ The closest formatter, linter, framework convention, compiler configuration, loc
 | `workbench/<category>/<slug>` | Local Python utilities and small projects                               | Category, then project        |
 | `others/<category>/<slug>`    | Userscripts, interface studies, retired experiments, and other material | Category, then project        |
 
-Do not add a new top-level collection or change these depths without updating the landing discovery validator, root documentation, and every workflow whose path filters, commands, or working directories read that collection. Review workspace globs and update them only when workspace membership changes. `apps/landing` is the only project intentionally excluded from landing catalog coverage because it is the catalog itself.
+Do not add a new top-level collection or change these depths without updating the repository contract checker, landing discovery validator, root documentation, and every workflow whose path filters, commands, or working directories read that collection. Review workspace globs and update them only when workspace membership changes. `apps/landing` is the only project intentionally excluded from landing catalog coverage because it is the catalog itself.
 
 ## 5. Documentation and Metadata Ownership
 
@@ -102,9 +102,12 @@ Do not add a new top-level collection or change these depths without updating th
 | Landing project config                                    | Public catalog identity, summary, lifecycle, update time, source link, external destination, and showcase |
 | `package.json`, `pyproject.toml`, requirements, lockfiles | Machine-readable package identity, scripts, dependencies, engines, and license metadata                   |
 | `docs/`                                                   | Cross-project policy and architecture that does not belong to one project                                 |
+| `scripts/repository-contract/`                            | Machine-enforceable tracked-file invariants, diagnostics, and checker fixtures                            |
 | `.github/workflows/`                                      | Automated trigger scope and executable validation                                                         |
 
 Do not copy an entire policy into several READMEs. Link to the canonical owner, but update every surface that independently presents the changed fact. A public URL, for example, appears independently in the root index, project README, and landing catalog.
+
+This document remains the canonical policy. The repository contract checker implements only its machine-verifiable subset, the root `package.json` exposes that checker as `pnpm check:repository-contract`, and GitHub Actions owns when the command runs. When an encoded rule changes, update the policy, checker diagnostics, and relevant fixtures together.
 
 ## 6. Minimum Project Contract
 
@@ -125,6 +128,8 @@ Node projects included in the pnpm workspace must also provide:
 Python workbench projects must document whether they use a local `pyproject.toml`, `uv.lock`, `requirements.txt`, or dependency-free execution.
 
 Imported projects must preserve upstream attribution and licensing. Never infer or manufacture a license for third-party code or assets; record an explicit unlicensed or review-needed status when reuse terms are not known.
+
+`pnpm check:repository-contract` validates only invariants that can be proven from tracked repository files. Passing it does not verify external URL availability, deployment-provider settings, runtime behavior, undocumented local prerequisites, or the legal validity of a license decision. Complete the manual and project-specific checks required elsewhere in this document even when the repository contract passes.
 
 ## 7. Adding a Project
 
@@ -175,6 +180,8 @@ For `others/<category>/<slug>`:
 
 New userscripts must also document installation, userscript-manager compatibility, and the committed-artifact policy. If an install URL points to generated `dist/` output, generate it through the project build and provide a drift check. A userscript that runs a real-browser test needs a dedicated workflow unless at least two userscripts execute the same version-controlled browser harness and can share one category-level path filter.
 
+After adding any project described in this section, run `pnpm check:repository-contract` in addition to its category- and project-specific validation.
+
 ## 8. Landing Catalog Rules
 
 The landing validator discovers:
@@ -190,6 +197,8 @@ Every discovered project except `apps/landing` needs exactly one catalog entry. 
 - `building.ts` for compact app and package cards.
 - `workbench.ts` for workbench categories and projects.
 - `others.ts` for other projects and lifecycle state.
+
+Repository infrastructure outside the discovered roots, including `scripts/repository-contract/` and `.github/workflows/`, is not a project. A checker- or CI-only change does not add a catalog entry, alter Landing presentation metadata, or bump `updatedAt`.
 
 Every entry needs a unique repository-relative `path`, `title`, `summary`, `kind`, and time-zone-qualified ISO `updatedAt`. Keep the path taxonomy aligned with the kind. Building and others entries must also define `label` and `lifecycle: "active" | "archived"`; featured and workbench entries do not support `lifecycle`. Adding one project inside the existing taxonomy does not require editing card numbers, aggregate counts, or `projects.ts`.
 
@@ -218,6 +227,8 @@ For an app with a stable public deployment, keep the same canonical endpoint in:
 4. Package `homepage` or userscript metadata only when the existing field or project documentation defines that field as the deployment destination.
 
 For a deployed app with a catalog entry, add `externalUrl` when the root or project README identifies that deployment as canonical, or the explicit task selects it as the card destination. `apps/landing` is the catalog itself and has no catalog entry.
+
+The repository contract checker and its workflow are not applications, workspace inventory entries, or deployments. Checker- or CI-only changes do not add a root README Workspaces row, a project or collection README entry, or a Live URL. Document the targeted checker command in Section 14; root `pnpm check` remains the aggregate command exposed by the root README.
 
 Before recording an endpoint:
 
@@ -268,10 +279,13 @@ Current workflow ownership:
 | File                                 | Responsibility                                                    |
 | ------------------------------------ | ----------------------------------------------------------------- |
 | `repo-codeql-security.yml`           | Repository JavaScript/TypeScript CodeQL analysis                  |
+| `repo-repository-contract-ci.yml`    | Repository structure, metadata, and synchronization contract      |
 | `group-apps-packages-ci.yml`         | Baseline dependency audit, check, and build for apps and packages |
 | `group-workbench-python-ci.yml`      | Workbench Ruff, registered tests, and dependency audits           |
 | `project-liminal-drift-ci.yml`       | Liminal Drift project and browser validation                      |
 | `project-youtube-auto-resume-ci.yml` | YouTube userscript unit, build-drift, and browser validation      |
+
+`repo-repository-contract-ci.yml` uses the display name `[Repo] Repository Contract CI`. It runs for every pull request and every push to `main`, without path filters, because a change at any tracked path can introduce a contract violation; it also supports `workflow_dispatch`. Keep this repository-wide gate separate from group and project workflows.
 
 Workflow ownership consists of the project directories and shared files that its project-specific commands explicitly type-check, test, build, audit, or upload. Repository-root checkout and frozen-install setup do not transfer ownership of unrelated sibling workspaces to a project workflow when a broader group workflow validates that shared install boundary.
 
@@ -337,9 +351,10 @@ Run the smallest owning checks first:
 | Liminal Drift gameplay, rendering, input, or UI  | Run the project `check` plus its documented canvas and interaction browser checks.                                                                                                                                                   |
 | Userscript with committed output                 | Run the project `check`. Inspect its script definition: run `build:check` and browser tests separately only when `check` does not already include them. Install every documented browser prerequisite first.                         |
 | Python workbench                                 | Run `uvx ruff format --check workbench`, `uvx ruff check workbench`, and the affected project's README- or CI-declared tests.                                                                                                        |
+| Repository contract or checker                   | Run `pnpm check:repository-contract` after changing taxonomy, inventories, catalog coverage, workspace registration, workflow ownership, checker source, or fixtures.                                                                |
 | Workflow change                                  | Run `pnpm check:workflows` and require exit code 0, then inspect path filters, package filters, permissions, working directories, and self-paths. Review the Actions run only when push is authorized.                               |
 
-Run root `pnpm check` when a change touches two or more project roots, a root configuration consumed by multiple workspaces, or a shared package public API. Run root `pnpm build` when those changes can alter production output in two or more workspaces. These commands intentionally include userscripts; the Apps & Packages workflow remains a narrower CI group.
+When `repo-repository-contract-ci.yml` changes, run both contract and workflow checks. Run root `pnpm check`, which includes the repository contract, when a change touches two or more project roots, a root configuration consumed by multiple workspaces, or a shared package public API. Run root `pnpm build` when those changes can alter production output in two or more workspaces. These commands intentionally include userscripts; the Apps & Packages workflow remains a narrower CI group.
 
 For moves and URL changes, also run a repository search for every old identifier. Always finish with `git diff --check` and inspect the final diff.
 
@@ -369,6 +384,7 @@ Before considering any repository change complete, confirm:
 - [ ] Workspace metadata, lockfiles, and generated artifacts are current.
 - [ ] Every documented browser, binary, service, and environment prerequisite is reproducible on a new machine.
 - [ ] CI naming, trigger scope, commands, and manual test/audit lists are current.
+- [ ] Repository contract policy, checker scope, diagnostics, and fixtures agree; `pnpm check:repository-contract` passed when an owned invariant changed.
 - [ ] Old paths, names, URLs, and orphaned assets are absent.
 - [ ] New or modified frontend code follows the owning project rules or the Section 2 defaults.
 - [ ] Targeted validation passed; root checks ran when the Section 14 ownership-boundary conditions were met.
