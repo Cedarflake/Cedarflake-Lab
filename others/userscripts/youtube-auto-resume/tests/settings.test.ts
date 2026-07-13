@@ -5,6 +5,7 @@ import {
   createSettingsStore,
   DEFAULT_SETTINGS,
   normalizeSettings,
+  type SettingsStorage,
 } from "../src/core/settings.ts"
 
 class MemoryStorage implements Storage {
@@ -71,7 +72,8 @@ test("settings store persists normalized values", () => {
     intervalMs: 20_000,
   })
 
-  assert.equal(saved.intervalMs, 10_000)
+  assert.equal(saved.persisted, true)
+  assert.equal(saved.settings.intervalMs, 10_000)
   assert.equal(store.reload().intervalMs, 10_000)
   assert.equal(JSON.parse(storage.getItem(store.key) ?? "null").intervalMs, 10_000)
 })
@@ -86,4 +88,25 @@ test("settings store recovers from invalid JSON", () => {
   })
 
   assert.deepEqual(store.get(), DEFAULT_SETTINGS)
+})
+
+test("settings store reports persistence failures without discarding memory state", () => {
+  const storage: SettingsStorage = {
+    getItem: () => null,
+    setItem: () => {
+      throw new Error("storage unavailable")
+    },
+  }
+  const store = createSettingsStore({
+    prefix: "failing.",
+    storage,
+  })
+  const saved = store.save({
+    ...DEFAULT_SETTINGS,
+    intervalMs: 2_000,
+  })
+
+  assert.equal(saved.persisted, false)
+  assert.equal(saved.settings.intervalMs, 2_000)
+  assert.equal(store.get().intervalMs, 2_000)
 })

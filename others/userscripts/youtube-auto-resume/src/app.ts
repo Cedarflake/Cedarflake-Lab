@@ -1,14 +1,21 @@
+import { createPlaybackState } from "./core/playbackState.ts"
 import {
   createSettingsStore,
   DEFAULT_SETTINGS,
   type Settings,
+  type SettingsSaveResult,
 } from "./core/settings.ts"
 import { nowText } from "./core/time.ts"
 import { isTypingContext } from "./core/typing.ts"
 import { createPanelView } from "./ui/panel.ts"
-import { createAdSkipper, getAdUiSnapshot } from "./youtube/ads.ts"
-import { getPlaybackQuality, getVideo } from "./youtube/player.ts"
-import { createQualityManager } from "./youtube/quality.ts"
+import {
+  createAdSkipper,
+  getAdUiSnapshot,
+} from "./youtube/ads.ts"
+import {
+  resolveActivePlayerContext,
+  type ActiveYouTubePlayerContext,
+} from "./youtube/player.ts"
 
 export interface AppEnvironment {
   loadedText?: string
@@ -22,6 +29,7 @@ export interface YouTubeAutoResumeApp {
 
 interface ResumeOptions {
   force?: boolean
+  shouldRefreshContext?: boolean
 }
 
 interface VideoStateSnapshot {
@@ -34,13 +42,18 @@ interface VideoStateSnapshot {
   readyState: number | null
 }
 
-function getStateSnapshot(video: HTMLVideoElement | null): VideoStateSnapshot {
-  const adUi = getAdUiSnapshot()
+function getStateSnapshot(
+  context: ActiveYouTubePlayerContext | null,
+): VideoStateSnapshot {
+  const adUi = getAdUiSnapshot({
+    getPlayerContext: () => context,
+  })
+  const video = context?.video ?? null
 
   if (!video) {
     return {
-      canCloseAdOverlay: adUi.canCloseAdOverlay,
-      canSkipAd: adUi.canSkipAd,
+      canCloseAdOverlay: false,
+      canSkipAd: false,
       currentTime: null,
       ended: null,
       hasVideo: false,
@@ -63,21 +76,18 @@ function getStateSnapshot(video: HTMLVideoElement | null): VideoStateSnapshot {
 function formatStatus(
   snapshot: VideoStateSnapshot,
   settings: Settings,
-  playbackQuality: string | null,
 ): string {
   if (!snapshot.hasVideo) {
-    return "检测到视频：否\n提示：请确认页面中有正在播放的 YouTube 视频"
+    return "检测到活动视频：否\n提示：当前页面没有受支持的 YouTube 播放器"
   }
 
   return [
-    "检测到视频：是",
+    "检测到活动视频：是",
     `暂停：${snapshot.paused ? "是" : "否"}`,
     `结束：${snapshot.ended ? "是" : "否"}`,
     `播放位置：${snapshot.currentTime === null ? "-" : snapshot.currentTime.toFixed(1)}`,
     `可跳过广告：${snapshot.canSkipAd ? "是" : "否"}`,
     `可关闭广告遮罩：${snapshot.canCloseAdOverlay ? "是" : "否"}`,
-    `最佳画质：${settings.bestQuality ? "是" : "否"}`,
-    `当前画质：${playbackQuality ?? "-"}`,
     `检测间隔：${settings.intervalMs}ms`,
     `暂停阈值：${settings.minPausedSeconds}s`,
   ].join("\n")
@@ -87,146 +97,397 @@ export function startYouTubeAutoResumeApp(
   environment: AppEnvironment = {},
 ): YouTubeAutoResumeApp {
   const store = createSettingsStore({})
+  const playbackState = createPlaybackState()
   let settings = store.get()
-  let lastPausedAt = 0
+  let activeContext: ActiveYouTubePlayerContext | null = null
   let lastActionText = "尚未执行"
   let timerId: number | null = null
+  let timerDueAt = 0
+  let nextResumeAllowedAt = 0
   let isStopped = false
 
   const setLastAction = (text: string): void => {
+    if (isStopped) {
+      return
+    }
+
     lastActionText = `${nowText()} ${text}`
     panel.setLastActionText(lastActionText)
   }
 
-  const qualityManager = createQualityManager({
-    getSettings: () => settings,
-    onAction: setLastAction,
-  })
+  const saveSettings = (nextSettings: Settings): SettingsSaveResult => {
+    if (isStopped) {
+      return { persisted: false, settings }
+    }
+
+    const result = store.save(nextSettings)
+    settings = result.settings
+    return result
+  }
+
   const adSkipper = createAdSkipper({
     getSettings: () => settings,
+    getPlayerContext: () => activeContext,
     onAction: setLastAction,
   })
   const panel = createPanelView({
     getSettings: () => settings,
+    onExpanded: () => {
+      if (isStopped) {
+        return
+      }
+
+      refreshActiveContext()
+      updatePanelStatus()
+    },
+    onPanelStatePersistenceFailed: () => {
+      if (isStopped) {
+        return
+      }
+
+      setLastAction("面板显示状态已应用，但浏览器未能持久化")
+    },
     onResumeNow: () => {
+      if (isStopped) {
+        return
+      }
+
       setLastAction("手动触发恢复")
       void tryResume({ force: true })
     },
-    onSettingsApplied: (savedSettings) => {
-      settings = savedSettings
-      setLastAction("设置已保存")
+    onSettingsApplied: (result) => {
+      if (isStopped) {
+        return
+      }
+
+      settings = result.settings
+      renewActivePlaybackState()
+      setLastAction(
+        result.persisted
+          ? "设置已保存"
+          : "设置已应用，但浏览器未能持久化",
+      )
       panel.render(settings, lastActionText)
       scheduleNextLoop(0)
     },
     onSkipNow: () => {
+      if (isStopped) {
+        return
+      }
+
       setLastAction("手动触发跳过")
-      adSkipper.trySkipAdsIfPossible({ force: true })
+      const result = adSkipper.trySkipAdsIfPossible({ force: true })
+
+      if (result.recheckAfterMs !== null) {
+        scheduleNextLoop(result.recheckAfterMs)
+      }
     },
-    saveSettings: (nextSettings) => {
-      settings = store.save(nextSettings)
-      return settings
-    },
+    saveSettings,
   })
 
-  const ensurePanel = (): void => {
-    panel.ensureMounted()
-    panel.render(settings, lastActionText)
+  function detachVideoListeners(video: HTMLVideoElement): void {
+    video.removeEventListener("emptied", handleVideoSourceChange)
+    video.removeEventListener("ended", handleVideoEnded)
+    video.removeEventListener("loadedmetadata", handleVideoSourceChange)
+    video.removeEventListener("pause", handleVideoPause)
+    video.removeEventListener("play", handleVideoPlay)
   }
 
-  const tryResume = async (options: ResumeOptions = {}): Promise<void> => {
+  function attachVideoListeners(video: HTMLVideoElement): void {
+    video.addEventListener("emptied", handleVideoSourceChange)
+    video.addEventListener("ended", handleVideoEnded)
+    video.addEventListener("loadedmetadata", handleVideoSourceChange)
+    video.addEventListener("pause", handleVideoPause)
+    video.addEventListener("play", handleVideoPlay)
+  }
+
+  function setActiveContext(
+    nextContext: ActiveYouTubePlayerContext | null,
+  ): boolean {
+    const previousVideo = activeContext?.video ?? null
+    const nextVideo = nextContext?.video ?? null
+    activeContext = nextContext
+
+    if (previousVideo === nextVideo) {
+      return false
+    }
+
+    if (previousVideo) {
+      detachVideoListeners(previousVideo)
+    }
+
+    playbackState.activate(nextVideo, Date.now())
+    nextResumeAllowedAt = 0
+
+    if (nextVideo) {
+      attachVideoListeners(nextVideo)
+    }
+
+    return true
+  }
+
+  function refreshActiveContext(): boolean {
+    return setActiveContext(resolveActivePlayerContext())
+  }
+
+  function renewActivePlaybackState(): void {
+    const video = activeContext?.video
+
+    if (video) {
+      playbackState.renew(video, Date.now())
+    }
+
+    nextResumeAllowedAt = 0
+  }
+
+  function updatePanelStatus(): void {
+    if (isStopped || !panel.isExpanded()) {
+      return
+    }
+
+    panel.setStatus(formatStatus(getStateSnapshot(activeContext), settings))
+  }
+
+  function scheduleNextLoop(delay = settings.intervalMs): void {
+    if (isStopped) {
+      return
+    }
+
+    const normalizedDelay = Math.max(0, delay)
+    const dueAt = Date.now() + normalizedDelay
+
+    if (timerId !== null && timerDueAt <= dueAt) {
+      return
+    }
+
+    if (timerId !== null) {
+      window.clearTimeout(timerId)
+    }
+
+    timerDueAt = dueAt
+    timerId = window.setTimeout(() => {
+      timerId = null
+      timerDueAt = 0
+      runLoop()
+    }, normalizedDelay)
+  }
+
+  function handleVideoPlay(event: Event): void {
+    const video = event.currentTarget as HTMLVideoElement
+
+    playbackState.markPlaying(video)
+    nextResumeAllowedAt = 0
+    updatePanelStatus()
+  }
+
+  function handleVideoPause(event: Event): void {
+    const video = event.currentTarget as HTMLVideoElement
+
+    if (video.ended) {
+      playbackState.markPlaying(video)
+      return
+    }
+
+    playbackState.markPaused(video, Date.now())
+    scheduleNextLoop(settings.minPausedSeconds * 1_000)
+    updatePanelStatus()
+  }
+
+  function handleVideoEnded(event: Event): void {
+    playbackState.markPlaying(event.currentTarget as HTMLVideoElement)
+    updatePanelStatus()
+  }
+
+  function handleVideoSourceChange(event: Event): void {
+    const video = event.currentTarget as HTMLVideoElement
+
+    playbackState.renew(video, Date.now())
+    nextResumeAllowedAt = 0
+    scheduleNextLoop(0)
+  }
+
+  function handleNavigationStart(): void {
+    setActiveContext(null)
+    updatePanelStatus()
+  }
+
+  function handleNavigationFinish(): void {
+    scheduleNextLoop(0)
+  }
+
+  function handleStorage(event: StorageEvent): void {
+    if (event.key !== null && event.key !== store.key) {
+      return
+    }
+
+    settings = store.reload()
+    renewActivePlaybackState()
+    panel.render(settings, lastActionText)
+    scheduleNextLoop(0)
+  }
+
+  function handleVisibilityChange(): void {
+    if (document.visibilityState === "visible") {
+      scheduleNextLoop(0)
+    }
+  }
+
+  async function tryResume(options: ResumeOptions = {}): Promise<void> {
+    if (isStopped) {
+      return
+    }
+
     const isForced = options.force === true
-    const video = getVideo()
-    const snapshot = getStateSnapshot(video)
 
-    ensurePanel()
-    panel.setStatus(formatStatus(snapshot, settings, getPlaybackQuality()))
-
-    if ((!settings.enabled && !isForced) || !video) {
-      return
+    if (options.shouldRefreshContext !== false) {
+      refreshActiveContext()
     }
 
-    if (settings.avoidTyping && isTypingContext() && !isForced) {
-      return
-    }
+    updatePanelStatus()
 
-    if (settings.avoidEnded && video.ended && !isForced) {
+    const video = activeContext?.video
+
+    if (!video) {
       return
     }
 
     if (!video.paused) {
-      lastPausedAt = 0
+      playbackState.markPlaying(video)
       return
     }
 
     const now = Date.now()
+    playbackState.markPaused(video, now)
 
-    if (lastPausedAt === 0) {
-      lastPausedAt = now
+    if ((!settings.enabled && !isForced)
+      || (settings.avoidTyping && isTypingContext() && !isForced)
+      || (settings.avoidEnded && video.ended && !isForced)
+      || (!isForced && video.readyState < 2)
+      || (!isForced && now < nextResumeAllowedAt)) {
+      return
     }
 
-    if (!isForced && (now - lastPausedAt) / 1_000 < settings.minPausedSeconds) {
+    const pausedAt = playbackState.getPauseStartedAt(video)
+
+    if (
+      !isForced
+      && pausedAt !== null
+      && (now - pausedAt) / 1_000 < settings.minPausedSeconds
+    ) {
+      scheduleNextLoop(
+        settings.minPausedSeconds * 1_000 - (now - pausedAt),
+      )
+      return
+    }
+
+    const attempt = playbackState.beginResume(video)
+
+    if (!attempt) {
       return
     }
 
     try {
       await video.play()
-      lastPausedAt = 0
-      setLastAction("检测到暂停，已尝试恢复播放")
+
+      if (!playbackState.finishResume(attempt) || isStopped) {
+        return
+      }
+
+      playbackState.markPlaying(video)
+      nextResumeAllowedAt = 0
+      setLastAction("检测到暂停，已恢复播放")
     } catch {
-      setLastAction("恢复播放失败，可能受到浏览器自动播放策略限制")
+      if (!playbackState.finishResume(attempt) || isStopped) {
+        return
+      }
+
+      nextResumeAllowedAt = Date.now() + Math.max(5_000, settings.intervalMs * 3)
+      setLastAction("恢复播放失败，等待浏览器允许后重试")
+      scheduleNextLoop(nextResumeAllowedAt - Date.now())
+    } finally {
+      if (!isStopped) {
+        updatePanelStatus()
+      }
     }
   }
 
-  const scheduleNextLoop = (delay = settings.intervalMs): void => {
-    if (timerId !== null) {
-      window.clearTimeout(timerId)
-    }
-
+  function runLoop(): void {
     if (isStopped) {
       return
     }
 
-    timerId = window.setTimeout(runLoop, delay)
-  }
+    refreshActiveContext()
+    const adResult = adSkipper.trySkipAdsIfPossible()
 
-  const runLoop = (): void => {
-    settings = store.reload()
-    adSkipper.trySkipAdsIfPossible()
-    qualityManager.trySetBestQualityIfPossible()
-    void tryResume()
+    if (adResult.recheckAfterMs !== null) {
+      scheduleNextLoop(adResult.recheckAfterMs)
+    }
+
+    void tryResume({ shouldRefreshContext: false })
     scheduleNextLoop()
   }
 
-  ensurePanel()
+  function stop(): void {
+    if (isStopped) {
+      return
+    }
+
+    isStopped = true
+
+    if (timerId !== null) {
+      window.clearTimeout(timerId)
+      timerId = null
+      timerDueAt = 0
+    }
+
+    const video = activeContext?.video
+
+    if (video) {
+      detachVideoListeners(video)
+    }
+
+    activeContext = null
+    playbackState.reset()
+    document.removeEventListener("visibilitychange", handleVisibilityChange)
+    document.removeEventListener("yt-navigate-finish", handleNavigationFinish)
+    document.removeEventListener("yt-navigate-start", handleNavigationStart)
+    window.removeEventListener("storage", handleStorage)
+    panel.destroy()
+  }
+
+  panel.ensureMounted()
   setLastAction(environment.loadedText ?? "脚本已加载")
+  document.addEventListener("visibilitychange", handleVisibilityChange)
+  document.addEventListener("yt-navigate-finish", handleNavigationFinish)
+  document.addEventListener("yt-navigate-start", handleNavigationStart)
+  window.addEventListener("storage", handleStorage)
   scheduleNextLoop(0)
 
   return {
     openPanel: () => {
-      settings = store.save({
-        ...settings,
-        collapsed: false,
-      })
+      if (isStopped) {
+        return
+      }
+
       panel.ensureMounted()
       panel.open()
-      panel.render(settings, lastActionText)
     },
     resetSettings: () => {
-      settings = store.save(DEFAULT_SETTINGS)
-      panel.ensureMounted()
+      if (isStopped) {
+        return settings
+      }
+
+      const result = saveSettings({ ...DEFAULT_SETTINGS })
+      renewActivePlaybackState()
+      setLastAction(
+        result.persisted
+          ? "设置已重置"
+          : "设置已重置，但浏览器未能持久化",
+      )
       panel.render(settings, lastActionText)
       scheduleNextLoop(0)
       return settings
     },
-    stop: () => {
-      isStopped = true
-
-      if (timerId !== null) {
-        window.clearTimeout(timerId)
-        timerId = null
-      }
-
-      panel.destroy()
-    },
+    stop,
   }
 }

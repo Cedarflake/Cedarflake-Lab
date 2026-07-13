@@ -5,7 +5,6 @@ export interface YouTubeAutoResumeSettings {
   intervalMs: number
   minPausedSeconds: number
   autoSkipAds: boolean
-  bestQuality: boolean
   avoidTyping: boolean
   avoidEnded: boolean
   collapsed: boolean
@@ -27,7 +26,12 @@ export interface SettingsStore {
   readonly key: string
   get(): YouTubeAutoResumeSettings
   reload(): YouTubeAutoResumeSettings
-  save(next: unknown): YouTubeAutoResumeSettings
+  save(next: unknown): SettingsSaveResult
+}
+
+export interface SettingsSaveResult {
+  persisted: boolean
+  settings: YouTubeAutoResumeSettings
 }
 
 export const DEFAULT_SETTINGS: Readonly<YouTubeAutoResumeSettings> = {
@@ -35,7 +39,6 @@ export const DEFAULT_SETTINGS: Readonly<YouTubeAutoResumeSettings> = {
   intervalMs: 1000,
   minPausedSeconds: 2,
   autoSkipAds: false,
-  bestQuality: false,
   avoidTyping: true,
   avoidEnded: true,
   collapsed: true,
@@ -91,11 +94,6 @@ export function normalizeSettings(input: unknown): YouTubeAutoResumeSettings {
       "autoSkipAds",
       DEFAULT_SETTINGS.autoSkipAds,
     ),
-    bestQuality: readBoolean(
-      source,
-      "bestQuality",
-      DEFAULT_SETTINGS.bestQuality,
-    ),
     avoidTyping: readBoolean(
       source,
       "avoidTyping",
@@ -146,10 +144,10 @@ export function createSettingsStore(
     return current
   }
 
-  function save(next: unknown): YouTubeAutoResumeSettings {
+  function save(next: unknown): SettingsSaveResult {
     current = normalizeSettings(next)
-    saveRaw(current)
-    return current
+    const persisted = saveRaw(current)
+    return { persisted, settings: current }
   }
 
   reload()

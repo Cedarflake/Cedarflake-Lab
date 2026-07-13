@@ -25,21 +25,6 @@ importers:
         specifier: 6.4.3
         version: 6.4.3(@types/node@22.10.5)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.4)
 
-  others/userscripts/youtube-auto-resume:
-    devDependencies:
-      '@types/node':
-        specifier: 22.10.5
-        version: 22.10.5
-      esbuild:
-        specifier: 0.25.0
-        version: 0.25.0
-      playwright:
-        specifier: 1.61.1
-        version: 1.61.1
-      typescript:
-        specifier: 5.7.3
-        version: 5.7.3
-
   apps/copilot-task:
     dependencies:
       framer-motion:
@@ -427,6 +412,27 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+
+  others/userscripts/youtube-auto-resume:
+    devDependencies:
+      '@types/node':
+        specifier: 22.10.5
+        version: 22.10.5
+      '@types/semver':
+        specifier: 7.7.1
+        version: 7.7.1
+      esbuild:
+        specifier: 0.25.0
+        version: 0.25.0
+      playwright:
+        specifier: 1.61.1
+        version: 1.61.1
+      semver:
+        specifier: 7.8.5
+        version: 7.8.5
+      typescript:
+        specifier: 5.7.3
+        version: 5.7.3
 
   packages/focus-orb:
     devDependencies:
@@ -2252,6 +2258,9 @@ packages:
 
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
+
+  '@types/semver@7.7.1':
+    resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
 
   '@types/stats.js@0.17.4':
     resolution: {integrity: sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==}
@@ -5864,6 +5873,8 @@ snapshots:
   '@types/react@19.2.17':
     dependencies:
       csstype: 3.2.3
+
+  '@types/semver@7.7.1': {}
 
   '@types/stats.js@0.17.4': {}
 

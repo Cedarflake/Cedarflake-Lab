@@ -4,9 +4,9 @@ export const otherProjectEntries = [
   {
     title: "YouTube Auto Resume",
     path: "others/userscripts/youtube-auto-resume",
-    updatedAt: "2026-07-13T01:34:05+08:00",
+    updatedAt: "2026-07-13T11:58:42+08:00",
     summary:
-      "A YouTube userscript that restores paused playback with optional skippable-ad handling, best-quality selection, and a resilient Shadow DOM control panel.",
+      "A YouTube userscript that restores paused playback with optional guarded ad handling and a resilient Shadow DOM control panel.",
     label: "Userscript",
     lifecycle: "active",
     kind: "other",

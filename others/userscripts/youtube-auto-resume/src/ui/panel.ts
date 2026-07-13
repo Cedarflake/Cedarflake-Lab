@@ -2,6 +2,7 @@ import {
   DEFAULT_SETTINGS,
   clampNumber,
   type Settings,
+  type SettingsSaveResult,
 } from "../core/settings.ts"
 import { createIcon } from "./icons.ts"
 
@@ -26,7 +27,9 @@ const PANEL_CSS = `
   .wrap {
     display: block;
     width: max-content;
-    max-width: calc(100vw - 32px);
+    max-width: calc(
+      100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+    );
     color: #f1f1f1;
     font-family: "Roboto", "Arial", sans-serif;
     line-height: normal;
@@ -70,6 +73,11 @@ const PANEL_CSS = `
     outline-offset: 2px;
   }
 
+  .switch input:focus-visible + .track {
+    outline: 2px solid #3ea6ff;
+    outline-offset: 3px;
+  }
+
   .fab svg {
     width: 24px;
     height: 24px;
@@ -77,8 +85,13 @@ const PANEL_CSS = `
 
   .panel {
     width: 340px;
-    max-width: calc(100vw - 32px);
+    max-width: calc(
+      100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
+    );
     max-height: calc(100vh - 32px);
+    max-height: calc(
+      100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
     overflow: hidden auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
@@ -169,6 +182,7 @@ const PANEL_CSS = `
     min-width: 0;
     flex-direction: column;
     gap: 4px;
+    cursor: pointer;
   }
 
   .label-key {
@@ -341,6 +355,14 @@ const PANEL_CSS = `
       background: rgba(240, 240, 240, 0.98);
     }
 
+    .fab:focus-visible,
+    .icon-button:focus-visible,
+    .button:focus-visible,
+    .number-input:focus-visible,
+    .switch input:focus-visible + .track {
+      outline-color: #065fd4;
+    }
+
     .panel {
       border-color: rgba(0, 0, 0, 0.1);
       background: #ffffff;
@@ -412,12 +434,29 @@ const PANEL_CSS = `
       flex-direction: column;
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fab,
+    .icon-button,
+    .number-input,
+    .track,
+    .thumb,
+    .button {
+      transition: none;
+    }
+
+    .fade-in {
+      animation: none;
+    }
+  }
 `
 
 export interface PanelViewOptions {
   getSettings: () => Settings
-  saveSettings: (settings: Settings) => Settings
-  onSettingsApplied?: (settings: Settings) => void
+  saveSettings: (settings: Settings) => SettingsSaveResult
+  onExpanded?: () => void
+  onPanelStatePersistenceFailed?: () => void
+  onSettingsApplied?: (result: SettingsSaveResult) => void
   onResumeNow?: () => void
   onSkipNow?: () => void
 }
@@ -428,6 +467,7 @@ export interface PanelView {
   setStatus: (text: string) => void
   setLastActionText: (text: string) => void
   render: (settings: Settings, lastActionText?: string) => void
+  isExpanded: () => boolean
   open: () => void
 }
 
@@ -439,7 +479,6 @@ interface PanelElements {
   interval: HTMLInputElement
   minPaused: HTMLInputElement
   autoSkipAds: HTMLInputElement
-  bestQuality: HTMLInputElement
   avoidTyping: HTMLInputElement
   avoidEnded: HTMLInputElement
   status: HTMLDivElement
@@ -456,15 +495,22 @@ interface NumberRow {
   input: HTMLInputElement
 }
 
-function createLabel(title: string, description: string): HTMLDivElement {
-  const label = document.createElement("div")
+function createLabel(
+  id: string,
+  title: string,
+  description: string,
+): HTMLLabelElement {
+  const label = document.createElement("label")
   const key = document.createElement("div")
   const detail = document.createElement("div")
 
   label.className = "label"
+  label.htmlFor = id
   key.className = "label-key"
+  key.id = `${id}-label`
   key.textContent = title
   detail.className = "label-description"
+  detail.id = `${id}-description`
   detail.textContent = description
   label.append(key, detail)
 
@@ -484,14 +530,15 @@ function createSwitchRow(
 
   row.className = "row"
   control.className = "switch"
-  control.setAttribute("aria-label", title)
   input.id = id
   input.type = "checkbox"
+  input.setAttribute("aria-labelledby", `${id}-label`)
+  input.setAttribute("aria-describedby", `${id}-description`)
   track.className = "track"
   thumb.className = "thumb"
   track.appendChild(thumb)
   control.append(input, track)
-  row.append(createLabel(title, description), control)
+  row.append(createLabel(id, title, description), control)
 
   return { row, input }
 }
@@ -514,8 +561,9 @@ function createNumberRow(
   input.min = String(min)
   input.max = String(max)
   input.step = String(step)
-  input.setAttribute("aria-label", title)
-  row.append(createLabel(title, description), input)
+  input.setAttribute("aria-labelledby", `${id}-label`)
+  input.setAttribute("aria-describedby", `${id}-description`)
+  row.append(createLabel(id, title, description), input)
 
   return { row, input }
 }
@@ -523,8 +571,8 @@ function createNumberRow(
 function applyHostStyles(host: HTMLDivElement): void {
   const styles: ReadonlyArray<readonly [string, string]> = [
     ["position", "fixed"],
-    ["right", "16px"],
-    ["bottom", "16px"],
+    ["right", "calc(16px + env(safe-area-inset-right, 0px))"],
+    ["bottom", "calc(16px + env(safe-area-inset-bottom, 0px))"],
     ["left", "auto"],
     ["top", "auto"],
     ["z-index", "2147483647"],
@@ -535,8 +583,14 @@ function applyHostStyles(host: HTMLDivElement): void {
     ["height", "max-content"],
     ["min-width", "48px"],
     ["min-height", "48px"],
-    ["max-width", "calc(100vw - 32px)"],
-    ["max-height", "calc(100vh - 32px)"],
+    [
+      "max-width",
+      "calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))",
+    ],
+    [
+      "max-height",
+      "calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))",
+    ],
     ["margin", "0"],
     ["padding", "0"],
     ["border", "0"],
@@ -546,7 +600,12 @@ function applyHostStyles(host: HTMLDivElement): void {
   ]
 
   for (const [property, value] of styles) {
-    host.style.setProperty(property, value, "important")
+    if (
+      host.style.getPropertyValue(property) !== value
+      || host.style.getPropertyPriority(property) !== "important"
+    ) {
+      host.style.setProperty(property, value, "important")
+    }
   }
 }
 
@@ -576,6 +635,72 @@ export function createPanelView(options: PanelViewOptions): PanelView {
   let observedMountTarget: Element | null = null
   let statusText = ""
   let currentLastActionText = ""
+  let focusReturnTarget: HTMLElement | null = null
+  let hasRendered = false
+  let isDestroyed = false
+
+  function isExpanded(): boolean {
+    if (isDestroyed) {
+      return false
+    }
+
+    if (!elements) {
+      return !options.getSettings().collapsed
+    }
+
+    return !elements.panel.classList.contains("hidden")
+  }
+
+  function setTextIfChanged(element: Element, text: string): void {
+    if (element.textContent !== text) {
+      element.textContent = text
+    }
+  }
+
+  function setCheckedIfChanged(
+    input: HTMLInputElement,
+    checked: boolean,
+  ): void {
+    if (input.checked !== checked) {
+      input.checked = checked
+    }
+  }
+
+  function setValueIfChanged(input: HTMLInputElement, value: string): void {
+    if (input.value !== value) {
+      input.value = value
+    }
+  }
+
+  function setHiddenIfChanged(element: HTMLElement, isHidden: boolean): void {
+    if (element.classList.contains("hidden") !== isHidden) {
+      element.classList.toggle("hidden", isHidden)
+    }
+  }
+
+  function getFocusedElement(): HTMLElement | null {
+    const shadowActiveElement = shadow?.activeElement
+
+    if (shadowActiveElement instanceof HTMLElement) {
+      return shadowActiveElement
+    }
+
+    return document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
+  }
+
+  function restoreFocusAfterCollapse(): void {
+    const nextFocusTarget = focusReturnTarget
+    focusReturnTarget = null
+
+    if (nextFocusTarget?.isConnected && nextFocusTarget !== host) {
+      nextFocusTarget.focus()
+      return
+    }
+
+    elements?.fab.focus()
+  }
 
   function observeMountTarget(target: Element): void {
     if (!mountObserver || observedMountTarget === target) {
@@ -624,16 +749,50 @@ export function createPanelView(options: PanelViewOptions): PanelView {
   }
 
   function setOpen(isOpen: boolean): void {
+    if (isDestroyed) {
+      return
+    }
+
     ensureMounted()
-    const saved = options.saveSettings({
+
+    if (!elements) {
+      return
+    }
+
+    const wasOpen = isExpanded()
+
+    if (isOpen && !wasOpen) {
+      focusReturnTarget = getFocusedElement()
+    }
+
+    if (isOpen === wasOpen) {
+      if (isOpen) {
+        elements?.close.focus()
+        options.onExpanded?.()
+      }
+
+      return
+    }
+
+    const result = options.saveSettings({
       ...options.getSettings(),
       collapsed: !isOpen,
     })
-    render(saved, currentLastActionText)
+    render(result.settings, currentLastActionText)
+
+    if (!result.persisted) {
+      options.onPanelStatePersistenceFailed?.()
+    }
+
+    if (isOpen) {
+      elements?.close.focus()
+      options.onExpanded?.()
+      return
+    }
   }
 
   function applySettingsFromUi(): void {
-    if (!elements) {
+    if (isDestroyed || !elements) {
       return
     }
 
@@ -655,21 +814,29 @@ export function createPanelView(options: PanelViewOptions): PanelView {
         DEFAULT_SETTINGS.minPausedSeconds,
       ),
       autoSkipAds: elements.autoSkipAds.checked,
-      bestQuality: elements.bestQuality.checked,
       avoidTyping: elements.avoidTyping.checked,
       avoidEnded: elements.avoidEnded.checked,
     }
-    const saved = options.saveSettings(nextSettings)
+    const result = options.saveSettings(nextSettings)
+    setValueIfChanged(elements.interval, String(result.settings.intervalMs))
+    setValueIfChanged(
+      elements.minPaused,
+      String(result.settings.minPausedSeconds),
+    )
 
     if (options.onSettingsApplied) {
-      options.onSettingsApplied(saved)
+      options.onSettingsApplied(result)
       return
     }
 
-    render(saved, currentLastActionText)
+    render(result.settings, currentLastActionText)
   }
 
   function buildPanel(): void {
+    if (isDestroyed) {
+      return
+    }
+
     host = document.createElement("div")
     host.id = HOST_ID
     host.setAttribute("data-auto-chick-ui", "youtube-auto-resume")
@@ -690,7 +857,7 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     const grid = document.createElement("div")
     const enabled = createSwitchRow(
       "enabled",
-      "启用",
+      "自动恢复",
       "暂停后自动恢复播放",
     )
     const interval = createNumberRow(
@@ -712,12 +879,7 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     const autoSkipAds = createSwitchRow(
       "auto-skip-ads",
       "自动跳过广告",
-      "检测跳过按钮和广告遮罩",
-    )
-    const bestQuality = createSwitchRow(
-      "best-quality",
-      "最佳画质",
-      "自动切换到最高可用画质",
+      "按钮优先；必要时推进有限时长广告",
     )
     const avoidTyping = createSwitchRow(
       "avoid-typing",
@@ -769,7 +931,6 @@ export function createPanelView(options: PanelViewOptions): PanelView {
       interval.row,
       minPaused.row,
       autoSkipAds.row,
-      bestQuality.row,
       avoidTyping.row,
       avoidEnded.row,
     )
@@ -778,6 +939,9 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     status.textContent = statusText
     lastAction.className = "last-action"
     lastAction.textContent = currentLastActionText
+    lastAction.setAttribute("role", "status")
+    lastAction.setAttribute("aria-live", "polite")
+    lastAction.setAttribute("aria-atomic", "true")
 
     footer.className = "footer"
     resumeNow.className = "button button-primary"
@@ -801,7 +965,6 @@ export function createPanelView(options: PanelViewOptions): PanelView {
       interval: interval.input,
       minPaused: minPaused.input,
       autoSkipAds: autoSkipAds.input,
-      bestQuality: bestQuality.input,
       avoidTyping: avoidTyping.input,
       avoidEnded: avoidEnded.input,
       status,
@@ -814,16 +977,28 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     interval.input.addEventListener("change", applySettingsFromUi)
     minPaused.input.addEventListener("change", applySettingsFromUi)
     autoSkipAds.input.addEventListener("change", applySettingsFromUi)
-    bestQuality.input.addEventListener("change", applySettingsFromUi)
     avoidTyping.input.addEventListener("change", applySettingsFromUi)
     avoidEnded.input.addEventListener("change", applySettingsFromUi)
     resumeNow.addEventListener("click", onResumeNow)
     skipNow.addEventListener("click", onSkipNow)
+    panel.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !isExpanded()) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+      setOpen(false)
+    })
 
     render(options.getSettings(), currentLastActionText)
   }
 
   function ensureMounted(): void {
+    if (isDestroyed) {
+      return
+    }
+
     if (!host) {
       buildPanel()
       watchMountState()
@@ -833,20 +1008,28 @@ export function createPanelView(options: PanelViewOptions): PanelView {
   }
 
   function setStatus(text: string): void {
+    if (isDestroyed) {
+      return
+    }
+
     statusText = text
     ensureMounted()
 
     if (elements) {
-      elements.status.textContent = statusText
+      setTextIfChanged(elements.status, statusText)
     }
   }
 
   function setLastActionText(text: string): void {
+    if (isDestroyed) {
+      return
+    }
+
     currentLastActionText = text
     ensureMounted()
 
     if (elements) {
-      elements.lastAction.textContent = currentLastActionText
+      setTextIfChanged(elements.lastAction, currentLastActionText)
     }
   }
 
@@ -854,6 +1037,10 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     settings: Settings,
     nextLastActionText?: string,
   ): void {
+    if (isDestroyed) {
+      return
+    }
+
     ensureMounted()
 
     if (!elements) {
@@ -864,32 +1051,47 @@ export function createPanelView(options: PanelViewOptions): PanelView {
       currentLastActionText = nextLastActionText
     }
 
+    const wasOpen = hasRendered && isExpanded()
     const isOpen = !settings.collapsed
-    elements.panel.classList.toggle("hidden", !isOpen)
-    elements.fab.classList.toggle("hidden", isOpen)
-    elements.enabled.checked = settings.enabled
+    setHiddenIfChanged(elements.panel, !isOpen)
+    setHiddenIfChanged(elements.fab, isOpen)
+    setCheckedIfChanged(elements.enabled, settings.enabled)
 
     if (shadow?.activeElement !== elements.interval) {
-      elements.interval.value = String(settings.intervalMs)
+      setValueIfChanged(elements.interval, String(settings.intervalMs))
     }
 
     if (shadow?.activeElement !== elements.minPaused) {
-      elements.minPaused.value = String(settings.minPausedSeconds)
+      setValueIfChanged(elements.minPaused, String(settings.minPausedSeconds))
     }
 
-    elements.autoSkipAds.checked = settings.autoSkipAds
-    elements.bestQuality.checked = settings.bestQuality
-    elements.avoidTyping.checked = settings.avoidTyping
-    elements.avoidEnded.checked = settings.avoidEnded
-    elements.status.textContent = statusText
-    elements.lastAction.textContent = currentLastActionText
+    setCheckedIfChanged(elements.autoSkipAds, settings.autoSkipAds)
+    setCheckedIfChanged(elements.avoidTyping, settings.avoidTyping)
+    setCheckedIfChanged(elements.avoidEnded, settings.avoidEnded)
+    setTextIfChanged(elements.status, statusText)
+    setTextIfChanged(elements.lastAction, currentLastActionText)
+
+    if (wasOpen && !isOpen) {
+      restoreFocusAfterCollapse()
+    }
+
+    hasRendered = true
   }
 
   function open(): void {
+    if (isDestroyed) {
+      return
+    }
+
     setOpen(true)
   }
 
   function destroy(): void {
+    if (isDestroyed) {
+      return
+    }
+
+    isDestroyed = true
     mountObserver?.disconnect()
     mountObserver = null
     observedMountTarget = null
@@ -898,6 +1100,8 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     host = null
     shadow = null
     elements = null
+    focusReturnTarget = null
+    hasRendered = false
   }
 
   return {
@@ -906,6 +1110,7 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     setStatus,
     setLastActionText,
     render,
+    isExpanded,
     open,
   }
 }

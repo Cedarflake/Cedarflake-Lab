@@ -14,14 +14,10 @@
     "noUncheckedIndexedAccess": true,
     "strict": true,
     "target": "ES2022",
-    "types": [
-      "node"
-    ],
+    "types": [],
     "useDefineForClassFields": true
   },
   "include": [
-    "scripts/**/*.ts",
-    "src/**/*.ts",
-    "tests/**/*.ts"
+    "src/**/*.ts"
   ]
 }

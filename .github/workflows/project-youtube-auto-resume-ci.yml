@@ -5,12 +5,14 @@ on:
   pull_request:
     paths:
       - "others/userscripts/youtube-auto-resume/**"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/project-youtube-auto-resume-ci.yml"
   push:
     branches:
       - main
     paths:
       - "others/userscripts/youtube-auto-resume/**"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/project-youtube-auto-resume-ci.yml"
 
 permissions:
@@ -28,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -42,7 +46,15 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm --filter @cedarflake/youtube-auto-resume --fail-if-no-match install --frozen-lockfile
+
+      - name: Check userscript version
+        if: github.event_name == 'pull_request'
+        run: pnpm --filter @cedarflake/youtube-auto-resume --fail-if-no-match version:check --base-ref=${{ github.event.pull_request.base.sha }}
+
+      - name: Check userscript version on push
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: pnpm --filter @cedarflake/youtube-auto-resume --fail-if-no-match version:check --base-ref=${{ github.event.before }}
 
       - name: Audit YouTube userscript dependencies
         run: pnpm --config.registry=https://registry.npmjs.org/ --filter @cedarflake/youtube-auto-resume --fail-if-no-match audit --audit-level high
