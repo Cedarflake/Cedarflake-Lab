@@ -3,6 +3,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs"
 import { extname, isAbsolute, relative, resolve, sep } from "node:path"
 import { inflateSync } from "node:zlib"
 
+import { parse } from "parse5"
+import type { DefaultTreeAdapterTypes, ParserError } from "parse5"
+
 import { projectCatalog } from "../src/config/projects"
 import { workbenchCategories } from "../src/config/projects/workbench"
 import { siteConfig } from "../src/config/site"
@@ -27,6 +30,14 @@ const referencedCoverSources = new Set<string>()
 const coverProjectBySource = new Map<string, string>()
 const catalogProjectPaths = new Set(projects.map((project) => project.path))
 const catalogCoverageExclusions = new Set(["apps/landing"])
+const projectPublicDirectories = new Map<string, string>([["apps/copilot-task", "assets"]])
+const genericDocumentTitles = new Set(["app", "react app", "vite + react + ts"])
+const genericDocumentDescriptions = new Set([
+  "description",
+  "website",
+  "web site created using create-react-app",
+  "a vite + react + typescript project",
+])
 
 function resolveWithin(root: string, relativePath: string, label: string) {
   const targetPath = resolve(root, relativePath)
@@ -46,6 +57,696 @@ function isFile(filePath: string) {
 
 function isDirectory(directoryPath: string) {
   return existsSync(directoryPath) && statSync(directoryPath).isDirectory()
+}
+
+interface HtmlDocumentSections {
+  head: DefaultTreeAdapterTypes.Element
+  htmlElement: DefaultTreeAdapterTypes.Element
+}
+
+interface HtmlDocumentAnalysis {
+  parseErrors: readonly ParserError[]
+  sections: HtmlDocumentSections | null
+}
+
+function isHtmlElement(
+  node: DefaultTreeAdapterTypes.ChildNode,
+): node is DefaultTreeAdapterTypes.Element {
+  return "tagName" in node
+}
+
+function isHtmlTextNode(
+  node: DefaultTreeAdapterTypes.ChildNode,
+): node is DefaultTreeAdapterTypes.TextNode {
+  return node.nodeName === "#text"
+}
+
+function getDirectHtmlElements(parent: DefaultTreeAdapterTypes.ParentNode, tagName: string) {
+  return parent.childNodes
+    .filter(isHtmlElement)
+    .filter((element) => element.tagName.toLowerCase() === tagName.toLowerCase())
+}
+
+function readHtmlAttribute(element: DefaultTreeAdapterTypes.Element, name: string) {
+  return element.attrs.find((attribute) => attribute.name.toLowerCase() === name.toLowerCase())
+    ?.value
+}
+
+function analyzeHtmlDocument(html: string): HtmlDocumentAnalysis {
+  const parseErrors: ParserError[] = []
+  const document = parse(html, {
+    onParseError: (error) => parseErrors.push(error),
+    sourceCodeLocationInfo: true,
+  })
+  const htmlElements = getDirectHtmlElements(document, "html").filter(
+    (element) => element.sourceCodeLocation,
+  )
+
+  if (htmlElements.length !== 1) {
+    return { parseErrors, sections: null }
+  }
+
+  const htmlElement = htmlElements[0]
+
+  if (!htmlElement) {
+    return { parseErrors, sections: null }
+  }
+
+  const heads = getDirectHtmlElements(htmlElement, "head").filter(
+    (element) => element.sourceCodeLocation,
+  )
+  const head = heads[0]
+
+  if (heads.length !== 1 || !head) {
+    return { parseErrors, sections: null }
+  }
+
+  return { parseErrors, sections: { head, htmlElement } }
+}
+
+function getMetaContents(
+  head: DefaultTreeAdapterTypes.Element,
+  attributeName: "name" | "property",
+  attributeValue: string,
+) {
+  return getDirectHtmlElements(head, "meta")
+    .filter(
+      (element) =>
+        readHtmlAttribute(element, attributeName)?.toLowerCase() === attributeValue.toLowerCase(),
+    )
+    .map((element) => readHtmlAttribute(element, "content"))
+}
+
+function getLinkHrefs(head: DefaultTreeAdapterTypes.Element, rel: string) {
+  return getDirectHtmlElements(head, "link")
+    .filter((element) =>
+      (readHtmlAttribute(element, "rel") ?? "")
+        .toLowerCase()
+        .split(/\s+/)
+        .includes(rel.toLowerCase()),
+    )
+    .map((element) => readHtmlAttribute(element, "href"))
+}
+
+function getDocumentTitles(head: DefaultTreeAdapterTypes.Element) {
+  return getDirectHtmlElements(head, "title").map((title) =>
+    title.childNodes
+      .filter(isHtmlTextNode)
+      .map((node) => node.value)
+      .join("")
+      .trim(),
+  )
+}
+
+function readSingleValue(values: readonly (string | undefined)[], label: string) {
+  const value = values[0]?.trim()
+
+  if (values.length !== 1 || !value) {
+    errors.push(`${label} must appear exactly once with a non-empty value`)
+    return null
+  }
+
+  return value
+}
+
+function validateExactValue(
+  values: readonly (string | undefined)[],
+  expected: string,
+  label: string,
+) {
+  if (values.length !== 1 || values[0] !== expected) {
+    errors.push(`${label} must equal ${expected}`)
+  }
+}
+
+function getProjectPublicDirectoryName(projectPath: string) {
+  return projectPublicDirectories.get(projectPath) ?? "public"
+}
+
+interface RobotsGroup {
+  policies: readonly ("allow" | "disallow")[]
+  userAgents: readonly string[]
+}
+
+function parseRobotsGroups(robots: string) {
+  const groups: RobotsGroup[] = []
+  let userAgents: string[] = []
+  let policies: ("allow" | "disallow")[] = []
+  let hasDirective = false
+
+  const flushGroup = () => {
+    if (userAgents.length > 0) {
+      groups.push({ policies, userAgents })
+    }
+
+    userAgents = []
+    policies = []
+    hasDirective = false
+  }
+
+  for (const rawLine of robots.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+    const line = rawLine.replace(/#.*$/, "").trim()
+
+    if (!line) {
+      flushGroup()
+      continue
+    }
+
+    const separatorIndex = line.indexOf(":")
+
+    if (separatorIndex < 0) {
+      hasDirective = userAgents.length > 0
+      continue
+    }
+
+    const name = line.slice(0, separatorIndex).trim().toLowerCase()
+    const value = line
+      .slice(separatorIndex + 1)
+      .trim()
+      .toLowerCase()
+
+    if (name === "user-agent") {
+      if (hasDirective) {
+        flushGroup()
+      }
+
+      if (value) {
+        userAgents.push(value)
+      }
+
+      continue
+    }
+
+    if (userAgents.length === 0) {
+      continue
+    }
+
+    hasDirective = true
+
+    if (name === "allow" || name === "disallow") {
+      policies.push(name)
+    }
+  }
+
+  flushGroup()
+
+  return groups
+}
+
+function validateRobotsFile(
+  projectPath: string,
+  projectDirectory: string,
+  publicDirectoryName: string,
+) {
+  const robotsPath = resolve(projectDirectory, publicDirectoryName, "robots.txt")
+
+  if (!isFile(robotsPath)) {
+    errors.push(
+      `Live project ${projectPath} must own ${publicDirectoryName}/robots.txt in its deployed public directory`,
+    )
+    return
+  }
+
+  const robots = readFileSync(robotsPath, "utf8")
+  const wildcardGroups = parseRobotsGroups(robots).filter((group) => group.userAgents.includes("*"))
+
+  if (wildcardGroups.length === 0 || wildcardGroups.every((group) => group.policies.length === 0)) {
+    errors.push(`Live project ${projectPath} robots.txt must declare a public crawler policy`)
+  }
+}
+
+function resolveProjectPublicAsset(
+  projectDirectory: string,
+  publicDirectoryName: string,
+  publicUrl: string | undefined,
+) {
+  if (!publicUrl?.startsWith("/")) {
+    return null
+  }
+
+  const encodedAssetPath = publicUrl.slice(1).split(/[?#]/, 1)[0]
+
+  if (!encodedAssetPath) {
+    return null
+  }
+
+  let relativeAssetPath: string
+
+  try {
+    relativeAssetPath = decodeURIComponent(encodedAssetPath)
+  } catch {
+    return null
+  }
+
+  const publicDirectory = resolve(projectDirectory, publicDirectoryName)
+  const assetPath = resolve(publicDirectory, relativeAssetPath)
+  const pathFromPublicDirectory = relative(publicDirectory, assetPath)
+
+  if (
+    pathFromPublicDirectory === ".." ||
+    pathFromPublicDirectory.startsWith(`..${sep}`) ||
+    isAbsolute(pathFromPublicDirectory) ||
+    !isFile(assetPath)
+  ) {
+    return null
+  }
+
+  return assetPath
+}
+
+function isValidDocumentIcon(filePath: string) {
+  const extension = extname(filePath).toLowerCase()
+  const contents = readFileSync(filePath)
+
+  if (extension === ".svg") {
+    const svg = contents.toString("utf8").trim()
+
+    return /^(?:<\?xml[\s\S]*?\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg\b[\s\S]*<\/svg>$/.test(svg)
+  }
+
+  if (extension === ".ico") {
+    if (contents.length < 6) {
+      return false
+    }
+
+    const imageCount = contents.readUInt16LE(4)
+
+    return (
+      contents.readUInt16LE(0) === 0 &&
+      contents.readUInt16LE(2) === 1 &&
+      imageCount > 0 &&
+      contents.length >= 6 + imageCount * 16
+    )
+  }
+
+  if (extension === ".png") {
+    return contents.subarray(0, 8).toString("hex") === "89504e470d0a1a0a"
+  }
+
+  if (extension === ".jpg" || extension === ".jpeg") {
+    return (
+      contents.length >= 4 &&
+      contents.subarray(0, 2).toString("hex") === "ffd8" &&
+      contents.subarray(-2).toString("hex") === "ffd9"
+    )
+  }
+
+  if (extension === ".gif") {
+    return ["GIF87a", "GIF89a"].includes(contents.subarray(0, 6).toString("ascii"))
+  }
+
+  if (extension === ".webp") {
+    return (
+      contents.length >= 12 &&
+      contents.subarray(0, 4).toString("ascii") === "RIFF" &&
+      contents.subarray(8, 12).toString("ascii") === "WEBP"
+    )
+  }
+
+  return false
+}
+
+function validateLiveDocument(projectPath: string, projectDirectory: string, liveUrl: string) {
+  const indexPath = resolve(projectDirectory, "index.html")
+  const publicDirectoryName = getProjectPublicDirectoryName(projectPath)
+
+  if (!isFile(indexPath)) {
+    errors.push(`Live project ${projectPath} is missing its document metadata owner: index.html`)
+    return
+  }
+
+  const html = readFileSync(indexPath, "utf8")
+  const analysis = analyzeHtmlDocument(html)
+
+  if (analysis.parseErrors.length > 0) {
+    const errorCodes = [...new Set(analysis.parseErrors.map((error) => error.code))]
+
+    errors.push(`Live project ${projectPath} HTML has parse errors: ${errorCodes.join(", ")}`)
+  }
+
+  if (!analysis.sections) {
+    errors.push(
+      `Live project ${projectPath} must contain exactly one rendered html element and head section`,
+    )
+    validateRobotsFile(projectPath, projectDirectory, publicDirectoryName)
+    return
+  }
+
+  const { head, htmlElement } = analysis.sections
+  const title = readSingleValue(getDocumentTitles(head), `${projectPath} document title`)
+  const description = readSingleValue(
+    getMetaContents(head, "name", "description"),
+    `${projectPath} meta description`,
+  )
+  const language = readSingleValue(
+    [readHtmlAttribute(htmlElement, "lang")],
+    `${projectPath} document language`,
+  )
+
+  if (title && genericDocumentTitles.has(title.toLowerCase())) {
+    errors.push(`${projectPath} document title is still a generic scaffold value`)
+  }
+
+  if (description && genericDocumentDescriptions.has(description.toLowerCase())) {
+    errors.push(`${projectPath} meta description is still a generic scaffold value`)
+  }
+
+  if (language && !/^[a-z]{2,3}(?:-[A-Za-z0-9]+)*$/.test(language)) {
+    errors.push(`${projectPath} document language is invalid: ${language}`)
+  }
+
+  validateExactValue(getLinkHrefs(head, "canonical"), liveUrl, `${projectPath} canonical URL`)
+  const robotsMeta = readSingleValue(
+    getMetaContents(head, "name", "robots"),
+    `${projectPath} robots meta`,
+  )
+
+  if (robotsMeta) {
+    const robotsDirectives = new Set(
+      robotsMeta
+        .toLowerCase()
+        .split(",")
+        .map((directive) => directive.trim()),
+    )
+    const indexingDirectives = ["index", "noindex"].filter((directive) =>
+      robotsDirectives.has(directive),
+    )
+    const linkDirectives = ["follow", "nofollow"].filter((directive) =>
+      robotsDirectives.has(directive),
+    )
+
+    if (indexingDirectives.length !== 1 || linkDirectives.length !== 1) {
+      errors.push(`${projectPath} robots meta must declare indexing and link-following policy`)
+    }
+  }
+
+  validateExactValue(
+    getMetaContents(head, "property", "og:type"),
+    "website",
+    `${projectPath} og:type`,
+  )
+  validateExactValue(getMetaContents(head, "property", "og:url"), liveUrl, `${projectPath} og:url`)
+  validateExactValue(
+    getMetaContents(head, "name", "twitter:card"),
+    "summary",
+    `${projectPath} twitter:card`,
+  )
+
+  if (title) {
+    validateExactValue(
+      getMetaContents(head, "property", "og:title"),
+      title,
+      `${projectPath} og:title`,
+    )
+    validateExactValue(
+      getMetaContents(head, "name", "twitter:title"),
+      title,
+      `${projectPath} twitter:title`,
+    )
+  }
+
+  if (description) {
+    validateExactValue(
+      getMetaContents(head, "property", "og:description"),
+      description,
+      `${projectPath} og:description`,
+    )
+    validateExactValue(
+      getMetaContents(head, "name", "twitter:description"),
+      description,
+      `${projectPath} twitter:description`,
+    )
+  }
+
+  const hasValidIcon = getLinkHrefs(head, "icon").some((href) => {
+    const iconPath = resolveProjectPublicAsset(projectDirectory, publicDirectoryName, href)
+
+    return iconPath ? isValidDocumentIcon(iconPath) : false
+  })
+
+  if (!hasValidIcon) {
+    errors.push(
+      `Live project ${projectPath} must declare a valid icon from ${publicDirectoryName}/`,
+    )
+  }
+
+  validateRobotsFile(projectPath, projectDirectory, publicDirectoryName)
+}
+
+function validateUserscriptInstallMetadata(projectPath: string, installUrl: string) {
+  if (!repositoryRoot) {
+    return
+  }
+
+  const rawMainPrefix = "https://raw.githubusercontent.com/Cedarflake/Cedarflake-Lab/main/"
+
+  if (!installUrl.startsWith(rawMainPrefix)) {
+    return
+  }
+
+  let artifactRelativePath: string
+
+  try {
+    artifactRelativePath = decodeURIComponent(installUrl.slice(rawMainPrefix.length))
+  } catch {
+    errors.push(`Project ${projectPath} Install URL contains invalid path encoding`)
+    return
+  }
+
+  const projectArtifactPrefix = `${projectPath}/`
+
+  if (
+    !artifactRelativePath.startsWith(projectArtifactPrefix) ||
+    !artifactRelativePath.endsWith(".user.js")
+  ) {
+    errors.push(`Project ${projectPath} Install URL must target an owned .user.js artifact`)
+    return
+  }
+
+  const artifactProjectDirectory = resolveWithin(
+    repositoryRoot,
+    projectPath,
+    `Project ${projectPath} Install owner`,
+  )
+
+  if (!artifactProjectDirectory) {
+    return
+  }
+
+  const artifactPath = resolveWithin(
+    artifactProjectDirectory,
+    artifactRelativePath.slice(projectArtifactPrefix.length),
+    `Project ${projectPath} Install artifact`,
+  )
+
+  if (!artifactPath || !isFile(artifactPath)) {
+    errors.push(`Project ${projectPath} Install artifact is missing`)
+    return
+  }
+
+  const artifact = readFileSync(artifactPath, "utf8")
+  const artifactLines = artifact.split(/\r?\n/)
+  const blockStarts = artifactLines.flatMap((line, index) =>
+    /^\s*\/\/\s*==UserScript==\s*$/.test(line) ? [index] : [],
+  )
+  const blockEnds = artifactLines.flatMap((line, index) =>
+    /^\s*\/\/\s*==\/UserScript==\s*$/.test(line) ? [index] : [],
+  )
+  const blockStart = blockStarts[0]
+  const blockEnd = blockEnds[0]
+
+  if (
+    blockStarts.length !== 1 ||
+    blockEnds.length !== 1 ||
+    blockStart === undefined ||
+    blockEnd === undefined ||
+    blockStart >= blockEnd
+  ) {
+    errors.push(
+      `Project ${projectPath} Install artifact must contain one userscript metadata block`,
+    )
+    return
+  }
+
+  const metadataLines = artifactLines.slice(blockStart + 1, blockEnd)
+
+  for (const metadataName of ["downloadURL", "updateURL"]) {
+    const metadataValues = metadataLines.flatMap((line) => {
+      const match = line.match(new RegExp(`^\\s*//\\s*@${metadataName}\\s+(\\S+)\\s*$`))
+
+      return match?.[1] ? [match[1]] : []
+    })
+
+    if (metadataValues.length !== 1 || metadataValues[0] !== installUrl) {
+      errors.push(`Project ${projectPath} @${metadataName} does not match its Install URL`)
+    }
+  }
+}
+
+function getVisibleMarkdownLines(markdown: string) {
+  const lines = markdown.replace(/<!--[\s\S]*?-->/g, "").split(/\r?\n/)
+  const visibleLines: string[] = []
+  let fenceCharacter: "`" | "~" | null = null
+  let fenceLength = 0
+
+  for (const line of lines) {
+    if (fenceCharacter) {
+      const closingFence = line.match(/^\s{0,3}(`{3,}|~{3,})\s*$/)?.[1]
+
+      if (closingFence?.startsWith(fenceCharacter) && closingFence.length >= fenceLength) {
+        fenceCharacter = null
+        fenceLength = 0
+      }
+
+      continue
+    }
+
+    const openingFence = line.match(/^\s{0,3}(`{3,}|~{3,})/)?.[1]
+
+    if (openingFence) {
+      fenceCharacter = openingFence[0] === "`" ? "`" : "~"
+      fenceLength = openingFence.length
+      continue
+    }
+
+    visibleLines.push(line)
+  }
+
+  return visibleLines
+}
+
+function getMarkdownUrls(markdown: string) {
+  const visibleMarkdown = getVisibleMarkdownLines(markdown).join("\n")
+  const urls = visibleMarkdown.match(/https:\/\/[^\s<>()\[\]`"'，。；、！？]+/g) ?? []
+
+  return new Set(urls.map((url) => url.replace(/[.,;:!?]+$/, "")))
+}
+
+function splitMarkdownTableRow(line: string) {
+  const trimmedLine = line.trim()
+
+  if (!trimmedLine.startsWith("|")) {
+    return null
+  }
+
+  const row = trimmedLine.endsWith("|") ? trimmedLine.slice(1, -1) : trimmedLine.slice(1)
+  const cells: string[] = []
+  let cell = ""
+  let isEscaped = false
+
+  for (const character of row) {
+    if (isEscaped) {
+      cell += character
+      isEscaped = false
+      continue
+    }
+
+    if (character === "\\") {
+      isEscaped = true
+      continue
+    }
+
+    if (character === "|") {
+      cells.push(cell.trim())
+      cell = ""
+      continue
+    }
+
+    cell += character
+  }
+
+  cells.push(cell.trim())
+
+  return cells
+}
+
+function getRootReadmeLiveCells(markdown: string, projectPath: string) {
+  const lines = getVisibleMarkdownLines(markdown)
+
+  for (const [lineIndex, line] of lines.entries()) {
+    const header = splitMarkdownTableRow(line)
+
+    if (!header) {
+      continue
+    }
+
+    const normalizedHeader = header.map((cell) => cell.trim().toLowerCase())
+    const pathColumn = normalizedHeader.indexOf("path")
+    const liveColumn = normalizedHeader.indexOf("live")
+
+    if (pathColumn < 0 || liveColumn < 0) {
+      continue
+    }
+
+    const separator = splitMarkdownTableRow(lines[lineIndex + 1] ?? "")
+
+    if (
+      !separator ||
+      separator.length !== header.length ||
+      !separator.every((cell) => /^:?-{3,}:?$/.test(cell))
+    ) {
+      continue
+    }
+
+    const liveCells: string[] = []
+
+    for (const projectLine of lines.slice(lineIndex + 2)) {
+      const row = splitMarkdownTableRow(projectLine)
+
+      if (!row) {
+        break
+      }
+
+      if (row[pathColumn] === `\`${projectPath}\``) {
+        const liveCell = row[liveColumn]
+
+        if (liveCell !== undefined) {
+          liveCells.push(liveCell)
+        }
+      }
+    }
+
+    return liveCells
+  }
+
+  return []
+}
+
+function validateExternalActionContract(project: ProjectEntry, projectDirectory: string) {
+  const action = project.externalAction
+
+  if (!repositoryRoot || !action) {
+    return
+  }
+
+  const projectReadmePath = resolve(projectDirectory, "README.md")
+  const projectReadmeUrls = isFile(projectReadmePath)
+    ? getMarkdownUrls(readFileSync(projectReadmePath, "utf8"))
+    : new Set<string>()
+
+  if (!projectReadmeUrls.has(action.url)) {
+    errors.push(`Project ${project.path} README does not document its ${action.kind} URL`)
+  }
+
+  if (action.kind === "live" && project.kind === "app") {
+    const rootReadmePath = resolve(repositoryRoot, "README.md")
+    const liveCells = isFile(rootReadmePath)
+      ? getRootReadmeLiveCells(readFileSync(rootReadmePath, "utf8"), project.path)
+      : []
+    const liveCellUrls = getMarkdownUrls(liveCells[0] ?? "")
+    const hasMatchingRootReadmeRow =
+      liveCells.length === 1 && liveCellUrls.size === 1 && liveCellUrls.has(action.url)
+
+    if (!hasMatchingRootReadmeRow) {
+      errors.push(`Root README does not bind ${project.path} to its Live URL`)
+    }
+
+    validateLiveDocument(project.path, projectDirectory, action.url)
+  }
+
+  if (action.kind === "install" && project.path.startsWith("others/userscripts/")) {
+    validateUserscriptInstallMetadata(project.path, action.url)
+  }
 }
 
 function fileHash(filePath: string) {
@@ -363,6 +1064,10 @@ for (const project of projects) {
 
   if (repositoryRoot && resolvedProjectPath && !isDirectory(resolvedProjectPath)) {
     errors.push(`Project path is missing: ${project.path}`)
+  }
+
+  if (resolvedProjectPath && isDirectory(resolvedProjectPath)) {
+    validateExternalActionContract(project, resolvedProjectPath)
   }
 
   if (project.showcase) {

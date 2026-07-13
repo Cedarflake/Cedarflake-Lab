@@ -93,17 +93,17 @@ Do not add a new top-level collection or change these depths without updating th
 
 ## 5. Documentation and Metadata Ownership
 
-| Surface                                                   | Owns                                                                                                   |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Root `README.md`                                          | High-level repository entry, app inventory, and public app Live endpoints                              |
-| Collection README                                         | Complete inventory and collection-specific policy for `packages/`, `workbench/`, or `others/`          |
-| Category README                                           | Category inventory when a category has one, such as `others/userscripts/README.md`                     |
-| Project README                                            | Purpose, setup, usage, status, limitations, license, and project Live or Install URL                   |
-| Landing project config                                    | Public catalog identity, summary, lifecycle, update time, Source action, external action, and showcase |
-| `package.json`, `pyproject.toml`, requirements, lockfiles | Machine-readable package identity, scripts, dependencies, engines, and license metadata                |
-| `docs/`                                                   | Cross-project policy and architecture that does not belong to one project                              |
-| `scripts/repository-contract/`                            | Machine-enforceable tracked-file invariants, diagnostics, and checker fixtures                         |
-| `.github/workflows/`                                      | Automated trigger scope and executable validation                                                      |
+| Surface                                                   | Owns                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Root `README.md`                                          | High-level repository entry, app inventory, and public app Live endpoints                                           |
+| Collection README                                         | Complete inventory and collection-specific policy for `packages/`, `workbench/`, or `others/`                       |
+| Category README                                           | Category inventory when a category has one, such as `others/userscripts/README.md`                                  |
+| Project README                                            | Purpose, setup, usage, status, limitations, license, and project Live or Install URL                                |
+| Landing project config                                    | Public catalog identity, summary, lifecycle, update time, primary Source destination, external action, and showcase |
+| `package.json`, `pyproject.toml`, requirements, lockfiles | Machine-readable package identity, scripts, dependencies, engines, and license metadata                             |
+| `docs/`                                                   | Cross-project policy and architecture that does not belong to one project                                           |
+| `scripts/repository-contract/`                            | Machine-enforceable tracked-file invariants, diagnostics, and checker fixtures                                      |
+| `.github/workflows/`                                      | Automated trigger scope and executable validation                                                                   |
 
 Do not copy an entire policy into several READMEs. Link to the canonical owner, but update every surface that independently presents the changed fact. A public Live URL, for example, appears independently in the root index, project README, and landing catalog.
 
@@ -204,12 +204,16 @@ Repository infrastructure outside the discovered roots, including `scripts/repos
 
 Every entry needs a unique repository-relative `path`, `title`, `summary`, `kind`, and time-zone-qualified ISO `updatedAt`. Keep the path taxonomy aligned with the kind. Building and others entries must also define `label` and `lifecycle: "active" | "archived"`; featured and workbench entries do not support `lifecycle`. Adding one project inside the existing taxonomy does not require editing card numbers, aggregate counts, or `projects.ts`.
 
-Every rendered project card retains a `Source` action whose GitHub URL is derived from `path`; do not store or override that destination in project configuration. An optional `externalAction` adds exactly one credential-free HTTPS action after `Source`:
+Rendered collections must place `archived` entries after active or lifecycle-free entries. Within each lifecycle group, sort by `updatedAt` from newest to oldest and use the title as the deterministic tie-breaker.
+
+Every rendered project card retains a whole-card primary link to the Source URL derived from `path`, including cards that also define an external action; do not store or override that Source destination in project configuration. The footer also renders a compact icon-only Source link. An optional `externalAction` adds exactly one compact icon-only link before Source; every icon link must have an explicit accessible name. The primary and footer links must be independent, non-nested links so each remains separately focusable and the external action cannot change the card destination:
 
 - Use `kind: "live"` only when the same URL is an externally verified canonical deployment synchronized across the root README, project README, and project-owned web metadata. Preview, expiring, private, authentication-only, and undocumented endpoints are not Live destinations.
 - Use `kind: "install"` only when the URL is an externally verified installation channel synchronized with the project README and its owning machine-readable distribution metadata. A userscript Install action must match the generated `@downloadURL`; a package Install action requires the package to exist at the documented official registry before the landing link or install command is published.
 
 Workbench entries remain source-only under the current local-first presentation. Extending them with an external action requires an intentional type, UI, copy, and validation change rather than an unused configuration field.
+
+Discuss any new or materially redesigned user-visible navigation, action control, or interaction pattern with the maintainer before implementation unless an approved design is already provided.
 
 Use `showcase` only when a unique PNG of the project's actual UI or output is available:
 
@@ -236,6 +240,8 @@ For an app with a stable public deployment, keep the same canonical endpoint in:
 For a deployed app with a catalog entry, add `externalAction: { kind: "live", url }` when the root and project READMEs identify that deployment as canonical, or the explicit task selects and verifies it as the Live destination. `apps/landing` is the catalog itself and has no catalog entry.
 
 For an externally distributed project with a catalog entry, add `externalAction: { kind: "install", url }` only after verifying the exact public installation channel from a supported client or package manager. Keep that URL synchronized with the project README and the owning registry or generated artifact metadata. For a userscript, the landing Install URL and generated `@downloadURL` must be identical; `@updateURL` follows the project's documented update-channel policy and is normally identical for a raw-artifact channel.
+
+The Landing monorepo validator enforces the tracked-file subset of this contract: project and root README references, static app title/description/language/favicon/canonical/robots/Open Graph/Twitter metadata, source `robots.txt`, and raw-main userscript download/update metadata. External availability and installer behavior still require the manual checks below.
 
 The repository contract checker and its workflow are not applications, workspace inventory entries, or deployments. Checker- or CI-only changes do not add a root README Workspaces row, a project or collection README entry, or a Live URL. Document the targeted checker command in Section 14; root `pnpm check` remains the aggregate command exposed by the root README.
 
@@ -357,7 +363,7 @@ Archiving retains source and history:
 - Keep the project in the landing catalog because coverage validation still discovers its directory.
 - Move an archived featured app or package to a catalog presentation that supports `lifecycle: "archived"`.
 - Remove an obsolete showcase and its cover.
-- Remove or replace a dead `externalAction`, while retaining the derived Source action.
+- Remove or replace a dead `externalAction`, while retaining the derived Source destination.
 - Mark the status near the top of the project README and in its owning index.
 - Preserve licenses, attribution, and historical context.
 - Apply the CI disposition criteria below.
@@ -409,7 +415,7 @@ Before considering any repository change complete, confirm:
 - [ ] The project is in the correct taxonomy and directory depth.
 - [ ] Project README and license status are explicit.
 - [ ] Root and collection/category indexes are synchronized.
-- [ ] Landing path, presentation, date, Source action, optional `externalAction`, and cover are correct; `lifecycle` is present only for building and others catalog entries.
+- [ ] Landing path, presentation, date, primary Source destination, optional `externalAction`, and cover are correct; `lifecycle` is present only for building and others catalog entries.
 - [ ] Public Live URLs were verified and synchronized.
 - [ ] Public Install URLs were verified through their owning channel and synchronized with project and machine-readable distribution metadata.
 - [ ] Workspace metadata, lockfiles, and generated artifacts are current.

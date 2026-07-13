@@ -38,7 +38,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install repository contract dependencies
-        run: pnpm --filter cedarflake-lab install --frozen-lockfile
+        run: pnpm --filter cedarflake-lab --filter @cedarflake/landing install --frozen-lockfile
 
       - name: Verify repository contract
         run: pnpm check:repository-contract
+
+      - name: Verify public catalog contract
+        run: pnpm --filter @cedarflake/landing validate
