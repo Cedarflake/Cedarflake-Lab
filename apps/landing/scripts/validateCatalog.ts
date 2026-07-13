@@ -12,6 +12,7 @@ import { siteConfig } from "../src/config/site"
 import { validateProjectCatalog } from "../src/lib/projectCatalog"
 import type { ProjectCover, ProjectEntry } from "../src/types/project"
 import { appRoot, repositoryRoot, validationContext } from "./repositoryContext"
+import { getVisibleMarkdownLines, isSvgDocument } from "./validationText"
 
 interface DeploymentCopy {
   canonicalRelativePath: string
@@ -319,9 +320,7 @@ function isValidDocumentIcon(filePath: string) {
   const contents = readFileSync(filePath)
 
   if (extension === ".svg") {
-    const svg = contents.toString("utf8").trim()
-
-    return /^(?:<\?xml[\s\S]*?\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg\b[\s\S]*<\/svg>$/.test(svg)
+    return isSvgDocument(contents.toString("utf8"))
   }
 
   if (extension === ".ico") {
@@ -581,38 +580,6 @@ function validateUserscriptInstallMetadata(projectPath: string, installUrl: stri
       errors.push(`Project ${projectPath} @${metadataName} does not match its Install URL`)
     }
   }
-}
-
-function getVisibleMarkdownLines(markdown: string) {
-  const lines = markdown.replace(/<!--[\s\S]*?-->/g, "").split(/\r?\n/)
-  const visibleLines: string[] = []
-  let fenceCharacter: "`" | "~" | null = null
-  let fenceLength = 0
-
-  for (const line of lines) {
-    if (fenceCharacter) {
-      const closingFence = line.match(/^\s{0,3}(`{3,}|~{3,})\s*$/)?.[1]
-
-      if (closingFence?.startsWith(fenceCharacter) && closingFence.length >= fenceLength) {
-        fenceCharacter = null
-        fenceLength = 0
-      }
-
-      continue
-    }
-
-    const openingFence = line.match(/^\s{0,3}(`{3,}|~{3,})/)?.[1]
-
-    if (openingFence) {
-      fenceCharacter = openingFence[0] === "`" ? "`" : "~"
-      fenceLength = openingFence.length
-      continue
-    }
-
-    visibleLines.push(line)
-  }
-
-  return visibleLines
 }
 
 function getMarkdownUrls(markdown: string) {

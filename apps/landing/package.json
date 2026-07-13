@@ -10,11 +10,12 @@
   },
   "scripts": {
     "build": "pnpm validate && tsc -p tsconfig.json --noEmit && vite build && tsx ./scripts/validateBuild.ts",
-    "check": "pnpm format:check && pnpm typecheck && pnpm validate",
+    "check": "pnpm format:check && pnpm typecheck && pnpm test && pnpm validate",
     "dev": "pnpm validate && vite --host 127.0.0.1",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "preview": "vite preview --host 127.0.0.1",
+    "test": "tsx --test ./scripts/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "validate": "tsx ./scripts/validate.ts"
   },
