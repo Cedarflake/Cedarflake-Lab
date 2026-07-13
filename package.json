@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build": "pnpm -r --workspace-concurrency=1 --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present build",
-    "check": "pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present check && pnpm check:focus-orb-package",
+    "check": "pnpm check:repository-contract && pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present check && pnpm check:focus-orb-package",
+    "check:repository-contract": "pnpm typecheck:repository-contract && pnpm test:repository-contract && tsx scripts/repository-contract/check.ts",
     "check:workflows": "pnpm --filter @cedarflake/landing exec prettier --check \"../../.github/workflows/*.yml\"",
     "lint": "pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present lint",
     "typecheck": "pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present typecheck",
@@ -23,11 +24,16 @@
     "dev:shika": "pnpm --filter shika dev",
     "email": "pnpm --filter personal_email email",
     "render:email": "pnpm --filter personal_email render:email",
-    "check:focus-orb-package": "pnpm --filter @cedarflake/focus-orb build && pnpm --filter @cedarflake/focus-orb-demo exec tsc -p package-consumer/tsconfig.json --noEmit"
+    "check:focus-orb-package": "pnpm --filter @cedarflake/focus-orb pack:check && pnpm --filter @cedarflake/focus-orb-demo exec tsc -p package-consumer/tsconfig.json --noEmit",
+    "test:repository-contract": "tsx --test scripts/repository-contract/*.test.ts",
+    "typecheck:repository-contract": "tsc -p tsconfig.repository-contract.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "22.10.5",
     "@vitejs/plugin-react": "4.3.4",
+    "js-yaml": "5.2.1",
+    "smol-toml": "1.7.0",
+    "tsx": "4.22.4",
     "typescript": "5.7.3",
     "vite": "6.4.3"
   }

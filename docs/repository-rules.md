@@ -89,22 +89,25 @@ The closest formatter, linter, framework convention, compiler configuration, loc
 | `workbench/<category>/<slug>` | Local Python utilities and small projects                               | Category, then project        |
 | `others/<category>/<slug>`    | Userscripts, interface studies, retired experiments, and other material | Category, then project        |
 
-Do not add a new top-level collection or change these depths without updating the landing discovery validator, root documentation, and every workflow whose path filters, commands, or working directories read that collection. Review workspace globs and update them only when workspace membership changes. `apps/landing` is the only project intentionally excluded from landing catalog coverage because it is the catalog itself.
+Do not add a new top-level collection or change these depths without updating the repository contract checker, landing discovery validator, root documentation, and every workflow whose path filters, commands, or working directories read that collection. Review workspace globs and update them only when workspace membership changes. `apps/landing` is the only project intentionally excluded from landing catalog coverage because it is the catalog itself.
 
 ## 5. Documentation and Metadata Ownership
 
-| Surface                                                   | Owns                                                                                                      |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Root `README.md`                                          | High-level repository entry, app inventory, and public app Live endpoints                                 |
-| Collection README                                         | Complete inventory and collection-specific policy for `packages/`, `workbench/`, or `others/`             |
-| Category README                                           | Category inventory when a category has one, such as `others/userscripts/README.md`                        |
-| Project README                                            | Purpose, setup, usage, status, limitations, license, and project Live URL                                 |
-| Landing project config                                    | Public catalog identity, summary, lifecycle, update time, source link, external destination, and showcase |
-| `package.json`, `pyproject.toml`, requirements, lockfiles | Machine-readable package identity, scripts, dependencies, engines, and license metadata                   |
-| `docs/`                                                   | Cross-project policy and architecture that does not belong to one project                                 |
-| `.github/workflows/`                                      | Automated trigger scope and executable validation                                                         |
+| Surface                                                   | Owns                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Root `README.md`                                          | High-level repository entry, app inventory, and public app Live endpoints                                           |
+| Collection README                                         | Complete inventory and collection-specific policy for `packages/`, `workbench/`, or `others/`                       |
+| Category README                                           | Category inventory when a category has one, such as `others/userscripts/README.md`                                  |
+| Project README                                            | Purpose, setup, usage, status, limitations, license, and project Live or Install URL                                |
+| Landing project config                                    | Public catalog identity, summary, lifecycle, update time, primary Source destination, external action, and showcase |
+| `package.json`, `pyproject.toml`, requirements, lockfiles | Machine-readable package identity, scripts, dependencies, engines, and license metadata                             |
+| `docs/`                                                   | Cross-project policy and architecture that does not belong to one project                                           |
+| `scripts/repository-contract/`                            | Machine-enforceable tracked-file invariants, diagnostics, and checker fixtures                                      |
+| `.github/workflows/`                                      | Automated trigger scope and executable validation                                                                   |
 
-Do not copy an entire policy into several READMEs. Link to the canonical owner, but update every surface that independently presents the changed fact. A public URL, for example, appears independently in the root index, project README, and landing catalog.
+Do not copy an entire policy into several READMEs. Link to the canonical owner, but update every surface that independently presents the changed fact. A public Live URL, for example, appears independently in the root index, project README, and landing catalog.
+
+This document remains the canonical policy. The repository contract checker implements only its machine-verifiable subset, the root `package.json` exposes that checker as `pnpm check:repository-contract`, and GitHub Actions owns when the command runs. When an encoded rule changes, update the policy, checker diagnostics, and relevant fixtures together.
 
 ## 6. Minimum Project Contract
 
@@ -125,6 +128,8 @@ Node projects included in the pnpm workspace must also provide:
 Python workbench projects must document whether they use a local `pyproject.toml`, `uv.lock`, `requirements.txt`, or dependency-free execution.
 
 Imported projects must preserve upstream attribution and licensing. Never infer or manufacture a license for third-party code or assets; record an explicit unlicensed or review-needed status when reuse terms are not known.
+
+`pnpm check:repository-contract` validates only invariants that can be proven from tracked repository files. Passing it does not verify external URL availability, deployment-provider settings, runtime behavior, undocumented local prerequisites, or the legal validity of a license decision. Complete the manual and project-specific checks required elsewhere in this document even when the repository contract passes.
 
 ## 7. Adding a Project
 
@@ -147,7 +152,9 @@ For `packages/<slug>`:
 2. Add the package to the landing catalog.
 3. Provide a project README, local license, and package manifest.
 4. For a publishable package, make `repository.directory` match the real repository path, make `homepage` and `bugs` resolve to their documented destinations, and verify every `files` and export path exists after build.
-5. When the public API changes, validate the package and every repository workspace whose manifest depends on it and whose source calls the changed API. If no such workspace exists, add or update a fixture or demo that imports the built public export instead of a source-only alias.
+5. A publishable package must expose a deterministic pack check that builds the package, inspects the package manager's real dry-run file list, rejects missing public targets and unintended source or tooling files, and enforces a reviewed size budget.
+6. `publishConfig`, a successful dry run, and a locally generated tarball prove only release readiness. Before claiming an install command or registry URL, verify the external package exists. Before a first publication, also verify registry ownership, the intended official registry, authentication or trusted-publishing configuration, and the authorized release identity.
+7. When the public API changes, validate the package and every repository workspace whose manifest depends on it and whose source calls the changed API. If no such workspace exists, add or update a fixture or demo that imports the built public export instead of a source-only alias.
 
 ### 7.3 Python Workbench Project
 
@@ -175,6 +182,8 @@ For `others/<category>/<slug>`:
 
 New userscripts must also document installation, userscript-manager compatibility, and the committed-artifact policy. If an install URL points to generated `dist/` output, generate it through the project build and provide a drift check. A userscript that runs a real-browser test needs a dedicated workflow unless at least two userscripts execute the same version-controlled browser harness and can share one category-level path filter.
 
+After adding any project described in this section, run `pnpm check:repository-contract` in addition to its category- and project-specific validation.
+
 ## 8. Landing Catalog Rules
 
 The landing validator discovers:
@@ -191,9 +200,20 @@ Every discovered project except `apps/landing` needs exactly one catalog entry. 
 - `workbench.ts` for workbench categories and projects.
 - `others.ts` for other projects and lifecycle state.
 
+Repository infrastructure outside the discovered roots, including `scripts/repository-contract/` and `.github/workflows/`, is not a project. A checker- or CI-only change does not add a catalog entry, alter Landing presentation metadata, or bump `updatedAt`.
+
 Every entry needs a unique repository-relative `path`, `title`, `summary`, `kind`, and time-zone-qualified ISO `updatedAt`. Keep the path taxonomy aligned with the kind. Building and others entries must also define `label` and `lifecycle: "active" | "archived"`; featured and workbench entries do not support `lifecycle`. Adding one project inside the existing taxonomy does not require editing card numbers, aggregate counts, or `projects.ts`.
 
-Use `externalUrl` only when the same credential-free HTTPS URL is identified as the canonical Live destination in the root or project README, or the explicit task names it as the card destination. Without it, the card intentionally links to the GitHub source path.
+Rendered collections must place `archived` entries after active or lifecycle-free entries. Within each lifecycle group, sort by `updatedAt` from newest to oldest and use the title as the deterministic tie-breaker.
+
+Every rendered project card retains a whole-card primary link to the Source URL derived from `path`, including cards that also define an external action; do not store or override that Source destination in project configuration. The footer also renders a compact icon-only Source link. An optional `externalAction` adds exactly one compact icon-only link before Source; every icon link must have an explicit accessible name. The primary and footer links must be independent, non-nested links so each remains separately focusable and the external action cannot change the card destination:
+
+- Use `kind: "live"` only when the same URL is an externally verified canonical deployment synchronized across the root README, project README, and project-owned web metadata. Preview, expiring, private, authentication-only, and undocumented endpoints are not Live destinations.
+- Use `kind: "install"` only when the URL is an externally verified installation channel synchronized with the project README and its owning machine-readable distribution metadata. A userscript Install action must match the generated `@downloadURL`; a package Install action requires the package to exist at the documented official registry before the landing link or install command is published.
+
+Workbench entries remain source-only under the current local-first presentation. Extending them with an external action requires an intentional type, UI, copy, and validation change rather than an unused configuration field.
+
+Discuss any new or materially redesigned user-visible navigation, action control, or interaction pattern with the maintainer before implementation unless an approved design is already provided.
 
 Use `showcase` only when a unique PNG of the project's actual UI or output is available:
 
@@ -206,7 +226,7 @@ Use `showcase` only when a unique PNG of the project's actual UI or output is av
 
 Landing SEO configuration describes the Cedarflake Lab landing site only. Every deployable app owns its own title, description, favicon, canonical URL, social metadata, and robots policy.
 
-## 9. README and Live URL Rules
+## 9. README, Live, and Install URL Rules
 
 A deployment is stable only when a credential-free HTTPS GET reaches the intended app after redirects, does not use a preview or expiring hostname, requires no login, and is intended as the canonical endpoint.
 
@@ -217,12 +237,19 @@ For an app with a stable public deployment, keep the same canonical endpoint in:
 3. Project-owned canonical and social metadata for a web app.
 4. Package `homepage` or userscript metadata only when the existing field or project documentation defines that field as the deployment destination.
 
-For a deployed app with a catalog entry, add `externalUrl` when the root or project README identifies that deployment as canonical, or the explicit task selects it as the card destination. `apps/landing` is the catalog itself and has no catalog entry.
+For a deployed app with a catalog entry, add `externalAction: { kind: "live", url }` when the root and project READMEs identify that deployment as canonical, or the explicit task selects and verifies it as the Live destination. `apps/landing` is the catalog itself and has no catalog entry.
 
-Before recording an endpoint:
+For an externally distributed project with a catalog entry, add `externalAction: { kind: "install", url }` only after verifying the exact public installation channel from a supported client or package manager. Keep that URL synchronized with the project README and the owning registry or generated artifact metadata. For a userscript, the landing Install URL and generated `@downloadURL` must be identical; `@updateURL` follows the project's documented update-channel policy and is normally identical for a raw-artifact channel.
 
-- Verify the final credential-free HTTPS URL returns the intended app.
+The Landing monorepo validator enforces the tracked-file subset of this contract: project and root README references, static app title/description/language/favicon/canonical/robots/Open Graph/Twitter metadata, source `robots.txt`, and raw-main userscript download/update metadata. External availability and installer behavior still require the manual checks below.
+
+The repository contract checker and its workflow are not applications, workspace inventory entries, or deployments. Checker- or CI-only changes do not add a root README Workspaces row, a project or collection README entry, or a Live URL. Document the targeted checker command in Section 14; root `pnpm check` remains the aggregate command exposed by the root README.
+
+Before recording a Live or Install endpoint:
+
+- Verify the final credential-free HTTPS URL reaches the intended app or installation channel after redirects.
 - Do not publish localhost, preview, expiring, private, or authentication-only URLs as Live.
+- Verify an Install URL through the supported userscript manager, registry client, browser-extension store, or other owning installer; a source tree, README, local tarball, or successful dry run does not prove an external installation channel exists.
 - Use `—` in the root table when no stable public endpoint exists.
 - For Vercel projects, verify the external Dashboard Root Directory as well as checked-in `vercel.json` or local workspace configuration.
 
@@ -247,6 +274,21 @@ Do not edit build output such as `dist/`, `.next/`, coverage, artifacts, or cach
 
 Node and build-policy compatibility requires `pnpm install --frozen-lockfile` to pass under the repository's strict Node policy. A native dependency must not appear in both `allowBuilds` and `ignoredBuiltDependencies`.
 
+### 10.1 Release Authorization and Tags
+
+Release preparation is an ordinary repository change; publishing is an external write. Authorization to edit, commit, push a branch, or open a pull request does not by itself authorize any of these actions:
+
+- Creating or pushing a version tag.
+- Creating or modifying a GitHub Release or its assets.
+- Publishing to npm, another registry, a browser-extension store, or a userscript catalog.
+- Creating registry credentials, repository secrets, environments, or trusted-publisher bindings.
+
+In this multi-project repository, new project release tags use `<project-slug>-v<SemVer>`, such as `focus-orb-v0.1.0` or `youtube-auto-resume-v0.4.0`. The tag version must exactly equal the owning manifest or generated metadata version, and the tag must point to a commit where the project-specific release check passed. Do not create repository-wide version tags for a single-project release.
+
+A release workflow must use a project-scoped `project-<slug>-release.yml` filename and tag prefix, verify tag-to-version equality before writing, rebuild and validate the distributable, publish checksums with immutable assets, remain safe to rerun, and grant write permissions only to the release job. Do not add registry publication until the registry identity and authentication path are verified.
+
+A userscript may intentionally use a committed raw `main` artifact as its install and update channel. In that model, keep the project README, generated `@downloadURL`, and generated `@updateURL` identical, and treat a GitHub Release asset as an immutable archive unless the project explicitly migrates its update channel. Do not use the repository-wide `releases/latest/download` URL for one project in a multi-project repository because another project's release can become latest.
+
 ## 11. GitHub Actions Rules
 
 Workflow filenames use:
@@ -263,15 +305,22 @@ Allowed scopes:
 
 Common purposes are `ci`, `security`, `release`, and `maintenance`. Targets use kebab-case. Display names begin with the matching `[Repo]`, `[Group]`, or `[Project]` prefix.
 
+Every remote Action and reusable workflow reference must use the full 40-character lowercase commit SHA from a verified upstream release, followed by the exact release tag in an inline comment. Local `./` references are exempt; Docker actions must use a lowercase SHA-256 image digest. Dependabot owns routine GitHub Actions updates and must preserve immutable references and readable release comments.
+
+Set `persist-credentials: false` on every `actions/checkout` step unless that job is explicitly responsible for committing or pushing. A credential-writing job must document that responsibility in its workflow, retain the smallest required token permissions, and must not run untrusted pull-request code with write credentials.
+
 Current workflow ownership:
 
 | File                                 | Responsibility                                                    |
 | ------------------------------------ | ----------------------------------------------------------------- |
 | `repo-codeql-security.yml`           | Repository JavaScript/TypeScript CodeQL analysis                  |
+| `repo-repository-contract-ci.yml`    | Repository structure, metadata, and synchronization contract      |
 | `group-apps-packages-ci.yml`         | Baseline dependency audit, check, and build for apps and packages |
 | `group-workbench-python-ci.yml`      | Workbench Ruff, registered tests, and dependency audits           |
 | `project-liminal-drift-ci.yml`       | Liminal Drift project and browser validation                      |
 | `project-youtube-auto-resume-ci.yml` | YouTube userscript unit, build-drift, and browser validation      |
+
+`repo-repository-contract-ci.yml` uses the display name `[Repo] Repository Contract CI`. It runs for every pull request and every push to `main`, without path filters, because a change at any tracked path can introduce a contract violation; it also supports `workflow_dispatch`. Keep this repository-wide gate separate from group and project workflows.
 
 Workflow ownership consists of the project directories and shared files that its project-specific commands explicitly type-check, test, build, audit, or upload. Repository-root checkout and frozen-install setup do not transfer ownership of unrelated sibling workspaces to a project workflow when a broader group workflow validates that shared install boundary.
 
@@ -300,7 +349,8 @@ Use a history-preserving move, then search for the old path, package name, and U
 - Workspace globs and the lockfile importer.
 - CI triggers, working directories, package filters, and artifact paths.
 - Deployment Root Directory and project-owned SEO.
-- Root Live link, project Live link, and landing `externalUrl`.
+- Root and project Live links, project-owned web metadata, and a landing `externalAction` with `kind: "live"`.
+- Project Install link, registry or generated artifact metadata, and a landing `externalAction` with `kind: "install"`.
 - Userscript `@homepageURL`, `@downloadURL`, and `@updateURL`, generated-artifact paths, and path-specific `.gitignore` exceptions, followed by a rebuild of committed output.
 - License, attribution, and upstream-source references.
 
@@ -313,7 +363,7 @@ Archiving retains source and history:
 - Keep the project in the landing catalog because coverage validation still discovers its directory.
 - Move an archived featured app or package to a catalog presentation that supports `lifecycle: "archived"`.
 - Remove an obsolete showcase and its cover.
-- Remove or replace a dead `externalUrl`.
+- Remove or replace a dead `externalAction`, while retaining the derived Source destination.
 - Mark the status near the top of the project README and in its owning index.
 - Preserve licenses, attribution, and historical context.
 - Apply the CI disposition criteria below.
@@ -329,17 +379,18 @@ Deleting source also requires deleting its catalog entry, cover, index rows, wor
 
 Run the smallest owning checks first:
 
-| Area                                             | Minimum validation                                                                                                                                                                                                                   |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Ordinary app or package                          | Always run `pnpm --filter <package-name> check`. Also run `build` after changes to source, public assets, build configuration, dependency manifests or importer resolutions, generator inputs, or other files consumed by the build. |
-| Landing catalog, metadata, components, or styles | Run `pnpm --filter @cedarflake/landing check` and `pnpm --filter @cedarflake/landing build` for every production-visible catalog, component, style, document, SEO, asset, or deployment change.                                      |
-| Focus Orb package/demo                           | Run both workspace `check` scripts and `pnpm check:focus-orb-package`. Build the demo when its source, assets, or build inputs change.                                                                                               |
-| Liminal Drift gameplay, rendering, input, or UI  | Run the project `check` plus its documented canvas and interaction browser checks.                                                                                                                                                   |
-| Userscript with committed output                 | Run the project `check`. Inspect its script definition: run `build:check` and browser tests separately only when `check` does not already include them. Install every documented browser prerequisite first.                         |
-| Python workbench                                 | Run `uvx ruff format --check workbench`, `uvx ruff check workbench`, and the affected project's README- or CI-declared tests.                                                                                                        |
-| Workflow change                                  | Run `pnpm check:workflows` and require exit code 0, then inspect path filters, package filters, permissions, working directories, and self-paths. Review the Actions run only when push is authorized.                               |
+| Area                                             | Minimum validation                                                                                                                                                                                                                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary app or package                          | Always run `pnpm --filter <package-name> check`. Also run `build` after changes to source, public assets, build configuration, dependency manifests or importer resolutions, generator inputs, or other files consumed by the build.                                   |
+| Landing catalog, metadata, components, or styles | Run `pnpm --filter @cedarflake/landing check` and `pnpm --filter @cedarflake/landing build` for every production-visible catalog, component, style, document, SEO, asset, or deployment change.                                                                        |
+| Focus Orb package/demo                           | Run both workspace `check` scripts and `pnpm check:focus-orb-package`; the root check includes the package dry-run contract and built-consumer fixture. Build the demo when its source, assets, or build inputs change.                                                |
+| Liminal Drift gameplay, rendering, input, or UI  | Run the project `check` plus its documented canvas and interaction browser checks.                                                                                                                                                                                     |
+| Userscript with committed output                 | Run the project `check`. Inspect its script definition: run `build:check` and browser tests separately only when `check` does not already include them. Install every documented browser prerequisite first.                                                           |
+| Python workbench                                 | Run `uvx ruff format --check workbench`, `uvx ruff check workbench`, and the affected project's README- or CI-declared tests.                                                                                                                                          |
+| Repository contract or checker                   | Run `pnpm check:repository-contract` after changing taxonomy, inventories, catalog coverage, workspace registration, workflow ownership, checker source, or fixtures.                                                                                                  |
+| Workflow change                                  | Run `pnpm check:workflows` and `pnpm check:repository-contract`, then inspect path filters, package filters, permissions, working directories, immutable Action references, checkout credentials, and self-paths. Review the Actions run only when push is authorized. |
 
-Run root `pnpm check` when a change touches two or more project roots, a root configuration consumed by multiple workspaces, or a shared package public API. Run root `pnpm build` when those changes can alter production output in two or more workspaces. These commands intentionally include userscripts; the Apps & Packages workflow remains a narrower CI group.
+When `repo-repository-contract-ci.yml` changes, run both contract and workflow checks. Run root `pnpm check`, which includes the repository contract, when a change touches two or more project roots, a root configuration consumed by multiple workspaces, or a shared package public API. Run root `pnpm build` when those changes can alter production output in two or more workspaces. These commands intentionally include userscripts; the Apps & Packages workflow remains a narrower CI group.
 
 For moves and URL changes, also run a repository search for every old identifier. Always finish with `git diff --check` and inspect the final diff.
 
@@ -364,11 +415,14 @@ Before considering any repository change complete, confirm:
 - [ ] The project is in the correct taxonomy and directory depth.
 - [ ] Project README and license status are explicit.
 - [ ] Root and collection/category indexes are synchronized.
-- [ ] Landing path, presentation, date, external URL, and cover are correct; `lifecycle` is present only for building and others catalog entries.
+- [ ] Landing path, presentation, date, primary Source destination, optional `externalAction`, and cover are correct; `lifecycle` is present only for building and others catalog entries.
 - [ ] Public Live URLs were verified and synchronized.
+- [ ] Public Install URLs were verified through their owning channel and synchronized with project and machine-readable distribution metadata.
 - [ ] Workspace metadata, lockfiles, and generated artifacts are current.
+- [ ] Distribution claims distinguish a validated release candidate from an externally verified package, tag, Release, or install channel.
 - [ ] Every documented browser, binary, service, and environment prerequisite is reproducible on a new machine.
 - [ ] CI naming, trigger scope, commands, and manual test/audit lists are current.
+- [ ] Repository contract policy, checker scope, diagnostics, and fixtures agree; `pnpm check:repository-contract` passed when an owned invariant changed.
 - [ ] Old paths, names, URLs, and orphaned assets are absent.
 - [ ] New or modified frontend code follows the owning project rules or the Section 2 defaults.
 - [ ] Targeted validation passed; root checks ran when the Section 14 ownership-boundary conditions were met.

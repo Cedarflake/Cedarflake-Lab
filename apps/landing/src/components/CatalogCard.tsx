@@ -1,7 +1,8 @@
 import { ArrowUpRight } from "lucide-react"
 
-import { projectUrl } from "../lib/projectCatalog"
+import { projectPrimaryUrl } from "../lib/projectCatalog"
 import type { CatalogProject } from "../types/project"
+import { ProjectActions } from "./ProjectActions"
 
 interface CatalogCardProps {
   displayNumber: string
@@ -13,7 +14,15 @@ export function CatalogCard({ displayNumber, project }: CatalogCardProps) {
 
   return (
     <article className="catalog-card" data-lifecycle={project.lifecycle}>
-      <a href={projectUrl(project)} rel="noreferrer" target="_blank">
+      <a
+        className="project-primary-link"
+        data-project-primary-link="true"
+        href={projectPrimaryUrl(project)}
+        rel="noreferrer"
+        target="_blank"
+        aria-label={`View ${project.title} source on GitHub (opens in a new tab)`}
+      />
+      <div className="catalog-card__surface">
         <div className="catalog-card__topline">
           <span>{displayNumber}</span>
           <div className="catalog-card__labels">
@@ -26,8 +35,11 @@ export function CatalogCard({ displayNumber, project }: CatalogCardProps) {
           <ArrowUpRight aria-hidden="true" />
         </div>
         <p>{project.summary}</p>
-        <code className="source-path">{project.path}</code>
-      </a>
+        <footer className="catalog-card__footer">
+          <ProjectActions project={project} />
+          <code className="source-path">{project.path}</code>
+        </footer>
+      </div>
     </article>
   )
 }

@@ -4,6 +4,7 @@ import type {
   CatalogProject,
   LabStat,
   ProjectEntry,
+  ProjectExternalActionKind,
   ProjectKind,
   ShowcaseProject,
   WorkbenchGroupData,
@@ -29,6 +30,7 @@ const catalogProjectPrefixBySection = {
   building: "B",
   others: "O",
 } satisfies Record<CatalogProject["section"], string>
+const projectExternalActionKinds = new Set<ProjectExternalActionKind>(["live", "install"])
 
 function isValidIsoTimestamp(value: string) {
   const match = isoTimestampPattern.exec(value)
@@ -112,8 +114,14 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Project section does not match its path: ${projectLabel}`)
     }
 
-    if (project.presentation === "workbench" && pathSegments[1] !== project.category) {
-      throw new Error(`Workbench category does not match its path: ${projectLabel}`)
+    if (project.presentation === "workbench") {
+      if (pathSegments[1] !== project.category) {
+        throw new Error(`Workbench category does not match its path: ${projectLabel}`)
+      }
+
+      if (project.externalAction !== undefined) {
+        throw new Error(`Workbench project cannot define externalAction: ${projectLabel}`)
+      }
     }
 
     if (project.presentation === "catalog") {
@@ -134,19 +142,25 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Invalid project updatedAt: ${projectLabel}`)
     }
 
-    if (project.externalUrl !== undefined) {
+    if (project.externalAction !== undefined) {
+      const { kind, url } = project.externalAction
+
+      if (!projectExternalActionKinds.has(kind)) {
+        throw new Error(`Invalid project externalAction kind: ${projectLabel}`)
+      }
+
       try {
-        if (project.externalUrl !== project.externalUrl.trim()) {
+        if (url !== url.trim()) {
           throw new Error("Surrounding whitespace")
         }
 
-        const externalUrl = new URL(project.externalUrl)
+        const parsedUrl = new URL(url)
 
-        if (externalUrl.protocol !== "https:" || externalUrl.username || externalUrl.password) {
+        if (parsedUrl.protocol !== "https:" || parsedUrl.username || parsedUrl.password) {
           throw new Error("Unsafe URL")
         }
       } catch {
-        throw new Error(`Invalid project externalUrl: ${projectLabel}`)
+        throw new Error(`Invalid project externalAction URL: ${projectLabel}`)
       }
     }
 
@@ -222,7 +236,17 @@ function countProjects(kind: ProjectKind) {
     .padStart(2, "0")
 }
 
-function compareByUpdatedAt(left: ProjectEntry, right: ProjectEntry) {
+function lifecycleSortRank(project: ProjectEntry) {
+  return project.presentation === "catalog" && project.lifecycle === "archived" ? 1 : 0
+}
+
+function compareProjects(left: ProjectEntry, right: ProjectEntry) {
+  const lifecycleDifference = lifecycleSortRank(left) - lifecycleSortRank(right)
+
+  if (lifecycleDifference !== 0) {
+    return lifecycleDifference
+  }
+
   const updatedAtDifference = Date.parse(right.updatedAt) - Date.parse(left.updatedAt)
 
   if (updatedAtDifference !== 0) {
@@ -240,8 +264,8 @@ export function projectSourceUrl(path: string) {
   return `${siteConfig.repositoryUrl}/tree/${encodeUrlPath(siteConfig.repositoryBranch)}/${encodeUrlPath(path)}`
 }
 
-export function projectUrl(project: ProjectEntry) {
-  return project.externalUrl ?? projectSourceUrl(project.path)
+export function projectPrimaryUrl(project: ProjectEntry) {
+  return projectSourceUrl(project.path)
 }
 
 export function catalogProjectNumber(project: CatalogProject, index: number) {
@@ -252,19 +276,19 @@ export function catalogProjectNumber(project: CatalogProject, index: number) {
 
 export const showcaseProjects: readonly ShowcaseProject[] = catalog
   .filter(hasShowcase)
-  .sort(compareByUpdatedAt)
+  .sort(compareProjects)
 
 export const buildingProjects: readonly CatalogProject[] = catalog
   .filter(isBuildingProject)
-  .sort(compareByUpdatedAt)
+  .sort(compareProjects)
 
 export const workbenchProjects: readonly WorkbenchProject[] = catalog
   .filter(isWorkbenchProject)
-  .sort(compareByUpdatedAt)
+  .sort(compareProjects)
 
 export const otherProjects: readonly CatalogProject[] = catalog
   .filter(isOtherProject)
-  .sort(compareByUpdatedAt)
+  .sort(compareProjects)
 
 export const workbenchGroups: readonly WorkbenchGroupData[] = siteConfig.workbenchCategories
   .map((category) => ({

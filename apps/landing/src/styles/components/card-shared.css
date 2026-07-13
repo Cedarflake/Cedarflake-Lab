@@ -38,15 +38,88 @@
   margin-top: 28px;
 }
 
-.project-card__title-row svg,
-.catalog-card__title-row svg {
+.project-card__title-row > svg,
+.catalog-card__title-row > svg {
   flex: 0 0 auto;
   width: 22px;
   height: 22px;
   transition: transform 180ms ease;
 }
 
-.project-card:hover .project-card__title-row svg,
-.catalog-card:hover .catalog-card__title-row svg {
+.project-card:hover .project-card__title-row > svg,
+.project-card:focus-within .project-card__title-row > svg,
+.catalog-card:hover .catalog-card__title-row > svg,
+.catalog-card:focus-within .catalog-card__title-row > svg {
   transform: translate(4px, -4px);
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  justify-self: start;
+  gap: 4px;
+  margin: 0;
+}
+
+.project-primary-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  border-radius: inherit;
+}
+
+.project-primary-link:focus-visible {
+  outline-offset: -4px;
+}
+
+.project-action {
+  position: relative;
+  z-index: 2;
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-coral-deep);
+  line-height: 0;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.project-action:hover,
+.project-action:focus-visible {
+  background: rgba(183, 46, 67, 0.08);
+  color: var(--color-ink);
+}
+
+.project-action:focus-visible {
+  outline-offset: -2px;
+}
+
+.project-action:active {
+  transform: scale(0.94);
+}
+
+.project-action svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 180ms ease;
+}
+
+.project-action:hover svg,
+.project-action:focus-visible svg {
+  transform: scale(1.05);
+}
+
+@media (forced-colors: active) {
+  .project-action {
+    border: 1px solid currentcolor;
+  }
 }

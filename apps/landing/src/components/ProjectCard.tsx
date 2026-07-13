@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react"
 import { ArrowUpRight } from "lucide-react"
 
 import { siteConfig } from "../config/site"
-import { projectUrl } from "../lib/projectCatalog"
+import { projectPrimaryUrl } from "../lib/projectCatalog"
 import type { ShowcaseProject } from "../types/project"
+import { ProjectActions } from "./ProjectActions"
 
 interface ProjectCardProps {
   project: ShowcaseProject
@@ -40,7 +41,15 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <article className="project-card">
-      <a className="project-card__link" href={projectUrl(project)} rel="noreferrer" target="_blank">
+      <a
+        className="project-primary-link"
+        data-project-primary-link="true"
+        href={projectPrimaryUrl(project)}
+        rel="noreferrer"
+        target="_blank"
+        aria-label={`View ${project.title} source on GitHub (opens in a new tab)`}
+      />
+      <div className="project-card__surface">
         <div className="project-card__cover" data-load-state={coverLoadState}>
           <img
             ref={coverImageRef}
@@ -67,17 +76,18 @@ export function ProjectCard({ project }: ProjectCardProps) {
             <ArrowUpRight aria-hidden="true" />
           </div>
           <p className="project-card__summary">{project.summary}</p>
-          <div className="project-card__footer">
+          <footer className="project-card__footer">
+            <ProjectActions project={project} />
             <ul className="tag-list" aria-label={`${project.title} technologies`}>
               {tags.map((tag) => (
                 <li key={tag}>{tag}</li>
               ))}
             </ul>
             <code className="source-path">{project.path}</code>
-          </div>
-          {note ? <span className="project-card__note">{note}</span> : null}
+            {note ? <span className="project-card__note">{note}</span> : null}
+          </footer>
         </div>
-      </a>
+      </div>
     </article>
   )
 }
