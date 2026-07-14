@@ -24,6 +24,17 @@ Read [`docs/repository-rules.md`](./docs/repository-rules.md) before changing an
 - `workbench/<category>/` contains local Python utilities and small projects.
 - `others/<category>/` contains userscripts, interface studies, retired experiments, and other material outside the apps, packages, and Python workbench taxonomy.
 
+## Terminal and Local Resource Safety
+
+- Run terminal commands sequentially by default. Parallelize only independent, read-only, low-cost checks; never overlap package installs, builds, browser suites, development servers, or repository-wide scans.
+- Use short-lived, non-interactive task shells. Treat existing IDE terminals, browser windows, browser profiles, ports, and development servers as user-owned unless their task ownership is proven.
+- Run browser automation in an isolated, project-owned context. Do not open, reuse, close, or kill the user's Edge, Chrome, Firefox, browser profiles, or their child processes without explicit authorization for that exact action.
+- Before starting a server, watcher, browser, or background helper, check whether the required port or service is already active. Track every task-started process by a reliable handle, command, and port, and stop it when the task no longer needs it.
+- Before stopping a process, verify its command line, parent process, and task ownership. Never kill processes by a generic name, guessed ownership, or resource usage alone.
+- Start with the smallest owning validation and run at most one resource-intensive local command at a time. Do not repeatedly rerun a failed command without first identifying whether the cause is code, permissions, tooling, or host resources.
+- Treat out-of-memory errors, insufficient system resources, process-spawn failures, repeated shell startup failures, or similar host instability as a stop condition. Cancel task-owned heavy work, start no new local heavy checks, preserve user-owned processes, and report the exact failure.
+- When host instability prevents required comprehensive validation, use lightweight targeted checks locally and move the remaining validation to authorized remote CI. Report which checks ran where; never describe an unrun local check as passed.
+
 ## Working Rules
 
 - Use pnpm for Node.js work and run package commands from the repository root with `pnpm --filter <package-name> <script>`.
@@ -32,6 +43,7 @@ Read [`docs/repository-rules.md`](./docs/repository-rules.md) before changing an
 - Do not edit generated output directly. Regenerate committed artifacts through their owning build script and verify that source and output match.
 - Do not create, expose, or commit secrets, local environment files, downloads, caches, or runtime data.
 - Preserve unrelated user changes in a dirty worktree.
+- Choose branches by scope and risk, not merely because a tracked file will change. A small, self-contained, low-risk edit may remain on the current branch when no branch or pull request was requested. Create a `codex/` branch before feature work, public behavior changes, security fixes, dependency or lockfile updates, workflow or release changes, multi-project work, destructive migrations, or any task intended for a pull request.
 - Commit or push only when the task explicitly requests it. Commit summaries must use English Conventional Commits and contain no more than 20 words.
 
 Cross-project synchronization matrices, lifecycle rules, and CI naming policy live only in [`docs/repository-rules.md`](./docs/repository-rules.md). Keep project-specific architecture and validation requirements in the nearest `AGENTS.md` or project README.
