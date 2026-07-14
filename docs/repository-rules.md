@@ -399,7 +399,8 @@ For moves and URL changes, also run a repository search for every old identifier
 - Follow an explicit maintainer instruction about whether to use the current branch, create a branch, or open a pull request.
 - Do not create a branch solely because a tracked file will change. A change may remain on the current branch when it is small, self-contained, low risk, directly reviewable, and no branch or pull request was requested.
 - A change is small and low risk only when it does not alter public runtime behavior, security boundaries, dependencies, lockfiles, CI workflows, release or deployment behavior, generated artifacts, shared configuration, or more than one project owner.
-- Create a branch before feature development, public behavior changes, security fixes, dependency or lockfile updates, workflow or release changes, multi-project work, destructive migrations, long-running maintenance, or any task intended for a pull request. Use the `codex/<short-slug>` prefix unless the maintainer requests another name.
+- Create a branch before feature development, public behavior changes, security fixes, dependency or lockfile updates, workflow or release changes, multi-project work, destructive migrations, long-running maintenance, or any task intended for a pull request.
+- Branch prefixes belong to the acting tool, not to the repository as a universal namespace. Agents running through Codex use `codex/<short-slug>` unless the maintainer requests another name. Agents running through other tools, including Claude Code, follow their own documented branch-naming constraints and must not inherit the `codex/` prefix from this policy.
 - If work that began as a small current-branch edit expands beyond those limits, stop before broadening the diff and create a branch without discarding or overwriting existing work.
 
 - Commit or push only when the explicit task requests it.
