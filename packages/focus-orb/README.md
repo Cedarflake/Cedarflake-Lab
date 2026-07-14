@@ -2,6 +2,8 @@
 
 React WebGL focus orb component. It can be used as a round button or as a contained ambient surface.
 
+The [Focus Orb Demo](../../apps/focus-orb-demo/README.md) is the workspace consumer and visual tuning playground for this package.
+
 ## Distribution Status
 
 Version 0.1.0 is a release candidate. This repository currently supports it through `workspace:*` and does not document an npm installation channel or a public demo URL.

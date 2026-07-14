@@ -15,8 +15,6 @@ pnpm check:focus-orb-package
 
 `pnpm check:focus-orb-package` builds the package and verifies that the demo's package-consumer fixture can type-check against its public API.
 
-See [Focus Orb Workspace](../../docs/focus-orb-workspace.md) for the package/demo relationship.
-
 ## License
 
 BSD-3-Clause. See [`LICENSE`](./LICENSE).
