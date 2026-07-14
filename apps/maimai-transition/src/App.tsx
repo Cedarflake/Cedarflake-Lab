@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 
 import styles from './App.module.css'
@@ -20,15 +20,17 @@ type ActiveRouteTransition = {
   mode: 'initial' | 'route'
 }
 
-let hasPlayedInitialRouteDemoTransition = false
-
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
   const transitionKeyRef = useRef(0)
   const pendingPathRef = useRef<DemoRouteScene['path'] | null>(null)
   const hasHandledSceneSwapRef = useRef(false)
-  const [activeTransition, setActiveTransition] = useState<ActiveRouteTransition | null>(null)
+  const [activeTransition, setActiveTransition] =
+    useState<ActiveRouteTransition | null>({
+      key: 0,
+      mode: 'initial',
+    })
   const { deviceClass, fitMode, layoutMode } = useResponsiveOpeningMode()
 
   const currentScene = useMemo(
@@ -43,15 +45,6 @@ function App() {
       mode,
     })
   }, [])
-
-  useEffect(() => {
-    if (hasPlayedInitialRouteDemoTransition) {
-      return
-    }
-
-    hasPlayedInitialRouteDemoTransition = true
-    openTransition('initial')
-  }, [openTransition])
 
   const startRouteTransition = useCallback(
     (targetPath: DemoRouteScene['path']) => {
