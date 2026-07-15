@@ -299,6 +299,19 @@ jobs:
           mapfile -t private_canaries < /tmp/shika-private-canaries.txt
           mapfile -t expected_public_counts < /tmp/shika-public-counts.txt
 
+          pluralized_count_marker() {
+            local count="$1"
+            local zero_label="$2"
+            local singular_label="$3"
+            local plural_label="$4"
+
+            case "${count}" in
+              0) printf "%s" "${zero_label}" ;;
+              1) printf "1 %s" "${singular_label}" ;;
+              *) printf "%s %s" "${count}" "${plural_label}" ;;
+            esac
+          }
+
           if ((
             ${#public_canaries[@]} != 4 ||
             ${#incident_public_canaries[@]} != 3 ||
@@ -377,9 +390,9 @@ jobs:
 
             if [[ "${route_names[$index]}" == "home" ]]; then
               public_count_markers=(
-                "${expected_public_counts[0]} active incidents"
-                "${expected_public_counts[1]} status components"
-                "${expected_public_counts[2]} maintenance windows"
+                "$(pluralized_count_marker "${expected_public_counts[0]}" "No active incidents" "active incident" "active incidents")"
+                "$(pluralized_count_marker "${expected_public_counts[1]}" "No status components" "status component" "status components")"
+                "$(pluralized_count_marker "${expected_public_counts[2]}" "No maintenance windows" "maintenance window" "maintenance windows")"
               )
 
               for marker in "${public_count_markers[@]}"; do
@@ -398,7 +411,7 @@ jobs:
                 exit 1
               fi
             elif [[ "${route_names[$index]}" == "history" ]]; then
-              history_count_marker="${expected_public_counts[3]} records on this page"
+              history_count_marker="$(pluralized_count_marker "${expected_public_counts[3]}" "No records on this page" "record on this page" "records on this page")"
               if ! grep -Fq -- "${history_count_marker}" "${output_prefix}.html" ||
                 ! grep -Fq -- "${history_count_marker}" "${output_prefix}.rsc"; then
                 echo "::error::Expected public count ${history_count_marker} is missing from ${route}"
