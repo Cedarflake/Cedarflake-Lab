@@ -420,7 +420,7 @@ jobs:
             fi
 
             if [[ "${route}" == "/history" ]]; then
-              if ! grep -Fq -- "${public_incident_severity} incident" "${output_prefix}.html"; then
+              if ! grep -Fq -- "${public_incident_severity^} incident" "${output_prefix}.html"; then
                 echo "::error::Public incident severity is missing from ${route} HTML"
                 exit 1
               fi
