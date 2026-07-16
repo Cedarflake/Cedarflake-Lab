@@ -40,7 +40,7 @@ async function buildAppTestBundle(): Promise<string> {
       loader: "ts",
       resolveDir: projectDirectory,
     },
-    target: ["chrome109", "firefox115"],
+    target: ["chrome109"],
     write: false,
   })
   const output = result.outputFiles?.[0]
@@ -525,8 +525,72 @@ test("launcher remains visible and follows the active mount target", async () =>
       true,
     )
 
+    const panel = host.locator(".panel")
+    const content = host.locator(".content")
+    const footer = host.locator(".footer")
+    await panel.evaluate(async (element) => {
+      await Promise.all(
+        element.getAnimations().map((animation) => animation.finished),
+      )
+    })
+    await panel.evaluate((element) => {
+      (element as HTMLElement).style.maxHeight = "360px"
+    })
+    const fixedFooterLayout = await host.evaluate((element) => {
+      const root = element.shadowRoot
+      const panelElement = root?.querySelector<HTMLElement>(".panel")
+      const contentElement = root?.querySelector<HTMLElement>(".content")
+      const footerElement = root?.querySelector<HTMLElement>(".footer")
+
+      if (!panelElement || !contentElement || !footerElement) {
+        throw new TypeError("fixed footer fixture is incomplete")
+      }
+
+      const panelRect = panelElement.getBoundingClientRect()
+      const footerRect = footerElement.getBoundingClientRect()
+      return {
+        contentClientHeight: contentElement.clientHeight,
+        contentScrollHeight: contentElement.scrollHeight,
+        footerBottom: footerRect.bottom,
+        footerTop: footerRect.top,
+        panelBottom: panelRect.bottom,
+      }
+    })
+    assert.ok(
+      fixedFooterLayout.contentScrollHeight
+      > fixedFooterLayout.contentClientHeight,
+      JSON.stringify(fixedFooterLayout),
+    )
+    assert.ok(fixedFooterLayout.footerBottom <= fixedFooterLayout.panelBottom)
+    await content.evaluate((element) => {
+      element.scrollTop = element.scrollHeight
+    })
+    const scrolledFooterTop = await footer.evaluate(
+      (element) => element.getBoundingClientRect().top,
+    )
+    assert.ok(
+      Math.abs(scrolledFooterTop - fixedFooterLayout.footerTop) < 1,
+      `footer moved ${Math.abs(scrolledFooterTop - fixedFooterLayout.footerTop)}px`,
+    )
+    await content.evaluate((element) => {
+      element.scrollTop = 0
+    })
+    await panel.evaluate((element) => {
+      (element as HTMLElement).style.removeProperty("max-height")
+    })
+    const boundedPanelLayout = await panel.evaluate((element) => ({
+      height: element.getBoundingClientRect().height,
+      viewportHeight: window.innerHeight,
+    }))
+    assert.ok(
+      boundedPanelLayout.height
+      <= Math.min(680, boundedPanelLayout.viewportHeight * 0.72) + 1,
+      JSON.stringify(boundedPanelLayout),
+    )
+
     await page.keyboard.press("Tab")
     const enabledSwitch = page.getByRole("checkbox", { name: "自动恢复" })
+    const autoLoopSwitch = page.getByRole("checkbox", { name: "自动循环" })
     const qualitySelect = page.getByRole("combobox", { name: "目标画质" })
     assert.equal(await qualitySelect.inputValue(), "auto")
     assert.equal(
@@ -566,6 +630,14 @@ test("launcher remains visible and follows the active mount target", async () =>
       outlineWidth: "2px",
     })
     assert.ok(await enabledSwitch.getAttribute("aria-describedby"))
+    assert.equal(await autoLoopSwitch.isChecked(), false)
+    await host.locator('label[for="auto-loop"]').click()
+    assert.equal(await autoLoopSwitch.isChecked(), true)
+    await page.waitForFunction(() => {
+      const raw = localStorage.getItem("autoChick.ytAutoResume.settings")
+      const settings = raw ? JSON.parse(raw) as Record<string, unknown> : {}
+      return settings.autoLoop === true && !("avoidEnded" in settings)
+    })
     await page.getByRole("status").waitFor({ state: "attached" })
 
     await page.mouse.move(0, 0)
@@ -859,9 +931,7 @@ test("stopped app remains terminal after pending and stale callbacks", async () 
     const resumeButton = await page.getByRole("button", {
       name: "立即恢复",
     }).elementHandle()
-    const skipButton = await page.getByRole("button", {
-      name: "点击跳过按钮",
-    }).elementHandle()
+    const skipButton = await host.locator(".native-skip-button").elementHandle()
     const enabledSwitch = await page.getByRole("checkbox", {
       name: "自动恢复",
     }).elementHandle()

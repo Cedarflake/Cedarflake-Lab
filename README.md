@@ -19,7 +19,7 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 | `apps/maimai-transition`             | Vite/React transition experience.                                              | [7gkp.test.i0c.cc](https://7gkp.test.i0c.cc/) |
 | `apps/personal-email`                | React Email templates and mail scripts.                                        | —                                             |
 | `apps/shika`                         | Single-owner personal status app with explicit private and public projections. | —                                             |
-| `apps/youtube-auto-resume-extension` | Cross-browser Manifest V3 YouTube playback assistant.                          | —                                             |
+| `apps/youtube-auto-resume-extension` | Chromium Manifest V3 YouTube playback assistant.                               | —                                             |
 | `packages/*`                         | Reusable frontend packages.                                                    | —                                             |
 | `workbench/*`                        | Local Python utilities and small projects.                                     | —                                             |
 | `others/*`                           | Others.                                                                        | —                                             |

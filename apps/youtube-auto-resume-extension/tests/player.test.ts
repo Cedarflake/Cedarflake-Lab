@@ -4,10 +4,12 @@ import test from "node:test"
 import {
   getMoviePlayer,
   getPlayerAvailableQualityLevels,
+  getPlayerLoopVideo,
   getPlayerPlaybackQuality,
   getVideo,
   isPlayerShowingAd,
   resolveActivePlayerContext,
+  setPlayerLoopVideo,
   setPlayerPlaybackQuality,
   type YouTubePlayerElement,
 } from "../src/youtube/player.ts"
@@ -248,6 +250,37 @@ test("quality helpers validate player API responses and apply both controls", ()
   assert.equal(setPlayerPlaybackQuality(player, "hd1080"), true)
   assert.deepEqual(rangeCalls, [["hd1080", "hd1080"]])
   assert.deepEqual(qualityCalls, ["hd1080"])
+})
+
+test("loop helpers use YouTube's player-owned loop state", () => {
+  const documentRef = new FakeDocument()
+  const player = new FakeElement(documentRef) as unknown as YouTubePlayerElement
+  let isLoopEnabled = false
+
+  player.getLoopVideo = () => isLoopEnabled
+  player.setLoopVideo = (enabled) => {
+    isLoopEnabled = enabled
+  }
+
+  assert.equal(getPlayerLoopVideo(player), false)
+  assert.equal(setPlayerLoopVideo(player, true), true)
+  assert.equal(getPlayerLoopVideo(player), true)
+})
+
+test("loop helpers tolerate unavailable or changing player APIs", () => {
+  const documentRef = new FakeDocument()
+  const player = new FakeElement(documentRef) as unknown as YouTubePlayerElement
+
+  assert.equal(getPlayerLoopVideo(player), null)
+  assert.equal(setPlayerLoopVideo(player, true), false)
+
+  player.getLoopVideo = () => "enabled"
+  player.setLoopVideo = () => {
+    throw new Error("player replacement")
+  }
+
+  assert.equal(getPlayerLoopVideo(player), null)
+  assert.equal(setPlayerLoopVideo(player, true), false)
 })
 
 test("quality helpers tolerate unavailable or changing player APIs", () => {

@@ -1,35 +1,34 @@
 export interface ContentScriptDefinition {
-  all_frames: false;
-  js: ["runtime.js"];
-  matches: ["https://www.youtube.com/*"];
-  run_at: "document_idle";
-  world: "MAIN";
+  all_frames: false
+  js: [string]
+  matches: ["https://www.youtube.com/*"]
+  run_at: "document_idle"
+  world: "ISOLATED" | "MAIN"
 }
 
 export interface ExtensionManifest {
-  manifest_version: 3;
-  name: string;
-  version: string;
-  description: string;
-  content_scripts: [ContentScriptDefinition];
-  browser_specific_settings?: {
-    gecko: {
-      id: string;
-      strict_min_version: string;
-      data_collection_permissions: {
-        required: ["none"];
-      };
-    };
-  };
+  manifest_version: 3
+  name: string
+  version: string
+  description: string
+  permissions: ["debugger"]
+  background: {
+    service_worker: "background.js"
+  }
+  content_scripts: [ContentScriptDefinition, ContentScriptDefinition]
 }
 
-function createBaseManifest(version: string): ExtensionManifest {
+export function createExtensionManifest(version: string): ExtensionManifest {
   return {
     manifest_version: 3,
     name: "YouTube Auto Resume",
     version,
     description:
-      "Recover paused YouTube playback, select a target quality, and click visible YouTube skip controls.",
+      "Recover paused playback, select a target quality, and activate visible YouTube skip controls.",
+    permissions: ["debugger"],
+    background: {
+      service_worker: "background.js",
+    },
     content_scripts: [
       {
         all_frames: false,
@@ -38,27 +37,13 @@ function createBaseManifest(version: string): ExtensionManifest {
         run_at: "document_idle",
         world: "MAIN",
       },
-    ],
-  };
-}
-
-export function createExtensionManifests(version: string): {
-  chromium: ExtensionManifest;
-  firefox: ExtensionManifest;
-} {
-  return {
-    chromium: createBaseManifest(version),
-    firefox: {
-      ...createBaseManifest(version),
-      browser_specific_settings: {
-        gecko: {
-          id: "youtube-auto-resume@cedarflake-lab",
-          strict_min_version: "128.0",
-          data_collection_permissions: {
-            required: ["none"],
-          },
-        },
+      {
+        all_frames: false,
+        js: ["auto-skip-bridge.js"],
+        matches: ["https://www.youtube.com/*"],
+        run_at: "document_idle",
+        world: "ISOLATED",
       },
-    },
-  };
+    ],
+  }
 }

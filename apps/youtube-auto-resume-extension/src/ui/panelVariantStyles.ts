@@ -29,6 +29,7 @@ export const PANEL_VARIANT_STYLES = `
     .fab:focus-visible,
     .icon-button:focus-visible,
     .button:focus-visible,
+    ::slotted(.native-skip-button:focus-visible),
     .number-input:focus-visible,
     .select-input:focus-visible,
     .switch input:focus-visible + .track {
@@ -44,6 +45,10 @@ export const PANEL_VARIANT_STYLES = `
 
     .header {
       border-bottom-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .footer {
+      border-top-color: rgba(0, 0, 0, 0.1);
     }
 
     .icon-button:hover {
@@ -92,13 +97,20 @@ export const PANEL_VARIANT_STYLES = `
       color: #606060;
     }
 
-    .button {
+    .button,
+    ::slotted(.native-skip-button) {
       background: rgba(0, 0, 0, 0.05);
       color: #0f0f0f;
     }
 
-    .button:hover {
+    .button:hover,
+    ::slotted(.native-skip-button:hover) {
       background: rgba(0, 0, 0, 0.1);
+    }
+
+    ::slotted(.native-skip-button[aria-disabled="true"]) {
+      background: rgba(0, 0, 0, 0.03);
+      color: #909090;
     }
 
     .button-primary {
@@ -125,7 +137,8 @@ export const PANEL_VARIANT_STYLES = `
     .select-input,
     .track,
     .thumb,
-    .button {
+    .button,
+    ::slotted(.native-skip-button) {
       transition: none;
     }
 

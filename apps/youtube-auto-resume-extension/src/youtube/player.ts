@@ -1,6 +1,8 @@
 export interface YouTubePlayerElement extends HTMLElement {
   getAvailableQualityLevels?: () => unknown
+  getLoopVideo?: () => unknown
   getPlaybackQuality?: () => unknown
+  setLoopVideo?: (enabled: boolean) => void
   setPlaybackQuality?: (quality: string) => void
   setPlaybackQualityRange?: (minimum: string, maximum: string) => void
 }
@@ -225,6 +227,37 @@ export function getPlayerAvailableQualityLevels(
     return levels.filter((level): level is string => typeof level === "string")
   } catch {
     return null
+  }
+}
+
+export function getPlayerLoopVideo(
+  player: YouTubePlayerElement,
+): boolean | null {
+  if (!player.getLoopVideo) {
+    return null
+  }
+
+  try {
+    const isEnabled = player.getLoopVideo()
+    return typeof isEnabled === "boolean" ? isEnabled : null
+  } catch {
+    return null
+  }
+}
+
+export function setPlayerLoopVideo(
+  player: YouTubePlayerElement,
+  enabled: boolean,
+): boolean {
+  if (!player.setLoopVideo) {
+    return false
+  }
+
+  try {
+    player.setLoopVideo(enabled)
+    return true
+  } catch {
+    return false
   }
 }
 

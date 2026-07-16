@@ -11,6 +11,7 @@ const userscriptPath = resolve(
 )
 
 interface VideoFixtureState {
+  ended: boolean
   paused: boolean
   playCalls: number
   resolvePlay: (() => void) | null
@@ -23,6 +24,7 @@ async function installVideoFixture(
   await video.evaluate((element, holdPlay) => {
     const videoElement = element as HTMLVideoElement
     const state: VideoFixtureState = {
+      ended: false,
       paused: true,
       playCalls: 0,
       resolvePlay: null,
@@ -35,7 +37,7 @@ async function installVideoFixture(
       },
       ended: {
         configurable: true,
-        get: () => false,
+        get: () => state.ended,
       },
       paused: {
         configurable: true,
@@ -51,6 +53,7 @@ async function installVideoFixture(
 
       return new Promise<void>((resolvePlay) => {
         const finish = (): void => {
+          state.ended = false
           state.paused = false
           state.resolvePlay = null
           videoElement.dispatchEvent(new Event("play"))
@@ -75,6 +78,22 @@ async function getPlayCalls(video: Locator): Promise<number> {
       | undefined
 
     return state?.playCalls ?? 0
+  })
+}
+
+async function dispatchVideoEnded(video: Locator): Promise<void> {
+  await video.evaluate((element) => {
+    const state = Reflect.get(element, "runtimeFixtureState") as
+      | VideoFixtureState
+      | undefined
+
+    if (!state) {
+      throw new Error("runtime video state is missing")
+    }
+
+    state.ended = true
+    state.paused = true
+    element.dispatchEvent(new Event("ended"))
   })
 }
 
@@ -118,8 +137,8 @@ async function openFixture(page: Page, pathname: string): Promise<void> {
     localStorage.setItem(
       "autoChick.ytAutoResume.settings",
       JSON.stringify({
+        autoLoop: false,
         autoSkipAds: false,
-        avoidEnded: true,
         avoidTyping: true,
         collapsed: true,
         enabled: true,
@@ -185,6 +204,108 @@ test("scheduled loop resolves the active player once", async () => {
   }
 })
 
+test("automatic loop uses YouTube player state without reacting to ads", async () => {
+  const browser = await chromium.launch({ headless: true })
+
+  try {
+    const page = await browser.newPage()
+    await openFixture(page, "/watch?v=automatic-loop")
+    await page.evaluate(() => {
+      const key = "autoChick.ytAutoResume.settings"
+      const settings = JSON.parse(localStorage.getItem(key) ?? "{}") as
+        Record<string, unknown>
+      localStorage.setItem(key, JSON.stringify({
+        ...settings,
+        autoLoop: true,
+        enabled: false,
+        intervalMs: 200,
+      }))
+    })
+    const video = page.locator("#primary-video")
+    await installVideoFixture(video, false)
+    await page.evaluate(() => {
+      const player = document.querySelector("#movie_player")
+      const videoElement = document.querySelector("#primary-video")
+
+      if (!(player instanceof HTMLElement)
+        || !(videoElement instanceof HTMLVideoElement)) {
+        throw new TypeError("loop fixture player is incomplete")
+      }
+
+      const state = {
+        calls: [] as boolean[],
+        isEnabled: false,
+      }
+
+      Reflect.set(player, "getLoopVideo", () => state.isEnabled)
+      Reflect.set(player, "setLoopVideo", (enabled: boolean) => {
+        state.calls.push(enabled)
+        state.isEnabled = enabled
+        videoElement.loop = enabled
+      })
+      videoElement.addEventListener("ended", () => {
+        if (!state.isEnabled) {
+          history.pushState({}, "", "/watch?v=next-video")
+        }
+      })
+      Reflect.set(window, "loopFixtureState", state)
+    })
+    await page.addScriptTag({ path: userscriptPath })
+    await page.waitForFunction(() => {
+      const state = Reflect.get(window, "loopFixtureState") as
+        | { calls: boolean[]; isEnabled: boolean }
+        | undefined
+
+      return state?.isEnabled === true && state.calls.length === 1
+    })
+
+    await page.locator("#movie_player").evaluate((element) => {
+      element.classList.add("ad-showing")
+    })
+    await page.waitForTimeout(700)
+    await page.locator("#movie_player").evaluate((element) => {
+      element.classList.remove("ad-showing")
+    })
+    await page.waitForTimeout(700)
+
+    await dispatchVideoEnded(video)
+    await page.waitForTimeout(300)
+
+    assert.deepEqual(
+      await page.evaluate(() => Reflect.get(window, "loopFixtureState")),
+      { calls: [true], isEnabled: true },
+    )
+    assert.equal(await getPlayCalls(video), 0)
+    assert.equal(new URL(page.url()).searchParams.get("v"), "automatic-loop")
+
+    await page.evaluate(() => {
+      const key = "autoChick.ytAutoResume.settings"
+      const settings = JSON.parse(localStorage.getItem(key) ?? "{}") as
+        Record<string, unknown>
+      const nextValue = JSON.stringify({ ...settings, autoLoop: false })
+
+      localStorage.setItem(key, nextValue)
+      window.dispatchEvent(new StorageEvent("storage", {
+        key,
+        newValue: nextValue,
+      }))
+    })
+    await page.waitForFunction(() => {
+      const state = Reflect.get(window, "loopFixtureState") as
+        | { calls: boolean[]; isEnabled: boolean }
+        | undefined
+
+      return state?.isEnabled === false && state.calls.length === 2
+    })
+    assert.deepEqual(
+      await page.evaluate(() => Reflect.get(window, "loopFixtureState")),
+      { calls: [true, false], isEnabled: false },
+    )
+  } finally {
+    await browser.close()
+  }
+})
+
 test("selected target quality is applied to the active player", async () => {
   const browser = await chromium.launch({ headless: true })
 
@@ -241,32 +362,23 @@ test("selected target quality is applied to the active player", async () => {
   }
 })
 
-test("official ad button is retried when its first click is ignored", async () => {
+test("native skip bridge preserves trusted pointer and keyboard activation", async () => {
   const browser = await chromium.launch({ headless: true })
 
   try {
     const page = await browser.newPage()
-    await openFixture(page, "/watch?v=ad-recheck")
+    await openFixture(page, "/watch?v=native-skip-bridge")
     const video = page.locator("#primary-video")
     await installVideoFixture(video, false)
     await page.evaluate(() => {
-      const key = "autoChick.ytAutoResume.settings"
-      const settings = JSON.parse(localStorage.getItem(key) ?? "{}") as
-        Record<string, unknown>
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          ...settings,
-          autoSkipAds: true,
-          intervalMs: 250,
-        }),
-      )
-
       const player = document.querySelector("#movie_player")
       const video = document.querySelector("#primary-video")
 
-      if (!(player instanceof HTMLElement) || !(video instanceof HTMLVideoElement)) {
-        throw new TypeError("ad recheck fixture is incomplete")
+      if (
+        !(player instanceof HTMLElement) ||
+        !(video instanceof HTMLVideoElement)
+      ) {
+        throw new TypeError("native skip fixture is incomplete")
       }
 
       const skipContainer = document.createElement("div")
@@ -287,76 +399,60 @@ test("official ad button is retried when its first click is ignored", async () =
       player.classList.add("ad-showing")
       player.append(skipContainer)
       Reflect.set(window, "adSkipClickCount", 0)
-      Reflect.set(window, "adSkipAcceptedCount", 0)
-      Reflect.set(window, "isAdSkipReady", false)
-      Reflect.set(window, "adSeekTime", 0)
-      skipButton.addEventListener("click", () => {
+      Reflect.set(window, "adSkipTrustedValues", [])
+      skipButton.addEventListener("click", (event) => {
         const count = Number(Reflect.get(window, "adSkipClickCount") ?? 0)
         Reflect.set(window, "adSkipClickCount", count + 1)
-
-        if (!Reflect.get(window, "isAdSkipReady")) {
-          return
-        }
-
-        const acceptedCount = Number(
-          Reflect.get(window, "adSkipAcceptedCount") ?? 0,
-        )
-        Reflect.set(window, "adSkipAcceptedCount", acceptedCount + 1)
-        skipButton.remove()
-      })
-      Object.defineProperties(video, {
-        currentTime: {
-          configurable: true,
-          get: () => Number(Reflect.get(window, "adSeekTime") ?? 0),
-          set: (value: number) => Reflect.set(window, "adSeekTime", value),
-        },
-        duration: {
-          configurable: true,
-          get: () => 15,
-        },
-        seekable: {
-          configurable: true,
-          get: () => ({
-            end: () => 15,
-            length: 1,
-            start: () => 0,
-          }),
-        },
+        const trustedValues = Reflect.get(
+          window,
+          "adSkipTrustedValues",
+        ) as boolean[]
+        trustedValues.push(event.isTrusted)
       })
     })
     await page.addScriptTag({ path: userscriptPath })
-    await page.waitForFunction(() => (
-      Number(Reflect.get(window, "adSkipClickCount") ?? 0) === 1
-    ), null, { timeout: 5_000 })
-    await page.evaluate(() => {
-      Reflect.set(window, "isAdSkipReady", true)
-      const skipButton = document.querySelector(".ytp-skip-ad-button")
+    await page.waitForTimeout(700)
+    assert.equal(
+      await page.evaluate(() =>
+        Number(Reflect.get(window, "adSkipClickCount") ?? 0),
+      ),
+      0,
+    )
 
-      if (!(skipButton instanceof HTMLButtonElement)) {
-        throw new TypeError("persistent skip button is missing")
-      }
-
-      skipButton.style.opacity = "1"
-    })
-    await page.waitForFunction(() => (
-      Number(Reflect.get(window, "adSkipAcceptedCount") ?? 0) === 1
-    ), null, { timeout: 5_000 })
-    await page.waitForTimeout(500)
+    await page
+      .locator("#auto-chick-yt-auto-resume-host .native-skip-button")
+      .waitFor({
+        state: "attached",
+      })
+    await page
+      .locator("#auto-chick-yt-auto-resume-host")
+      .locator(".fab")
+      .click()
+    const nativeSkipAction = page
+      .locator("#auto-chick-yt-auto-resume-host")
+      .locator(".native-skip-button")
+    await nativeSkipAction.waitFor({ state: "visible" })
+    assert.equal(
+      await nativeSkipAction.evaluate(
+        (element) =>
+          element instanceof HTMLLabelElement &&
+          element.control === document.querySelector(".ytp-skip-ad-button"),
+      ),
+      true,
+    )
+    await nativeSkipAction.click()
+    await nativeSkipAction.focus()
+    await nativeSkipAction.press("Enter")
 
     assert.deepEqual(
       {
         ...(await page.evaluate(() => ({
-          clickCount: Number(
-            Reflect.get(window, "adSkipClickCount") ?? 0,
-          ),
-          acceptedCount: Number(
-            Reflect.get(window, "adSkipAcceptedCount") ?? 0,
-          ),
-          seekTime: Number(Reflect.get(window, "adSeekTime") ?? 0),
+          clickCount: Number(Reflect.get(window, "adSkipClickCount") ?? 0),
+          trustedValues: Reflect.get(window, "adSkipTrustedValues"),
         }))),
         playCalls: await getPlayCalls(video),
       },
-      { acceptedCount: 1, clickCount: 2, playCalls: 0, seekTime: 0 },
+      { clickCount: 2, playCalls: 0, trustedValues: [true, true] },
     )
   } finally {
     await browser.close()
@@ -372,14 +468,6 @@ test("in-player enforcement suspends playback and ad interactions", async () => 
     const video = page.locator("#primary-video")
     await installVideoFixture(video, false)
     await page.evaluate(() => {
-      const key = "autoChick.ytAutoResume.settings"
-      const settings = JSON.parse(localStorage.getItem(key) ?? "{}") as
-        Record<string, unknown>
-      localStorage.setItem(
-        key,
-        JSON.stringify({ ...settings, autoSkipAds: true }),
-      )
-
       const player = document.querySelector("#movie_player")
 
       if (!(player instanceof HTMLElement)) {

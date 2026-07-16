@@ -21,9 +21,9 @@ export interface YouTubeAutoResumeSettings {
   intervalMs: number
   minPausedSeconds: number
   autoSkipAds: boolean
+  autoLoop: boolean
   preferredQuality: QualityPreference
   avoidTyping: boolean
-  avoidEnded: boolean
   collapsed: boolean
 }
 
@@ -56,9 +56,9 @@ export const DEFAULT_SETTINGS: Readonly<YouTubeAutoResumeSettings> = {
   intervalMs: 1000,
   minPausedSeconds: 2,
   autoSkipAds: false,
+  autoLoop: false,
   preferredQuality: "auto",
   avoidTyping: true,
-  avoidEnded: true,
   collapsed: true,
 }
 
@@ -76,6 +76,18 @@ function readBoolean(
   fallback: boolean,
 ): boolean {
   return key in source ? Boolean(source[key]) : fallback
+}
+
+function readAutoLoop(source: UnknownRecord): boolean {
+  if ("autoLoop" in source) {
+    return Boolean(source.autoLoop)
+  }
+
+  if ("avoidEnded" in source) {
+    return !Boolean(source.avoidEnded)
+  }
+
+  return DEFAULT_SETTINGS.autoLoop
 }
 
 export function isQualityPreference(
@@ -118,6 +130,7 @@ export function normalizeSettings(input: unknown): YouTubeAutoResumeSettings {
       "autoSkipAds",
       DEFAULT_SETTINGS.autoSkipAds,
     ),
+    autoLoop: readAutoLoop(source),
     preferredQuality: isQualityPreference(source.preferredQuality)
       ? source.preferredQuality
       : DEFAULT_SETTINGS.preferredQuality,
@@ -125,11 +138,6 @@ export function normalizeSettings(input: unknown): YouTubeAutoResumeSettings {
       source,
       "avoidTyping",
       DEFAULT_SETTINGS.avoidTyping,
-    ),
-    avoidEnded: readBoolean(
-      source,
-      "avoidEnded",
-      DEFAULT_SETTINGS.avoidEnded,
     ),
     collapsed: readBoolean(source, "collapsed", DEFAULT_SETTINGS.collapsed),
   }

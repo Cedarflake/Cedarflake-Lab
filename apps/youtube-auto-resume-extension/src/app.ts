@@ -10,13 +10,16 @@ import { isTypingContext } from "./core/typing.ts"
 import { formatAppStatus } from "./appStatus.ts"
 import { createPanelView } from "./ui/panel.ts"
 import {
-  createAdSkipper,
+  findSkipAdButton,
   isPlaybackEnforcementVisible,
 } from "./youtube/ads.ts"
 import {
+  getPlayerLoopVideo,
   isPlayerShowingAd,
   resolveActivePlayerContext,
+  setPlayerLoopVideo,
   type ActiveYouTubePlayerContext,
+  type YouTubePlayerElement,
 } from "./youtube/player.ts"
 import { createQualityManager } from "./youtube/quality.ts"
 
@@ -46,6 +49,8 @@ export function startYouTubeAutoResumeApp(
   let timerId: number | null = null
   let timerDueAt = 0
   let nextResumeAllowedAt = 0
+  let managedLoopPlayer: YouTubePlayerElement | null = null
+  let managedLoopOriginalValue: boolean | null = null
   let isStopped = false
 
   const setLastAction = (text: string): void => {
@@ -67,11 +72,6 @@ export function startYouTubeAutoResumeApp(
     return result
   }
 
-  const adSkipper = createAdSkipper({
-    getSettings: () => settings,
-    getPlayerContext: () => activeContext,
-    onAction: setLastAction,
-  })
   const qualityManager = createQualityManager({
     getSettings: () => settings,
     getPlayerContext: () => activeContext,
@@ -85,6 +85,7 @@ export function startYouTubeAutoResumeApp(
       }
 
       refreshActiveContext()
+      updateNativeSkipControl()
       updatePanelStatus()
     },
     onPanelStatePersistenceFailed: () => {
@@ -108,6 +109,7 @@ export function startYouTubeAutoResumeApp(
       }
 
       settings = result.settings
+      syncAutoLoopPlayer()
       renewActivePlaybackState()
       setLastAction(
         result.persisted
@@ -117,18 +119,12 @@ export function startYouTubeAutoResumeApp(
       panel.render(settings, lastActionText)
       scheduleNextLoop(0)
     },
-    onSkipNow: () => {
+    onNativeSkipActivated: () => {
       if (isStopped) {
         return
       }
 
-      if (isPlaybackEnforcementVisible()) {
-        setLastAction("检测到 YouTube 播放限制提示，未尝试绕过")
-        return
-      }
-
-      setLastAction("手动查找 YouTube 跳过按钮")
-      adSkipper.trySkipAdsIfPossible({ force: true })
+      setLastAction("已交给 YouTube 原生按钮处理跳过")
     },
     saveSettings,
   })
@@ -149,14 +145,56 @@ export function startYouTubeAutoResumeApp(
     video.addEventListener("play", handleVideoPlay)
   }
 
+  function releaseManagedLoopPlayer(): void {
+    if (!managedLoopPlayer || managedLoopOriginalValue === null) {
+      return
+    }
+
+    setPlayerLoopVideo(managedLoopPlayer, managedLoopOriginalValue)
+    managedLoopPlayer = null
+    managedLoopOriginalValue = null
+  }
+
+  function syncAutoLoopPlayer(): void {
+    const player = activeContext?.player ?? null
+
+    if (managedLoopPlayer && managedLoopPlayer !== player) {
+      releaseManagedLoopPlayer()
+    }
+
+    if (isStopped || !settings.autoLoop || !player) {
+      releaseManagedLoopPlayer()
+      return
+    }
+
+    if (managedLoopPlayer === player) {
+      return
+    }
+
+    const originalValue = getPlayerLoopVideo(player)
+
+    if (originalValue === null || !setPlayerLoopVideo(player, true)) {
+      return
+    }
+
+    managedLoopPlayer = player
+    managedLoopOriginalValue = originalValue
+  }
+
   function setActiveContext(
     nextContext: ActiveYouTubePlayerContext | null,
   ): boolean {
     const previousVideo = activeContext?.video ?? null
     const nextVideo = nextContext?.video ?? null
+
+    if (previousVideo !== nextVideo) {
+      releaseManagedLoopPlayer()
+    }
+
     activeContext = nextContext
 
     if (previousVideo === nextVideo) {
+      syncAutoLoopPlayer()
       return false
     }
 
@@ -170,6 +208,8 @@ export function startYouTubeAutoResumeApp(
     if (nextVideo) {
       attachVideoListeners(nextVideo)
     }
+
+    syncAutoLoopPlayer()
 
     return true
   }
@@ -194,6 +234,17 @@ export function startYouTubeAutoResumeApp(
     }
 
     panel.setStatus(formatAppStatus(activeContext, settings))
+  }
+
+  function updateNativeSkipControl(): void {
+    if (isStopped || isPlaybackEnforcementVisible()) {
+      panel.setNativeSkipControl(null)
+      return
+    }
+
+    panel.setNativeSkipControl(
+      activeContext ? findSkipAdButton(activeContext.player) : null,
+    )
   }
 
   function scheduleNextLoop(delay = settings.intervalMs): void {
@@ -242,7 +293,9 @@ export function startYouTubeAutoResumeApp(
   }
 
   function handleVideoEnded(event: Event): void {
-    playbackState.markPlaying(event.currentTarget as HTMLVideoElement)
+    const video = event.currentTarget as HTMLVideoElement
+
+    playbackState.markPlaying(video)
     updatePanelStatus()
   }
 
@@ -256,6 +309,7 @@ export function startYouTubeAutoResumeApp(
 
   function handleNavigationStart(): void {
     setActiveContext(null)
+    updateNativeSkipControl()
     updatePanelStatus()
   }
 
@@ -269,6 +323,7 @@ export function startYouTubeAutoResumeApp(
     }
 
     settings = store.reload()
+    syncAutoLoopPlayer()
     renewActivePlaybackState()
     panel.render(settings, lastActionText)
     scheduleNextLoop(0)
@@ -323,7 +378,7 @@ export function startYouTubeAutoResumeApp(
 
     if ((!settings.enabled && !isForced)
       || (settings.avoidTyping && isTypingContext() && !isForced)
-      || (settings.avoidEnded && video.ended && !isForced)
+      || (video.ended && !isForced)
       || (!isForced && video.readyState < 2)
       || (!isForced && now < nextResumeAllowedAt)) {
       return
@@ -379,9 +434,10 @@ export function startYouTubeAutoResumeApp(
     }
 
     refreshActiveContext()
+    syncAutoLoopPlayer()
+    updateNativeSkipControl()
 
     if (!isPlaybackEnforcementVisible()) {
-      adSkipper.trySkipAdsIfPossible()
       qualityManager.trySetPreferredQualityIfPossible()
     }
 
@@ -395,6 +451,7 @@ export function startYouTubeAutoResumeApp(
     }
 
     isStopped = true
+    releaseManagedLoopPlayer()
 
     if (timerId !== null) {
       window.clearTimeout(timerId)
@@ -440,6 +497,7 @@ export function startYouTubeAutoResumeApp(
       }
 
       const result = saveSettings({ ...DEFAULT_SETTINGS })
+      syncAutoLoopPlayer()
       renewActivePlaybackState()
       setLastAction(
         result.persisted

@@ -6,6 +6,10 @@ import {
   type SettingsSaveResult,
 } from "../core/settings.ts"
 import type { FabAuroraController } from "./fabAurora.ts"
+import {
+  createNativeButtonBridge,
+  type NativeButtonBridge,
+} from "./nativeButtonBridge.ts"
 import { applyHostStyles, resolvePanelMountTarget } from "./panelMount.ts"
 import { createPanelShell, type PanelElements } from "./panelShell.ts"
 
@@ -22,8 +26,8 @@ export interface PanelViewOptions {
   onExpanded?: () => void
   onPanelStatePersistenceFailed?: () => void
   onSettingsApplied?: (result: SettingsSaveResult) => void
+  onNativeSkipActivated?: () => void
   onResumeNow?: () => void
-  onSkipNow?: () => void
 }
 
 export interface PanelView {
@@ -34,15 +38,19 @@ export interface PanelView {
   render: (settings: Settings, lastActionText?: string) => void
   isExpanded: () => boolean
   open: () => void
+  setNativeSkipControl: (control: HTMLButtonElement | null) => void
 }
 
 export function createPanelView(options: PanelViewOptions): PanelView {
   const onResumeNow = options.onResumeNow ?? (() => undefined)
-  const onSkipNow = options.onSkipNow ?? (() => undefined)
+  const onNativeSkipActivated =
+    options.onNativeSkipActivated ?? (() => undefined)
   let host: HTMLDivElement | null = null
   let shadow: ShadowRoot | null = null
   let elements: PanelElements | null = null
   let fabAuroraController: FabAuroraController | null = null
+  let nativeSkipBridge: NativeButtonBridge | null = null
+  let nativeSkipControl: HTMLButtonElement | null = null
   let mountObserver: MutationObserver | null = null
   let observedMountTarget: Element | null = null
   let statusText = ""
@@ -230,11 +238,11 @@ export function createPanelView(options: PanelViewOptions): PanelView {
         DEFAULT_SETTINGS.minPausedSeconds,
       ),
       autoSkipAds: elements.autoSkipAds.checked,
+      autoLoop: elements.autoLoop.checked,
       preferredQuality: isQualityPreference(elements.preferredQuality.value)
         ? elements.preferredQuality.value
         : DEFAULT_SETTINGS.preferredQuality,
       avoidTyping: elements.avoidTyping.checked,
-      avoidEnded: elements.avoidEnded.checked,
     }
     const result = options.saveSettings(nextSettings)
     setValueIfChanged(elements.interval, String(result.settings.intervalMs))
@@ -271,15 +279,27 @@ export function createPanelView(options: PanelViewOptions): PanelView {
 
     elements.fab.addEventListener("click", () => setOpen(true))
     elements.close.addEventListener("click", () => setOpen(false))
-    elements.enabled.addEventListener("change", applySettingsFromUi)
-    elements.interval.addEventListener("change", applySettingsFromUi)
-    elements.minPaused.addEventListener("change", applySettingsFromUi)
-    elements.autoSkipAds.addEventListener("change", applySettingsFromUi)
-    elements.preferredQuality.addEventListener("change", applySettingsFromUi)
-    elements.avoidTyping.addEventListener("change", applySettingsFromUi)
-    elements.avoidEnded.addEventListener("change", applySettingsFromUi)
+    elements.enabled.addEventListener("change", () => applySettingsFromUi())
+    elements.interval.addEventListener("change", () => applySettingsFromUi())
+    elements.minPaused.addEventListener("change", () => applySettingsFromUi())
+    elements.autoSkipAds.addEventListener("change", () => {
+      applySettingsFromUi()
+    })
+    elements.autoLoop.addEventListener("change", () => applySettingsFromUi())
+    elements.preferredQuality.addEventListener("change", () => {
+      applySettingsFromUi()
+    })
+    elements.avoidTyping.addEventListener("change", () => {
+      applySettingsFromUi()
+    })
     elements.resumeNow.addEventListener("click", onResumeNow)
-    elements.skipNow.addEventListener("click", onSkipNow)
+    elements.skipNow.addEventListener("click", (event) => {
+      if (!event.isTrusted || !nativeSkipBridge?.getControl()) {
+        return
+      }
+
+      onNativeSkipActivated()
+    })
     elements.panel.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || !isExpanded()) {
         return
@@ -290,6 +310,8 @@ export function createPanelView(options: PanelViewOptions): PanelView {
       setOpen(false)
     })
 
+    nativeSkipBridge = createNativeButtonBridge(elements.skipNow)
+    setNativeSkipControl(nativeSkipControl)
     render(options.getSettings(), currentLastActionText)
   }
 
@@ -332,6 +354,29 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     }
   }
 
+  function setNativeSkipControl(control: HTMLButtonElement | null): void {
+    if (isDestroyed) {
+      return
+    }
+
+    nativeSkipControl = control
+
+    if (!elements || !nativeSkipBridge) {
+      return
+    }
+
+    const isAvailable = nativeSkipBridge.bind(control)
+    elements.skipNowText.textContent = isAvailable
+      ? "跳过当前广告"
+      : "等待跳过按钮"
+    elements.skipNow.setAttribute(
+      "aria-label",
+      isAvailable
+        ? "通过 YouTube 原生按钮跳过当前广告"
+        : "当前没有可用的 YouTube 跳过按钮",
+    )
+  }
+
   function render(
     settings: Settings,
     nextLastActionText?: string,
@@ -366,9 +411,9 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     }
 
     setCheckedIfChanged(elements.autoSkipAds, settings.autoSkipAds)
+    setCheckedIfChanged(elements.autoLoop, settings.autoLoop)
     setValueIfChanged(elements.preferredQuality, settings.preferredQuality)
     setCheckedIfChanged(elements.avoidTyping, settings.avoidTyping)
-    setCheckedIfChanged(elements.avoidEnded, settings.avoidEnded)
     setTextIfChanged(elements.status, statusText)
     setTextIfChanged(elements.lastAction, currentLastActionText)
 
@@ -395,6 +440,8 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     isDestroyed = true
     fabAuroraController?.destroy()
     fabAuroraController = null
+    nativeSkipBridge?.destroy()
+    nativeSkipBridge = null
     mountObserver?.disconnect()
     mountObserver = null
     observedMountTarget = null
@@ -403,6 +450,7 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     host = null
     shadow = null
     elements = null
+    nativeSkipControl = null
     focusReturnTarget = null
     hasRendered = false
   }
@@ -415,5 +463,6 @@ export function createPanelView(options: PanelViewOptions): PanelView {
     render,
     isExpanded,
     open,
+    setNativeSkipControl,
   }
 }

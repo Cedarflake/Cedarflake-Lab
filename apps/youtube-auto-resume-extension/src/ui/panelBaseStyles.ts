@@ -242,6 +242,7 @@ export const PANEL_BASE_STYLES = `
   .fab:focus-visible,
   .icon-button:focus-visible,
   .button:focus-visible,
+  ::slotted(.native-skip-button:focus-visible),
   .number-input:focus-visible,
   .select-input:focus-visible {
     outline: 2px solid #3ea6ff;
@@ -259,15 +260,25 @@ export const PANEL_BASE_STYLES = `
   }
 
   .panel {
+    display: grid;
     width: 340px;
     max-width: calc(
       100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)
     );
-    max-height: calc(100vh - 32px);
-    max-height: calc(
-      100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    max-height: min(
+      680px,
+      calc(
+        72vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+      )
     );
-    overflow: hidden auto;
+    max-height: min(
+      680px,
+      calc(
+        72dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+      )
+    );
+    overflow: hidden;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     background: #212121;
@@ -336,6 +347,8 @@ export const PANEL_BASE_STYLES = `
   }
 
   .content {
+    min-height: 0;
+    overflow: hidden auto;
     padding: 12px 16px 16px;
   }
 
@@ -473,10 +486,17 @@ export const PANEL_BASE_STYLES = `
   .footer {
     display: flex;
     gap: 8px;
-    margin-top: 16px;
+    padding: 12px 16px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: inherit;
   }
 
-  .button {
+  slot[name="native-skip-action"] {
+    display: contents;
+  }
+
+  .button,
+  ::slotted(.native-skip-button) {
     display: inline-flex;
     min-width: 0;
     flex: 1;
@@ -489,19 +509,30 @@ export const PANEL_BASE_STYLES = `
     outline: none;
     background: rgba(255, 255, 255, 0.1);
     color: #f1f1f1;
+    font: inherit;
     font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
+    user-select: none;
     transition: background-color 0.2s;
   }
 
-  .button:hover {
+  .button:hover,
+  ::slotted(.native-skip-button:hover) {
     background: rgba(255, 255, 255, 0.2);
   }
 
-  .button:active {
+  .button:active,
+  ::slotted(.native-skip-button:active) {
     background: rgba(255, 255, 255, 0.3);
+  }
+
+  ::slotted(.native-skip-button[aria-disabled="true"]) {
+    background: rgba(255, 255, 255, 0.06);
+    color: #717171;
+    cursor: not-allowed;
+    pointer-events: none;
   }
 
   .button-primary {

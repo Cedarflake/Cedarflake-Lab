@@ -15,13 +15,14 @@ export interface PanelElements {
   interval: HTMLInputElement
   minPaused: HTMLInputElement
   autoSkipAds: HTMLInputElement
+  autoLoop: HTMLInputElement
   preferredQuality: HTMLSelectElement
   avoidTyping: HTMLInputElement
-  avoidEnded: HTMLInputElement
   status: HTMLDivElement
   lastAction: HTMLDivElement
   resumeNow: HTMLButtonElement
-  skipNow: HTMLButtonElement
+  skipNow: HTMLLabelElement
+  skipNowText: HTMLSpanElement
 }
 
 export interface PanelShell {
@@ -74,8 +75,13 @@ export function createPanelShell(
   )
   const autoSkipAds = createSwitchRow(
     "auto-skip-ads",
-    "自动点击跳过按钮",
-    "仅点击 YouTube 明确显示的跳过按钮",
+    "自动跳过广告",
+    "仅操作可见的 YouTube 原生跳过按钮",
+  )
+  const autoLoop = createSwitchRow(
+    "auto-loop",
+    "自动循环",
+    "视频结束后立即从头继续播放",
   )
   const preferredQuality = createSelectRow(
     "preferred-quality",
@@ -87,16 +93,14 @@ export function createPanelShell(
     "打字时不干预",
     "避免影响搜索或评论输入",
   )
-  const avoidEnded = createSwitchRow(
-    "avoid-ended",
-    "结束后不重播",
-    "视频结束后不自动播放",
-  )
   const status = document.createElement("div")
   const lastAction = document.createElement("div")
   const footer = document.createElement("div")
   const resumeNow = document.createElement("button")
-  const skipNow = document.createElement("button")
+  const skipSlot = document.createElement("slot")
+  const skipNow = document.createElement("label")
+  const skipNowIcon = createIcon("forward")
+  const skipNowText = document.createElement("span")
 
   style.textContent = PANEL_CSS
   wrap.className = "wrap"
@@ -134,7 +138,7 @@ export function createPanelShell(
     autoSkipAds.row,
     preferredQuality.row,
     avoidTyping.row,
-    avoidEnded.row,
+    autoLoop.row,
   )
 
   status.className = "status"
@@ -149,13 +153,24 @@ export function createPanelShell(
   resumeNow.className = "button button-primary"
   resumeNow.type = "button"
   resumeNow.append(createIcon("play"), "立即恢复")
-  skipNow.className = "button"
-  skipNow.type = "button"
-  skipNow.append(createIcon("forward"), "点击跳过按钮")
-  footer.append(resumeNow, skipNow)
+  skipSlot.name = "native-skip-action"
+  skipNow.slot = skipSlot.name
+  skipNow.className = "native-skip-button"
+  skipNow.setAttribute("aria-disabled", "true")
+  skipNow.setAttribute("aria-label", "当前没有可用的 YouTube 跳过按钮")
+  skipNow.setAttribute("role", "button")
+  skipNow.dataset.available = "false"
+  skipNow.tabIndex = -1
+  skipNowIcon.style.width = "18px"
+  skipNowIcon.style.height = "18px"
+  skipNowIcon.style.flex = "0 0 auto"
+  skipNowText.textContent = "等待跳过按钮"
+  skipNow.append(skipNowIcon, skipNowText)
+  host.appendChild(skipNow)
+  footer.append(resumeNow, skipSlot)
 
-  content.append(grid, status, lastAction, footer)
-  panel.append(header, content)
+  content.append(grid, status, lastAction)
+  panel.append(header, content, footer)
   wrap.append(fab, panel)
   shadow.append(style, wrap)
 
@@ -170,13 +185,14 @@ export function createPanelShell(
       interval: interval.input,
       minPaused: minPaused.input,
       autoSkipAds: autoSkipAds.input,
+      autoLoop: autoLoop.input,
       preferredQuality: preferredQuality.select,
       avoidTyping: avoidTyping.input,
-      avoidEnded: avoidEnded.input,
       status,
       lastAction,
       resumeNow,
       skipNow,
+      skipNowText,
     },
   }
 }

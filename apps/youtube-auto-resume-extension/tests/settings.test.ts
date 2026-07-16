@@ -40,16 +40,28 @@ test("normalizeSettings applies defaults and clamps numeric input", () => {
   assert.deepEqual(normalizeSettings(null), DEFAULT_SETTINGS)
 
   const settings = normalizeSettings({
+    autoLoop: 1,
     autoSkipAds: 1,
     intervalMs: 1,
     minPausedSeconds: 100,
     preferredQuality: "hd1080",
   })
 
+  assert.equal(settings.autoLoop, true)
   assert.equal(settings.autoSkipAds, true)
   assert.equal(settings.preferredQuality, "hd1080")
   assert.equal(settings.intervalMs, 200)
   assert.equal(settings.minPausedSeconds, 30)
+})
+
+test("auto loop migrates the inverse legacy ended setting", () => {
+  assert.equal(normalizeSettings({ avoidEnded: false }).autoLoop, true)
+  assert.equal(normalizeSettings({ avoidEnded: true }).autoLoop, false)
+  assert.equal(
+    normalizeSettings({ autoLoop: false, avoidEnded: false }).autoLoop,
+    false,
+  )
+  assert.equal("avoidEnded" in normalizeSettings({ avoidEnded: false }), false)
 })
 
 test("invalid and legacy quality settings fall back to YouTube automatic", () => {
