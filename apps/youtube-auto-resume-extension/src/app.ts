@@ -14,13 +14,16 @@ import {
   isPlaybackEnforcementVisible,
 } from "./youtube/ads.ts"
 import {
-  getPlayerLoopVideo,
   isPlayerShowingAd,
   resolveActivePlayerContext,
-  setPlayerLoopVideo,
   type ActiveYouTubePlayerContext,
-  type YouTubePlayerElement,
 } from "./youtube/player.ts"
+import { createLoopNavigationTracker } from "./youtube/loopNavigation.ts"
+import { createLoopPlayerController } from "./youtube/loopPlayer.ts"
+import {
+  createLoopTargetController,
+  getWatchVideoId,
+} from "./youtube/loopTarget.ts"
 import { createQualityManager } from "./youtube/quality.ts"
 
 export interface AppEnvironment {
@@ -44,13 +47,16 @@ export function startYouTubeAutoResumeApp(
   const store = createSettingsStore({})
   const playbackState = createPlaybackState()
   let settings = store.get()
+  const loopTarget = createLoopTargetController(
+    settings.autoLoop,
+    getWatchVideoId(window.location.href),
+  )
   let activeContext: ActiveYouTubePlayerContext | null = null
   let lastActionText = "尚未执行"
   let timerId: number | null = null
   let timerDueAt = 0
   let nextResumeAllowedAt = 0
-  let managedLoopPlayer: YouTubePlayerElement | null = null
-  let managedLoopOriginalValue: boolean | null = null
+  let isLoopTargetRestorePending = false
   let isStopped = false
 
   const setLastAction = (text: string): void => {
@@ -71,6 +77,31 @@ export function startYouTubeAutoResumeApp(
     settings = result.settings
     return result
   }
+
+  const loopPlayer = createLoopPlayerController({
+    getEnabled: () => settings.autoLoop,
+    onAdStateChange: (isShowingAd) => {
+      if (settings.autoLoop && enforceLoopTarget()) {
+        return false
+      }
+
+      if (!isShowingAd) {
+        scheduleNextLoop(0)
+      }
+
+      return true
+    },
+    onLoopReasserted: () => {
+      setLastAction("广告结束，已重新确认当前视频循环")
+    },
+  })
+  const loopNavigation = createLoopNavigationTracker({
+    getEnabled: () => settings.autoLoop,
+    onNavigationCheck: () => scheduleNextLoop(0),
+    onUserNavigation: (videoId) => {
+      loopTarget.markUserNavigation(videoId, Date.now())
+    },
+  })
 
   const qualityManager = createQualityManager({
     getSettings: () => settings,
@@ -109,6 +140,7 @@ export function startYouTubeAutoResumeApp(
       }
 
       settings = result.settings
+      configureLoopTarget()
       syncAutoLoopPlayer()
       renewActivePlaybackState()
       setLastAction(
@@ -135,6 +167,7 @@ export function startYouTubeAutoResumeApp(
     video.removeEventListener("loadedmetadata", handleVideoSourceChange)
     video.removeEventListener("pause", handleVideoPause)
     video.removeEventListener("play", handleVideoPlay)
+    video.removeEventListener("playing", handleVideoPlay)
   }
 
   function attachVideoListeners(video: HTMLVideoElement): void {
@@ -143,55 +176,78 @@ export function startYouTubeAutoResumeApp(
     video.addEventListener("loadedmetadata", handleVideoSourceChange)
     video.addEventListener("pause", handleVideoPause)
     video.addEventListener("play", handleVideoPlay)
+    video.addEventListener("playing", handleVideoPlay)
   }
 
-  function releaseManagedLoopPlayer(): void {
-    if (!managedLoopPlayer || managedLoopOriginalValue === null) {
-      return
-    }
-
-    setPlayerLoopVideo(managedLoopPlayer, managedLoopOriginalValue)
-    managedLoopPlayer = null
-    managedLoopOriginalValue = null
+  function getCurrentWatchVideoId(): string | null {
+    return getWatchVideoId(window.location.href)
   }
 
-  function syncAutoLoopPlayer(): void {
-    const player = activeContext?.player ?? null
+  function configureLoopTarget(): void {
+    loopTarget.configure(settings.autoLoop, getCurrentWatchVideoId())
 
-    if (managedLoopPlayer && managedLoopPlayer !== player) {
-      releaseManagedLoopPlayer()
+    if (!settings.autoLoop) {
+      isLoopTargetRestorePending = false
+    }
+  }
+
+  function restoreLoopTarget(videoId: string): boolean {
+    if (isLoopTargetRestorePending) {
+      return true
     }
 
-    if (isStopped || !settings.autoLoop || !player) {
-      releaseManagedLoopPlayer()
-      return
+    isLoopTargetRestorePending = true
+    setLastAction("检测到 YouTube 自动换片，正在返回循环目标")
+
+    const targetUrl = new URL("/watch", window.location.origin)
+    targetUrl.searchParams.set("v", videoId)
+    window.location.replace(targetUrl.href)
+
+    return true
+  }
+
+  function enforceLoopTarget(): boolean {
+    const currentVideoId = getCurrentWatchVideoId()
+
+    loopTarget.configure(settings.autoLoop, currentVideoId)
+
+    if (!settings.autoLoop || !currentVideoId) {
+      return false
     }
 
-    if (managedLoopPlayer === player) {
-      return
+    const targetVideoId = loopTarget.resolveUnexpectedNavigation(
+      currentVideoId,
+      Date.now(),
+    )
+
+    if (targetVideoId) {
+      return restoreLoopTarget(targetVideoId)
     }
 
-    const originalValue = getPlayerLoopVideo(player)
-
-    if (originalValue === null || !setPlayerLoopVideo(player, true)) {
-      return
+    if (loopTarget.getTargetVideoId() === currentVideoId) {
+      isLoopTargetRestorePending = false
     }
 
-    managedLoopPlayer = player
-    managedLoopOriginalValue = originalValue
+    return false
+  }
+
+  function syncAutoLoopPlayer(): boolean {
+    return loopPlayer.sync()
   }
 
   function setActiveContext(
     nextContext: ActiveYouTubePlayerContext | null,
   ): boolean {
+    const previousPlayer = activeContext?.player ?? null
+    const nextPlayer = nextContext?.player ?? null
     const previousVideo = activeContext?.video ?? null
     const nextVideo = nextContext?.video ?? null
 
-    if (previousVideo !== nextVideo) {
-      releaseManagedLoopPlayer()
-    }
-
     activeContext = nextContext
+
+    if (previousPlayer !== nextPlayer) {
+      loopPlayer.setPlayer(nextPlayer)
+    }
 
     if (previousVideo === nextVideo) {
       syncAutoLoopPlayer()
@@ -274,6 +330,11 @@ export function startYouTubeAutoResumeApp(
   function handleVideoPlay(event: Event): void {
     const video = event.currentTarget as HTMLVideoElement
 
+    if (enforceLoopTarget()) {
+      return
+    }
+
+    syncAutoLoopPlayer()
     playbackState.markPlaying(video)
     nextResumeAllowedAt = 0
     updatePanelStatus()
@@ -302,6 +363,11 @@ export function startYouTubeAutoResumeApp(
   function handleVideoSourceChange(event: Event): void {
     const video = event.currentTarget as HTMLVideoElement
 
+    if (enforceLoopTarget()) {
+      return
+    }
+
+    syncAutoLoopPlayer()
     playbackState.renew(video, Date.now())
     nextResumeAllowedAt = 0
     scheduleNextLoop(0)
@@ -314,6 +380,10 @@ export function startYouTubeAutoResumeApp(
   }
 
   function handleNavigationFinish(): void {
+    if (enforceLoopTarget()) {
+      return
+    }
+
     scheduleNextLoop(0)
   }
 
@@ -323,6 +393,7 @@ export function startYouTubeAutoResumeApp(
     }
 
     settings = store.reload()
+    configureLoopTarget()
     syncAutoLoopPlayer()
     renewActivePlaybackState()
     panel.render(settings, lastActionText)
@@ -433,6 +504,10 @@ export function startYouTubeAutoResumeApp(
       return
     }
 
+    if (enforceLoopTarget()) {
+      return
+    }
+
     refreshActiveContext()
     syncAutoLoopPlayer()
     updateNativeSkipControl()
@@ -451,7 +526,8 @@ export function startYouTubeAutoResumeApp(
     }
 
     isStopped = true
-    releaseManagedLoopPlayer()
+    loopNavigation.stop()
+    loopPlayer.stop()
 
     if (timerId !== null) {
       window.clearTimeout(timerId)
@@ -476,6 +552,7 @@ export function startYouTubeAutoResumeApp(
 
   panel.ensureMounted()
   setLastAction(environment.loadedText ?? "脚本已加载")
+  loopNavigation.start()
   document.addEventListener("visibilitychange", handleVisibilityChange)
   document.addEventListener("yt-navigate-finish", handleNavigationFinish)
   document.addEventListener("yt-navigate-start", handleNavigationStart)
@@ -497,6 +574,7 @@ export function startYouTubeAutoResumeApp(
       }
 
       const result = saveSettings({ ...DEFAULT_SETTINGS })
+      configureLoopTarget()
       syncAutoLoopPlayer()
       renewActivePlaybackState()
       setLastAction(

@@ -204,7 +204,7 @@ test("scheduled loop resolves the active player once", async () => {
   }
 })
 
-test("automatic loop uses YouTube player state without reacting to ads", async () => {
+test("automatic loop is reasserted when playback and ad state clear it", async () => {
   const browser = await chromium.launch({ headless: true })
 
   try {
@@ -259,21 +259,65 @@ test("automatic loop uses YouTube player state without reacting to ads", async (
       return state?.isEnabled === true && state.calls.length === 1
     })
 
+    await video.evaluate((element) => {
+      const state = Reflect.get(window, "loopFixtureState") as
+        | { calls: boolean[]; isEnabled: boolean }
+        | undefined
+
+      if (!state || !(element instanceof HTMLVideoElement)) {
+        throw new TypeError("loop fixture state is incomplete")
+      }
+
+      state.isEnabled = false
+      element.loop = false
+      element.dispatchEvent(new Event("playing"))
+    })
+    await page.waitForFunction(() => {
+      const state = Reflect.get(window, "loopFixtureState") as
+        | { calls: boolean[]; isEnabled: boolean }
+        | undefined
+
+      return state?.isEnabled === true && state.calls.length === 2
+    })
+
     await page.locator("#movie_player").evaluate((element) => {
+      const state = Reflect.get(window, "loopFixtureState") as
+        | { calls: boolean[]; isEnabled: boolean }
+        | undefined
+      const videoElement = document.querySelector("#primary-video")
+
+      if (!state || !(videoElement instanceof HTMLVideoElement)) {
+        throw new TypeError("loop fixture state is incomplete")
+      }
+
+      state.isEnabled = false
+      videoElement.loop = false
       element.classList.add("ad-showing")
     })
     await page.waitForTimeout(700)
+
+    assert.deepEqual(
+      await page.evaluate(() => Reflect.get(window, "loopFixtureState")),
+      { calls: [true, true], isEnabled: false },
+    )
+
     await page.locator("#movie_player").evaluate((element) => {
       element.classList.remove("ad-showing")
     })
-    await page.waitForTimeout(700)
+    await page.waitForFunction(() => {
+      const state = Reflect.get(window, "loopFixtureState") as
+        | { calls: boolean[]; isEnabled: boolean }
+        | undefined
+
+      return state?.isEnabled === true && state.calls.length === 3
+    })
 
     await dispatchVideoEnded(video)
     await page.waitForTimeout(300)
 
     assert.deepEqual(
       await page.evaluate(() => Reflect.get(window, "loopFixtureState")),
-      { calls: [true], isEnabled: true },
+      { calls: [true, true, true], isEnabled: true },
     )
     assert.equal(await getPlayCalls(video), 0)
     assert.equal(new URL(page.url()).searchParams.get("v"), "automatic-loop")
@@ -295,11 +339,80 @@ test("automatic loop uses YouTube player state without reacting to ads", async (
         | { calls: boolean[]; isEnabled: boolean }
         | undefined
 
-      return state?.isEnabled === false && state.calls.length === 2
+      return state?.isEnabled === false && state.calls.length === 4
     })
     assert.deepEqual(
       await page.evaluate(() => Reflect.get(window, "loopFixtureState")),
-      { calls: [true, false], isEnabled: false },
+      { calls: [true, true, true, false], isEnabled: false },
+    )
+  } finally {
+    await browser.close()
+  }
+})
+
+test("loop target accepts user selection and rejects automatic navigation", async () => {
+  const browser = await chromium.launch({ headless: true })
+
+  try {
+    const page = await browser.newPage()
+    await openFixture(page, "/watch?v=first-video")
+    await page.evaluate(() => {
+      const key = "autoChick.ytAutoResume.settings"
+      const settings = JSON.parse(localStorage.getItem(key) ?? "{}") as
+        Record<string, unknown>
+      localStorage.setItem(key, JSON.stringify({
+        ...settings,
+        autoLoop: true,
+        enabled: false,
+        intervalMs: 200,
+      }))
+
+      const anchor = document.createElement("a")
+      anchor.href = "/watch?v=user-selected"
+      anchor.id = "user-selection"
+      anchor.textContent = "Select another video"
+      anchor.addEventListener("click", (event) => {
+        event.preventDefault()
+        document.dispatchEvent(new Event("yt-navigate-start"))
+        history.pushState({}, "", anchor.href)
+        document.dispatchEvent(new Event("yt-navigate-finish"))
+      })
+
+      const navigationButton = document.createElement("button")
+      navigationButton.className = "ytp-next-button"
+      navigationButton.id = "user-next-button"
+      navigationButton.textContent = "Next video"
+      navigationButton.addEventListener("click", () => {
+        document.dispatchEvent(new Event("yt-navigate-start"))
+        history.pushState({}, "", "/watch?v=button-selected")
+        document.dispatchEvent(new Event("yt-navigate-finish"))
+      })
+      document.body.append(anchor, navigationButton)
+    })
+    await page.addScriptTag({ path: userscriptPath })
+
+    await page.locator("#user-selection").click()
+    await page.waitForURL("**/watch?v=user-selected")
+    await page.locator("#user-next-button").click()
+    await page.waitForURL("**/watch?v=button-selected")
+
+    const restoredNavigation = page.waitForEvent(
+      "framenavigated",
+      (frame) => frame === page.mainFrame()
+        && new URL(frame.url()).searchParams.get("v") === "button-selected",
+    )
+    await page.evaluate(() => {
+      window.setTimeout(() => {
+        document.dispatchEvent(new Event("yt-navigate-start"))
+        history.pushState({}, "", "/watch?v=automatic-next")
+        document.dispatchEvent(new Event("yt-navigate-finish"))
+      }, 0)
+    })
+    await restoredNavigation
+
+    assert.equal(
+      new URL(page.url()).searchParams.get("v"),
+      "button-selected",
     )
   } finally {
     await browser.close()

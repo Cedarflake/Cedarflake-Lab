@@ -10,7 +10,7 @@ The migration baseline comes from [`others/userscripts/youtube-auto-resume`](../
 
 Automatic ad skipping is opt-in and only acts when YouTube exposes a visible, enabled native skip button. The extension does not remove ad elements, alter ad playback time, rewrite player responses, or intercept YouTube network traffic. The in-player panel retains a manual native-button bridge as a fallback.
 
-Automatic looping is also opt-in. It uses YouTube's own player-level loop control, leaves that state untouched while ads transition through the player, and restores the previous player loop value when the feature is disabled or the active player changes. Existing `avoidEnded` settings are migrated to the inverse `autoLoop` value.
+Automatic looping is also opt-in. It captures the current video when the extension loads with looping enabled, when looping is enabled later, and when the user explicitly selects another video. The extension rechecks YouTube's own player-level loop control when playback metadata changes, playback starts, SPA navigation finishes, or an ad transition ends; it leaves the player untouched while an ad is active. If YouTube still navigates to another video without a matching user action, the extension returns to the remembered loop target. It restores the previous player loop value when the feature is disabled or the active player changes. Existing `avoidEnded` settings are migrated to the inverse `autoLoop` value.
 
 ## Browser architecture
 
