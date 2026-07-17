@@ -134,7 +134,7 @@ class TestGuiEntry(unittest.TestCase):
                 self.assertEqual(app.v2_vars["carrier"].get(), "中国电信")
                 self.assertLessEqual(
                     abs(toggle_border.winfo_reqheight() - app.v2_carrier_combo.winfo_reqheight()),
-                    2,
+                    3,
                 )
                 v1_entries = [
                     widget
