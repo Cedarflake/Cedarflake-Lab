@@ -180,12 +180,11 @@ export function App() {
             <p className="eyebrow">{siteConfig.openBench.eyebrow}</p>
             <h2 id={siteConfig.openBench.titleId}>{siteConfig.openBench.title}</h2>
           </div>
-          <ul className="command-stack" aria-label="Common repository commands">
-            {siteConfig.openBench.commands.map((command) => (
-              <li key={command}>
-                <code>
-                  <span>$</span> {command}
-                </code>
+          <ul className="bench-stack" aria-label="Workspace areas">
+            {siteConfig.openBench.areas.map((area) => (
+              <li key={area.label}>
+                <span>{area.label}</span>
+                <p>{area.description}</p>
               </li>
             ))}
           </ul>

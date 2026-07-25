@@ -190,7 +190,10 @@ validateUnique(
   "navigation destinations",
 )
 validateUnique(siteConfig.hero.ruler, "hero ruler labels")
-validateUnique(siteConfig.openBench.commands, "repository commands")
+validateUnique(
+  siteConfig.openBench.areas.map((area) => area.label),
+  "open bench area labels",
+)
 
 const sections = Object.values(siteConfig.sections)
 
@@ -205,5 +208,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Validated site configuration with ${siteConfig.stats.length} stats, ${siteConfig.navigation.length} navigation links, ${sections.length} sections, and ${siteConfig.openBench.commands.length} commands.`,
+  `Validated site configuration with ${siteConfig.stats.length} stats, ${siteConfig.navigation.length} navigation links, ${sections.length} sections, and ${siteConfig.openBench.areas.length} open bench areas.`,
 )

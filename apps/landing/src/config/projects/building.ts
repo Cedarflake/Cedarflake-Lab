@@ -2,6 +2,32 @@ import type { CatalogProject } from "../../types/project"
 
 export const buildingProjectEntries = [
   {
+    title: "i0c.cc",
+    repositoryUrl: "https://github.com/Revaea/i0c.cc",
+    externalAction: {
+      kind: "live",
+      url: "https://u.i0c.cc",
+    },
+    updatedAt: "2026-07-24T16:49:00+08:00",
+    summary:
+      "A Git-driven edge redirect playground with provider-selectable runtimes, a management WebUI, and optional analytics.",
+    label: "Edge experiment",
+    lifecycle: "active",
+    kind: "app",
+    presentation: "catalog",
+    section: "building",
+    showcase: {
+      label: "Edge redirect platform",
+      tags: ["Next.js", "Edge runtimes", "Analytics"],
+      cover: {
+        src: "/covers/i0c.png",
+        alt: "i0c.cc analytics dashboard showing traffic metrics, a visit trend, and top routes",
+        width: 1600,
+        height: 900,
+      },
+    },
+  },
+  {
     title: "YouTube Auto Resume Extension",
     path: "apps/youtube-auto-resume-extension",
     updatedAt: "2026-07-16T23:37:42+08:00",

@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react"
 
-import { projectPrimaryUrl } from "../lib/projectCatalog"
+import { projectPrimaryUrl, projectSourceLabel } from "../lib/projectCatalog"
 import type { CatalogProject } from "../types/project"
 import { ProjectActions } from "./ProjectActions"
 
@@ -37,7 +37,7 @@ export function CatalogCard({ displayNumber, project }: CatalogCardProps) {
         <p>{project.summary}</p>
         <footer className="catalog-card__footer">
           <ProjectActions project={project} />
-          <code className="source-path">{project.path}</code>
+          <code className="source-path">{projectSourceLabel(project)}</code>
         </footer>
       </div>
     </article>

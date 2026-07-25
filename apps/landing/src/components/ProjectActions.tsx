@@ -50,7 +50,7 @@ export function ProjectActions({ project }: ProjectActionsProps) {
       <a
         className="project-action project-action--source"
         data-project-action="source"
-        href={projectSourceUrl(project.path)}
+        href={projectSourceUrl(project)}
         rel="noreferrer"
         target="_blank"
         title="View source"

@@ -103,9 +103,26 @@ export const siteConfig = {
     id: "open-bench",
     titleId: "open-bench-title",
     eyebrow: "05 / Open bench",
-    title: "One workspace. A few useful doors.",
-    commands: ["pnpm install", "pnpm check", "pnpm build"],
-    actionLabel: "Enter the repository",
+    title: "Different tools. One shared bench.",
+    areas: [
+      {
+        label: "Apps",
+        description: "Web products and interactive experiments",
+      },
+      {
+        label: "Packages",
+        description: "Reusable components and shared foundations",
+      },
+      {
+        label: "Workbench",
+        description: "Python utilities and local automation",
+      },
+      {
+        label: "Others",
+        description: "Projects and artifacts that resist a single category",
+      },
+    ],
+    actionLabel: "Explore the workspace",
   },
   footer: {
     note: "Built as a living index, not a finished catalogue.",

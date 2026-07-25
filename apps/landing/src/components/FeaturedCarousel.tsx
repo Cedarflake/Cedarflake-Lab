@@ -1,4 +1,5 @@
 import type { ShowcaseProject } from "../types/project"
+import { projectKey } from "../lib/projectCatalog"
 import { Carousel } from "./Carousel"
 import { ProjectCard } from "./ProjectCard"
 
@@ -12,6 +13,7 @@ export function FeaturedCarousel({ hint, labelledBy, projects }: FeaturedCarouse
   return (
     <Carousel
       className="featured-carousel"
+      getItemKey={projectKey}
       hint={hint}
       items={projects}
       labelledBy={labelledBy}

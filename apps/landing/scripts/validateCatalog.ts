@@ -9,8 +9,12 @@ import type { DefaultTreeAdapterTypes, ParserError } from "parse5"
 import { projectCatalog } from "../src/config/projects"
 import { workbenchCategories } from "../src/config/projects/workbench"
 import { siteConfig } from "../src/config/site"
-import { validateProjectCatalog } from "../src/lib/projectCatalog"
-import type { ProjectCover, ProjectEntry } from "../src/types/project"
+import {
+  isWorkspaceProject,
+  projectSourceLabel,
+  validateProjectCatalog,
+} from "../src/lib/projectCatalog"
+import type { ProjectCover, ProjectEntry, WorkspaceProjectEntry } from "../src/types/project"
 import { appRoot, repositoryRoot, validationContext } from "./repositoryContext"
 import { getVisibleMarkdownLines, isSvgDocument } from "./validationText"
 
@@ -29,7 +33,9 @@ const workbenchCategoryKeys = new Set<string>()
 const workbenchCategoryTitles = new Set<string>()
 const referencedCoverSources = new Set<string>()
 const coverProjectBySource = new Map<string, string>()
-const catalogProjectPaths = new Set(projects.map((project) => project.path))
+const catalogProjectPaths = new Set(
+  projects.filter(isWorkspaceProject).map((project) => project.path),
+)
 const catalogCoverageExclusions = new Set(["apps/landing"])
 const projectPublicDirectories = new Map<string, string>([["apps/copilot-task", "assets"]])
 const genericDocumentTitles = new Set(["app", "react app", "vite + react + ts"])
@@ -679,7 +685,7 @@ function getRootReadmeLiveCells(markdown: string, projectPath: string) {
   return []
 }
 
-function validateExternalActionContract(project: ProjectEntry, projectDirectory: string) {
+function validateExternalActionContract(project: WorkspaceProjectEntry, projectDirectory: string) {
   const action = project.externalAction
 
   if (!repositoryRoot || !action) {
@@ -1023,26 +1029,30 @@ for (const category of workbenchCategories) {
 }
 
 for (const project of projects) {
-  const resolvedProjectPath = resolveWithin(
-    projectPathRoot,
-    project.path,
-    `Project ${project.path} path`,
-  )
+  const sourceLabel = projectSourceLabel(project)
 
-  if (repositoryRoot && resolvedProjectPath && !isDirectory(resolvedProjectPath)) {
-    errors.push(`Project path is missing: ${project.path}`)
-  }
+  if (isWorkspaceProject(project)) {
+    const resolvedProjectPath = resolveWithin(
+      projectPathRoot,
+      project.path,
+      `Project ${project.path} path`,
+    )
 
-  if (resolvedProjectPath && isDirectory(resolvedProjectPath)) {
-    validateExternalActionContract(project, resolvedProjectPath)
+    if (repositoryRoot && resolvedProjectPath && !isDirectory(resolvedProjectPath)) {
+      errors.push(`Project path is missing: ${project.path}`)
+    }
+
+    if (resolvedProjectPath && isDirectory(resolvedProjectPath)) {
+      validateExternalActionContract(project, resolvedProjectPath)
+    }
   }
 
   if (project.showcase) {
-    validateCover(project.path, project.showcase.cover)
+    validateCover(sourceLabel, project.showcase.cover)
   }
 
   if (project.presentation === "workbench" && !workbenchCategoryKeys.has(project.category)) {
-    errors.push(`Project ${project.path} uses an unknown workbench category: ${project.category}`)
+    errors.push(`Project ${sourceLabel} uses an unknown workbench category: ${project.category}`)
   }
 }
 

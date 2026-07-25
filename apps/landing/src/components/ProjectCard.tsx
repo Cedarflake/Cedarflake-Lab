@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { ArrowUpRight } from "lucide-react"
 
 import { siteConfig } from "../config/site"
-import { projectPrimaryUrl } from "../lib/projectCatalog"
+import { projectPrimaryUrl, projectSourceLabel } from "../lib/projectCatalog"
 import type { ShowcaseProject } from "../types/project"
 import { ProjectActions } from "./ProjectActions"
 
@@ -83,7 +83,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 <li key={tag}>{tag}</li>
               ))}
             </ul>
-            <code className="source-path">{project.path}</code>
+            <code className="source-path">{projectSourceLabel(project)}</code>
             {note ? <span className="project-card__note">{note}</span> : null}
           </footer>
         </div>
