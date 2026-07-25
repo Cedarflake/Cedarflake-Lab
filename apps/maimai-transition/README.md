@@ -249,7 +249,7 @@ maimai-transition/
 - TypeScript 6
 - GSAP 3
 - Motion 12
-- React Router 7
+- React Router 8
 
 其中：
 

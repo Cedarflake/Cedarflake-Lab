@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 
 import styles from './App.module.css'
 import { RouteShowcasePage } from './features/demo/RouteShowcasePage'
