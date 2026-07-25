@@ -1,5 +1,5 @@
 import type { CatalogProject } from "../types/project"
-import { catalogProjectNumber } from "../lib/projectCatalog"
+import { catalogProjectNumber, projectKey } from "../lib/projectCatalog"
 import { Carousel } from "./Carousel"
 import { CatalogCard } from "./CatalogCard"
 
@@ -15,6 +15,7 @@ export function CatalogCarousel({ hint, labelledBy, projects }: CatalogCarouselP
   return (
     <Carousel
       className={`catalog-carousel${isSparse ? " catalog-carousel--sparse" : ""}`}
+      getItemKey={projectKey}
       hint={hint}
       items={projects}
       labelledBy={labelledBy}

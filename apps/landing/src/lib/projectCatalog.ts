@@ -9,6 +9,7 @@ import type {
   ShowcaseProject,
   WorkbenchGroupData,
   WorkbenchProject,
+  WorkspaceProjectEntry,
 } from "../types/project"
 
 const catalog: readonly ProjectEntry[] = projectCatalog
@@ -31,6 +32,7 @@ const catalogProjectPrefixBySection = {
   others: "O",
 } satisfies Record<CatalogProject["section"], string>
 const projectExternalActionKinds = new Set<ProjectExternalActionKind>(["live", "install"])
+const githubRepositorySegmentPattern = /^[A-Za-z0-9_.-]+$/
 
 function isValidIsoTimestamp(value: string) {
   const match = isoTimestampPattern.exec(value)
@@ -70,13 +72,68 @@ function isValidIsoTimestamp(value: string) {
   )
 }
 
+function isCanonicalGitHubRepositoryUrl(value: string) {
+  try {
+    const url = new URL(value)
+    const pathSegments = url.pathname.split("/").filter(Boolean)
+    const owner = pathSegments[0] ?? ""
+    const repository = pathSegments[1] ?? ""
+
+    return (
+      url.href === value &&
+      url.origin === "https://github.com" &&
+      !url.username &&
+      !url.password &&
+      !url.search &&
+      !url.hash &&
+      pathSegments.length === 2 &&
+      owner !== "." &&
+      owner !== ".." &&
+      repository !== "." &&
+      repository !== ".." &&
+      !repository.toLowerCase().endsWith(".git") &&
+      githubRepositorySegmentPattern.test(owner) &&
+      githubRepositorySegmentPattern.test(repository) &&
+      url.pathname === `/${owner}/${repository}`
+    )
+  } catch {
+    return false
+  }
+}
+
+export function isWorkspaceProject(project: ProjectEntry): project is WorkspaceProjectEntry {
+  return typeof project.path === "string"
+}
+
+export function projectKey(project: ProjectEntry) {
+  return isWorkspaceProject(project)
+    ? `workspace:${project.path}`
+    : `repository:${project.repositoryUrl}`
+}
+
+export function projectSourceLabel(project: ProjectEntry) {
+  if (isWorkspaceProject(project)) {
+    return project.path
+  }
+
+  return new URL(project.repositoryUrl).pathname.slice(1)
+}
+
 export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
   const paths = new Set<string>()
+  const repositoryUrls = new Set<string>()
   const titles = new Set<string>()
 
   for (const project of projects) {
-    const projectLabel = project.path.trim() || project.title.trim() || "unknown project"
-    const requiredProjectText = [project.title, project.path, project.summary]
+    const hasPath = typeof project.path === "string"
+    const hasRepositoryUrl = typeof project.repositoryUrl === "string"
+    const sourceIdentity = hasPath ? project.path : hasRepositoryUrl ? project.repositoryUrl : ""
+    const projectLabel = sourceIdentity.trim() || project.title.trim() || "unknown project"
+    const requiredProjectText = [project.title, sourceIdentity, project.summary]
+
+    if (hasPath === hasRepositoryUrl) {
+      throw new Error(`Project must define exactly one source: ${projectLabel}`)
+    }
 
     if (requiredProjectText.some((value) => !value.trim())) {
       throw new Error(`Missing required project text: ${projectLabel}`)
@@ -86,8 +143,14 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Project text has surrounding whitespace: ${projectLabel}`)
     }
 
-    if (paths.has(project.path)) {
+    if (hasPath && paths.has(project.path)) {
       throw new Error(`Duplicate project path: ${project.path}`)
+    }
+
+    const normalizedRepositoryUrl = hasRepositoryUrl ? project.repositoryUrl.toLowerCase() : ""
+
+    if (hasRepositoryUrl && repositoryUrls.has(normalizedRepositoryUrl)) {
+      throw new Error(`Duplicate project repository URL: ${project.repositoryUrl}`)
     }
 
     const normalizedTitle = project.title.toLowerCase()
@@ -96,32 +159,42 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       throw new Error(`Duplicate project title: ${project.title}`)
     }
 
-    const pathSegments = project.path.split("/")
-    const projectRoot = pathSegments[0] ?? ""
+    if (isWorkspaceProject(project)) {
+      const pathSegments = project.path.split("/")
+      const projectRoot = pathSegments[0] ?? ""
 
-    if (
-      project.path.includes("\\") ||
-      pathSegments.some((segment) => !segment || segment === "." || segment === "..")
-    ) {
-      throw new Error(`Invalid project path: ${projectLabel}`)
-    }
+      if (
+        project.path.includes("\\") ||
+        pathSegments.some((segment) => !segment || segment === "." || segment === "..")
+      ) {
+        throw new Error(`Invalid project path: ${projectLabel}`)
+      }
 
-    if (projectRoot !== projectRootByKind[project.kind]) {
-      throw new Error(`Project kind does not match its path: ${projectLabel}`)
-    }
+      if (projectRoot !== projectRootByKind[project.kind]) {
+        throw new Error(`Project kind does not match its path: ${projectLabel}`)
+      }
 
-    if (!projectRootsBySection[project.section].has(projectRoot)) {
-      throw new Error(`Project section does not match its path: ${projectLabel}`)
-    }
+      if (!projectRootsBySection[project.section].has(projectRoot)) {
+        throw new Error(`Project section does not match its path: ${projectLabel}`)
+      }
 
-    if (project.presentation === "workbench") {
-      if (pathSegments[1] !== project.category) {
+      if (project.presentation === "workbench" && pathSegments[1] !== project.category) {
         throw new Error(`Workbench category does not match its path: ${projectLabel}`)
       }
-
-      if (project.externalAction !== undefined) {
-        throw new Error(`Workbench project cannot define externalAction: ${projectLabel}`)
+    } else {
+      if (!isCanonicalGitHubRepositoryUrl(project.repositoryUrl)) {
+        throw new Error(`Invalid project repository URL: ${projectLabel}`)
       }
+
+      if (project.presentation !== "catalog") {
+        throw new Error(
+          `External repository project must use catalog presentation: ${projectLabel}`,
+        )
+      }
+    }
+
+    if (project.presentation === "workbench" && project.externalAction !== undefined) {
+      throw new Error(`Workbench project cannot define externalAction: ${projectLabel}`)
     }
 
     if (project.presentation === "catalog") {
@@ -204,7 +277,12 @@ export function validateProjectCatalog(projects: readonly ProjectEntry[]) {
       }
     }
 
-    paths.add(project.path)
+    if (isWorkspaceProject(project)) {
+      paths.add(project.path)
+    } else {
+      repositoryUrls.add(project.repositoryUrl.toLowerCase())
+    }
+
     titles.add(normalizedTitle)
   }
 }
@@ -218,15 +296,17 @@ function hasShowcase(project: ProjectEntry): project is ShowcaseProject {
 }
 
 function isBuildingProject(project: ProjectEntry): project is CatalogProject {
-  return project.presentation === "catalog" && project.section === "building"
+  return (
+    project.presentation === "catalog" && project.section === "building" && !hasShowcase(project)
+  )
 }
 
 function isWorkbenchProject(project: ProjectEntry): project is WorkbenchProject {
-  return project.presentation === "workbench"
+  return project.presentation === "workbench" && !hasShowcase(project)
 }
 
 function isOtherProject(project: ProjectEntry): project is CatalogProject {
-  return project.presentation === "catalog" && project.section === "others"
+  return project.presentation === "catalog" && project.section === "others" && !hasShowcase(project)
 }
 
 function countProjects(kind: ProjectKind) {
@@ -260,12 +340,16 @@ function encodeUrlPath(path: string) {
   return path.split("/").map(encodeURIComponent).join("/")
 }
 
-export function projectSourceUrl(path: string) {
-  return `${siteConfig.repositoryUrl}/tree/${encodeUrlPath(siteConfig.repositoryBranch)}/${encodeUrlPath(path)}`
+export function projectSourceUrl(project: ProjectEntry) {
+  if (!isWorkspaceProject(project)) {
+    return project.repositoryUrl
+  }
+
+  return `${siteConfig.repositoryUrl}/tree/${encodeUrlPath(siteConfig.repositoryBranch)}/${encodeUrlPath(project.path)}`
 }
 
 export function projectPrimaryUrl(project: ProjectEntry) {
-  return projectSourceUrl(project.path)
+  return projectSourceUrl(project)
 }
 
 export function catalogProjectNumber(project: CatalogProject, index: number) {

@@ -9,6 +9,7 @@ import {
   catalogProjectNumber,
   otherProjects,
   projectPrimaryUrl,
+  projectSourceLabel,
   projectSourceUrl,
   showcaseProjects,
 } from "../src/lib/projectCatalog"
@@ -96,7 +97,7 @@ function hasInvalidAnchorStructure(markup: string) {
 }
 
 function formatProjectCard({ cardType, project }: ProjectCardCase) {
-  return `${project.path} (${cardType})`
+  return `${projectSourceLabel(project)} (${cardType})`
 }
 
 const html = renderToStaticMarkup(createElement(App))
@@ -180,7 +181,7 @@ const cardsWithInvalidPrimaryLink = projectCardCases.filter(({ markup, project }
 const cardsWithInvalidSourceAction = projectCardCases.filter(({ markup, project }) => {
   const sourceActions = getRenderedProjectActions(markup).filter(({ kind }) => kind === "source")
 
-  return sourceActions.length !== 1 || sourceActions[0]?.href !== projectSourceUrl(project.path)
+  return sourceActions.length !== 1 || sourceActions[0]?.href !== projectSourceUrl(project)
 })
 const cardsWithInvalidExternalAction = projectCardCases.filter(({ markup, project }) => {
   const externalActions = getRenderedProjectActions(markup).filter(({ kind }) => kind !== "source")
@@ -314,7 +315,7 @@ if (renderedCatalogNumbers.join("\0") !== expectedCatalogNumbers.join("\0")) {
 if (cardsWithInvalidLifecycle.length > 0) {
   errors.push(
     `Catalog card lifecycle markup does not match configuration: ${cardsWithInvalidLifecycle
-      .map(({ project }) => project.path)
+      .map(({ project }) => projectSourceLabel(project))
       .join(", ")}`,
   )
 }
@@ -322,7 +323,7 @@ if (cardsWithInvalidLifecycle.length > 0) {
 if (cardsWithInvalidArchiveBadge.length > 0) {
   errors.push(
     `Catalog card Archived badges do not match lifecycle configuration: ${cardsWithInvalidArchiveBadge
-      .map(({ project }) => project.path)
+      .map(({ project }) => projectSourceLabel(project))
       .join(", ")}`,
   )
 }

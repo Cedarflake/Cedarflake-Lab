@@ -3,12 +3,12 @@ import type { ReactNode } from "react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
 interface CarouselItem {
-  path: string
   title: string
 }
 
 interface CarouselProps<Project extends CarouselItem> {
   className?: string
+  getItemKey: (item: Project) => string
   hint: string
   items: readonly Project[]
   labelledBy: string
@@ -33,6 +33,7 @@ function getScrollBehavior(): ScrollBehavior {
 
 export function Carousel<Project extends CarouselItem>({
   className,
+  getItemKey,
   hint,
   items,
   labelledBy,
@@ -288,7 +289,7 @@ export function Carousel<Project extends CarouselItem>({
           {items.map((item, index) => (
             <div
               className="carousel__slide"
-              key={item.path}
+              key={getItemKey(item)}
               ref={(element) => {
                 slideRefs.current[index] = element
               }}

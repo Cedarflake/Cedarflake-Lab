@@ -4,17 +4,15 @@ import {
   buildingProjects,
   labStats,
   otherProjects,
+  projectKey,
+  projectSourceLabel,
   showcaseProjects,
   workbenchGroups,
   workbenchProjects,
 } from "../src/lib/projectCatalog"
+import type { ProjectEntry } from "../src/types/project"
 
-interface OrderedProject {
-  lifecycle?: "active" | "archived"
-  path: string
-  title: string
-  updatedAt: string
-}
+type OrderedProject = ProjectEntry
 
 const errors: string[] = []
 
@@ -33,27 +31,27 @@ function findDuplicates(values: readonly string[]) {
   return [...duplicates]
 }
 
-function validateSamePaths(
-  expectedPaths: readonly string[],
-  actualPaths: readonly string[],
+function validateSameProjectKeys(
+  expectedKeys: readonly string[],
+  actualKeys: readonly string[],
   label: string,
 ) {
-  const expectedSet = new Set(expectedPaths)
-  const actualSet = new Set(actualPaths)
-  const missingPaths = expectedPaths.filter((path) => !actualSet.has(path))
-  const unexpectedPaths = actualPaths.filter((path) => !expectedSet.has(path))
-  const duplicatePaths = findDuplicates(actualPaths)
+  const expectedSet = new Set(expectedKeys)
+  const actualSet = new Set(actualKeys)
+  const missingKeys = expectedKeys.filter((key) => !actualSet.has(key))
+  const unexpectedKeys = actualKeys.filter((key) => !expectedSet.has(key))
+  const duplicateKeys = findDuplicates(actualKeys)
 
-  if (missingPaths.length > 0) {
-    errors.push(`${label} is missing projects: ${missingPaths.join(", ")}`)
+  if (missingKeys.length > 0) {
+    errors.push(`${label} is missing projects: ${missingKeys.join(", ")}`)
   }
 
-  if (unexpectedPaths.length > 0) {
-    errors.push(`${label} contains unexpected projects: ${unexpectedPaths.join(", ")}`)
+  if (unexpectedKeys.length > 0) {
+    errors.push(`${label} contains unexpected projects: ${unexpectedKeys.join(", ")}`)
   }
 
-  if (duplicatePaths.length > 0) {
-    errors.push(`${label} contains duplicate projects: ${duplicatePaths.join(", ")}`)
+  if (duplicateKeys.length > 0) {
+    errors.push(`${label} contains duplicate projects: ${duplicateKeys.join(", ")}`)
   }
 }
 
@@ -66,8 +64,10 @@ function validateCollectionOrder(projects: readonly OrderedProject[], label: str
       continue
     }
 
-    const previousLifecycleRank = previousProject.lifecycle === "archived" ? 1 : 0
-    const lifecycleRank = project.lifecycle === "archived" ? 1 : 0
+    const previousLifecycleRank =
+      previousProject.presentation === "catalog" && previousProject.lifecycle === "archived" ? 1 : 0
+    const lifecycleRank =
+      project.presentation === "catalog" && project.lifecycle === "archived" ? 1 : 0
     const lifecycleDifference = previousLifecycleRank - lifecycleRank
     const dateDifference = Date.parse(previousProject.updatedAt) - Date.parse(project.updatedAt)
     const titleDifference = previousProject.title.localeCompare(project.title, siteConfig.locale)
@@ -77,34 +77,35 @@ function validateCollectionOrder(projects: readonly OrderedProject[], label: str
       (lifecycleDifference === 0 &&
         (dateDifference < 0 || (dateDifference === 0 && titleDifference > 0)))
     ) {
-      errors.push(`${label} does not follow lifecycle and update ordering at ${project.path}`)
+      errors.push(
+        `${label} does not follow lifecycle and update ordering at ${projectSourceLabel(project)}`,
+      )
     }
   }
 }
 
-const featuredProjects = showcaseProjects.filter((project) => project.presentation === "featured")
 const groupedWorkbenchProjects = workbenchGroups.flatMap((group) => group.items)
 const primaryProjects = [
-  ...featuredProjects,
+  ...showcaseProjects,
   ...buildingProjects,
   ...groupedWorkbenchProjects,
   ...otherProjects,
 ]
 const configuredShowcaseProjects = projectCatalog.filter((project) => "showcase" in project)
 
-validateSamePaths(
-  projectCatalog.map((project) => project.path),
-  primaryProjects.map((project) => project.path),
-  "Primary project collections",
+validateSameProjectKeys(
+  projectCatalog.map(projectKey),
+  primaryProjects.map(projectKey),
+  "Rendered project sections",
 )
-validateSamePaths(
-  configuredShowcaseProjects.map((project) => project.path),
-  showcaseProjects.map((project) => project.path),
+validateSameProjectKeys(
+  configuredShowcaseProjects.map(projectKey),
+  showcaseProjects.map(projectKey),
   "Showcase collection",
 )
-validateSamePaths(
-  workbenchProjects.map((project) => project.path),
-  groupedWorkbenchProjects.map((project) => project.path),
+validateSameProjectKeys(
+  workbenchProjects.map(projectKey),
+  groupedWorkbenchProjects.map(projectKey),
   "Workbench groups",
 )
 

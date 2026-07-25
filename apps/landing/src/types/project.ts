@@ -25,10 +25,22 @@ export interface ProjectShowcase {
 
 interface ProjectBase {
   title: string
-  path: string
   updatedAt: string
   summary: string
   kind: ProjectKind
+}
+
+interface WorkspaceProjectSource {
+  path: string
+  repositoryUrl?: never
+}
+
+interface ExternalRepositoryProjectSource {
+  path?: never
+  repositoryUrl: `https://github.com/${string}/${string}`
+}
+
+interface ProjectShowcaseOptional {
   showcase?: ProjectShowcase
 }
 
@@ -36,29 +48,37 @@ interface ProjectActionable {
   externalAction?: ProjectExternalAction
 }
 
-export interface FeaturedProject extends ProjectBase, ProjectActionable {
-  presentation: "featured"
-  section: "featured"
-  showcase: ProjectShowcase
-}
+export type FeaturedProject = ProjectBase &
+  WorkspaceProjectSource &
+  ProjectActionable & {
+    presentation: "featured"
+    section: "featured"
+    showcase: ProjectShowcase
+  }
 
-export interface CatalogProject extends ProjectBase, ProjectActionable {
-  presentation: "catalog"
-  section: "building" | "others"
-  label: string
-  lifecycle: ProjectLifecycle
-}
+export type CatalogProject = ProjectBase &
+  ProjectActionable &
+  (WorkspaceProjectSource | ExternalRepositoryProjectSource) &
+  ProjectShowcaseOptional & {
+    presentation: "catalog"
+    section: "building" | "others"
+    label: string
+    lifecycle: ProjectLifecycle
+  }
 
-export interface WorkbenchProject<Category extends string = string> extends ProjectBase {
-  presentation: "workbench"
-  section: "workbench"
-  category: Category
-  externalAction?: never
-}
+export type WorkbenchProject<Category extends string = string> = ProjectBase &
+  WorkspaceProjectSource &
+  ProjectShowcaseOptional & {
+    presentation: "workbench"
+    section: "workbench"
+    category: Category
+    externalAction?: never
+  }
 
 export type ProjectEntry = FeaturedProject | CatalogProject | WorkbenchProject
 
 export type ShowcaseProject = ProjectEntry & { showcase: ProjectShowcase }
+export type WorkspaceProjectEntry = ProjectEntry & WorkspaceProjectSource
 
 export interface WorkbenchGroupData {
   key: string

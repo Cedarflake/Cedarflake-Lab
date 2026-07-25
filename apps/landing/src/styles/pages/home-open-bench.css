@@ -1,14 +1,96 @@
+@property --open-bench-field-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 40%;
+}
+
 .open-bench {
   --color-selection-text: #ff9b9f;
+  --open-bench-mosaic-size: clamp(128px, 11vw, 192px);
 
+  position: relative;
   display: grid;
+  overflow: hidden;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
   gap: 48px clamp(48px, 9vw, 132px);
   align-items: end;
+  isolation: isolate;
   padding: clamp(84px, 11vw, 156px) var(--page-gutter);
   background:
-    radial-gradient(circle at 78% 20%, rgba(255, 112, 118, 0.28), transparent 24%), var(--color-ink);
+    linear-gradient(
+      90deg,
+      rgba(37, 29, 42, 0.96) 0%,
+      rgba(37, 29, 42, 0.78) 38%,
+      rgba(37, 29, 42, 0.34) 72%,
+      rgba(37, 29, 42, 0.7) 100%
+    ),
+    conic-gradient(
+        from 90deg at 50% 50%,
+        rgba(255, 112, 118, 0.055) 0 25%,
+        rgba(135, 102, 151, 0.045) 0 50%,
+        rgba(255, 255, 255, 0.012) 0 75%,
+        rgba(183, 46, 67, 0.04) 0
+      )
+      0 0 / var(--open-bench-mosaic-size) var(--open-bench-mosaic-size),
+    linear-gradient(135deg, var(--color-ink) 0%, #302330 54%, #211a27 100%);
   color: var(--color-white);
+}
+
+.open-bench::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 42% 78% at 24% var(--open-bench-field-y),
+      rgba(210, 115, 126, 0.24) 0%,
+      rgba(172, 83, 108, 0.11) 38%,
+      transparent 74%
+    ),
+    radial-gradient(
+      ellipse 34% 88% at 10% calc(var(--open-bench-field-y) - 24%),
+      rgba(126, 101, 151, 0.19) 0%,
+      rgba(109, 91, 140, 0.07) 46%,
+      transparent 80%
+    ),
+    radial-gradient(
+      ellipse 30% 68% at 42% calc(var(--open-bench-field-y) + 22%),
+      rgba(84, 121, 148, 0.16) 0%,
+      rgba(106, 91, 139, 0.05) 44%,
+      transparent 78%
+    );
+  animation: open-bench-color-field-float 10s ease-in-out infinite alternate;
+  content: "";
+  opacity: 0.9;
+  pointer-events: none;
+  -webkit-mask-image: conic-gradient(
+    from 90deg at 50% 50%,
+    rgba(0, 0, 0, 0.86) 0 25%,
+    rgba(0, 0, 0, 0.46) 0 50%,
+    rgba(0, 0, 0, 0.68) 0 75%,
+    rgba(0, 0, 0, 0.36) 0
+  );
+  mask-image: conic-gradient(
+    from 90deg at 50% 50%,
+    rgba(0, 0, 0, 0.86) 0 25%,
+    rgba(0, 0, 0, 0.46) 0 50%,
+    rgba(0, 0, 0, 0.68) 0 75%,
+    rgba(0, 0, 0, 0.36) 0
+  );
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+  -webkit-mask-size: var(--open-bench-mosaic-size) var(--open-bench-mosaic-size);
+  mask-size: var(--open-bench-mosaic-size) var(--open-bench-mosaic-size);
+}
+
+@keyframes open-bench-color-field-float {
+  to {
+    --open-bench-field-y: 66%;
+  }
+}
+
+.open-bench > * {
+  z-index: 1;
 }
 
 .open-bench__heading {
@@ -28,23 +110,34 @@
   line-height: var(--display-heading-leading);
 }
 
-.command-stack {
+.bench-stack {
   display: grid;
   border-top: 1px solid rgba(255, 255, 255, 0.32);
 }
 
-.command-stack code {
-  display: flex;
+.bench-stack li {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.34fr) minmax(0, 1fr);
+  gap: 24px;
   align-items: center;
-  gap: 12px;
-  min-height: 58px;
+  min-height: 64px;
+  padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-  color: #f7ecf1;
-  font-size: 13px;
 }
 
-.command-stack code span {
-  color: #ff8f95;
+.bench-stack span {
+  color: #ff9b9f;
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bench-stack p {
+  color: rgba(247, 236, 241, 0.76);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .open-bench > a {
@@ -80,7 +173,17 @@
   outline-color: #ff9b9f;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .open-bench::before {
+    animation: none;
+  }
+}
+
 @media (forced-colors: active) {
+  .open-bench::before {
+    display: none;
+  }
+
   .open-bench > a {
     border-color: currentcolor;
   }
