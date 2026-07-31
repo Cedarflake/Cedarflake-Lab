@@ -121,6 +121,37 @@ function validateRepositoryConfig() {
   }
 }
 
+function validateFooterConfig() {
+  validateUnique(
+    siteConfig.footer.links.map((link) => link.label),
+    "footer link labels",
+  )
+  validateUnique(
+    siteConfig.footer.links.map((link) => link.href),
+    "footer link destinations",
+  )
+
+  for (const link of siteConfig.footer.links) {
+    try {
+      const linkUrl = new URL(link.href)
+
+      if (
+        linkUrl.protocol !== "https:" ||
+        linkUrl.username ||
+        linkUrl.password ||
+        linkUrl.pathname !== "/" ||
+        linkUrl.search ||
+        linkUrl.hash ||
+        linkUrl.href !== link.href
+      ) {
+        errors.push(`Footer link must use a canonical HTTPS root URL: ${link.href}`)
+      }
+    } catch {
+      errors.push(`Invalid footer link URL: ${link.href}`)
+    }
+  }
+}
+
 function validateSeoConfig() {
   try {
     const siteUrl = new URL(seoConfig.siteUrl)
@@ -157,6 +188,7 @@ function validateSeoConfig() {
 validateText(siteConfig, "siteConfig")
 validateText(seoConfig, "seoConfig")
 validateRepositoryConfig()
+validateFooterConfig()
 validateSeoConfig()
 
 try {
@@ -208,5 +240,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Validated site configuration with ${siteConfig.stats.length} stats, ${siteConfig.navigation.length} navigation links, ${sections.length} sections, and ${siteConfig.openBench.areas.length} open bench areas.`,
+  `Validated site configuration with ${siteConfig.stats.length} stats, ${siteConfig.navigation.length} navigation links, ${siteConfig.footer.links.length} footer links, ${sections.length} sections, and ${siteConfig.openBench.areas.length} open bench areas.`,
 )

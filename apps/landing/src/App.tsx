@@ -196,9 +196,24 @@ export function App() {
       </main>
 
       <footer className="site-footer" data-reveal>
-        <p>{siteConfig.name}</p>
-        <p>{siteConfig.footer.note}</p>
-        <a href="#top">{siteConfig.footer.backToTopLabel}</a>
+        <p className="site-footer__brand">{siteConfig.name}</p>
+        <div className="site-footer__middle">
+          <nav className="site-footer__links" aria-label="Related websites">
+            <ul>
+              {siteConfig.footer.links.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} rel="noreferrer" target="_blank">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <p className="site-footer__note">{siteConfig.footer.note}</p>
+        </div>
+        <a className="site-footer__back-to-top" href="#top">
+          {siteConfig.footer.backToTopLabel}
+        </a>
       </footer>
     </div>
   )

@@ -102,9 +102,9 @@
 
 .site-footer {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 20px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  column-gap: clamp(16px, 2vw, 32px);
+  align-items: start;
   min-height: 86px;
   padding: 20px var(--page-gutter);
   border-top: 1px solid rgba(37, 29, 42, 0.14);
@@ -112,18 +112,59 @@
   font-size: 11px;
 }
 
-.site-footer p:first-child {
+.site-footer__brand {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   font-weight: 800;
 }
 
-.site-footer p:nth-child(2) {
-  color: #786f7a;
-  text-align: center;
+.site-footer__middle {
+  display: grid;
+  justify-items: center;
 }
 
-.site-footer a {
-  justify-self: end;
+.site-footer__links ul {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__links li {
+  display: flex;
+  align-items: center;
+}
+
+.site-footer__links li + li::before {
+  width: 1px;
+  height: 12px;
+  margin-inline: clamp(8px, 1.2vw, 18px);
+  background: rgba(37, 29, 42, 0.18);
+  content: "";
+}
+
+.site-footer__links a,
+.site-footer__back-to-top {
   font-weight: 700;
+  transition: color 160ms ease;
+}
+
+.site-footer__links a:hover,
+.site-footer__back-to-top:hover {
+  color: var(--color-coral-deep);
+}
+
+.site-footer__note {
+  color: #786f7a;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.site-footer__back-to-top {
+  justify-self: end;
 }
 
 @media (max-width: 760px) {
@@ -153,10 +194,15 @@
 
   .site-footer {
     grid-template-columns: 1fr auto;
+    row-gap: 4px;
   }
 
-  .site-footer p:nth-child(2) {
-    display: none;
+  .site-footer__middle {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    width: 100%;
+    padding-top: 12px;
+    border-top: 1px solid rgba(37, 29, 42, 0.12);
   }
 }
 
@@ -168,6 +214,18 @@
 
   .site-header nav {
     gap: 8px;
+    font-size: 10px;
+  }
+
+  .site-footer {
+    padding-inline: 14px;
+  }
+
+  .site-footer__links li + li::before {
+    margin-inline: 6px;
+  }
+
+  .site-footer__note {
     font-size: 10px;
   }
 }
