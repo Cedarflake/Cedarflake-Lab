@@ -129,7 +129,7 @@ export const siteConfig = {
       { label: "Revaea", href: "https://www.revaea.com/" },
       { label: "World", href: "https://story.revaea.com/" },
       { label: "Random Image", href: "https://api.revaea.com/" },
-      { label: "Redirect", href: "https://u.i0c.cc/" },
+      { label: "Redirect", href: "https://d.i0c.cc/" },
       { label: "HLS", href: "https://hls.revaea.com/" },
     ],
     note: "Built as a living index, not a finished catalogue.",

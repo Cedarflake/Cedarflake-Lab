@@ -6,9 +6,9 @@ export const buildingProjectEntries = [
     repositoryUrl: "https://github.com/Revaea/i0c.cc",
     externalAction: {
       kind: "live",
-      url: "https://u.i0c.cc",
+      url: "https://d.i0c.cc",
     },
-    updatedAt: "2026-07-24T16:49:00+08:00",
+    updatedAt: "2026-08-05T00:18:44+08:00",
     summary:
       "A Git-driven edge redirect playground with provider-selectable runtimes, a management WebUI, and optional analytics.",
     label: "Edge experiment",
