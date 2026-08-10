@@ -2,6 +2,18 @@ import type { CatalogProject } from "../../types/project"
 
 export const buildingProjectEntries = [
   {
+    title: "Cedarflake Ame",
+    repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Ame",
+    updatedAt: "2026-08-11T00:22:26+08:00",
+    summary:
+      "A local-first Windows photo library for indexing and browsing large personal collections with a Rust core and Flutter Material 3 interface.",
+    label: "Desktop app",
+    lifecycle: "active",
+    kind: "app",
+    presentation: "catalog",
+    section: "building",
+  },
+  {
     title: "i0c.cc",
     repositoryUrl: "https://github.com/Revaea/i0c.cc",
     externalAction: {
