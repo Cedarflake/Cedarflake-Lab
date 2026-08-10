@@ -9,10 +9,10 @@ index f3e2de9d87e1ce462517e49f35733bed8bdf85af..6c84d87835182d0670981dc15f488c2a
 +export default expand;
  //# sourceMappingURL=index.d.ts.map
 diff --git a/dist/commonjs/index.js b/dist/commonjs/index.js
-index be9df86be09c7655787a65c55ae6da01858894c3..9331e4445640e2b9c637a1168dba62ee641b98e4 100644
+index 869a6bee23807b9f01c18c99ab8e952b4b242f97..985fc869022c17e31a0371ee35a339c6db65528d 100644
 --- a/dist/commonjs/index.js
 +++ b/dist/commonjs/index.js
-@@ -260,4 +260,5 @@ function expand_(str, max, maxLength, isTop) {
+@@ -286,4 +286,5 @@ function expand_(str, max, maxLength, isTop) {
      }
      return acc;
  }
@@ -29,10 +29,10 @@ index f3e2de9d87e1ce462517e49f35733bed8bdf85af..6c84d87835182d0670981dc15f488c2a
 +export default expand;
  //# sourceMappingURL=index.d.ts.map
 diff --git a/dist/esm/index.js b/dist/esm/index.js
-index 6dc0392fc0feedb811e63d70a30be2736af17a3a..81ea182fa5dbc3c60fa4cec4cb549fa256a903e4 100644
+index fd68f57029207ac1bcafe7fb1c14ad5305b3ffa4..50a837105e22d965e9008dc05e62e448f69dd99a 100644
 --- a/dist/esm/index.js
 +++ b/dist/esm/index.js
-@@ -256,4 +256,5 @@ function expand_(str, max, maxLength, isTop) {
+@@ -282,4 +282,5 @@ function expand_(str, max, maxLength, isTop) {
      }
      return acc;
  }
