@@ -140,10 +140,10 @@ test("keeps rendered project sections mutually exclusive", () => {
     ...workbenchProjects.map(projectKey),
     ...otherProjects.map(projectKey),
   ]
-  const i0cProjectKey = "repository:https://github.com/Revaea/i0c.cc"
+  const namiProjectKey = "repository:https://github.com/Cedarflake/Cedarflake-Nami"
 
   assert.equal(new Set(renderedProjectKeys).size, renderedProjectKeys.length)
   assert.deepEqual(new Set(renderedProjectKeys), new Set(configuredProjectKeys))
-  assert.ok(showcaseProjectKeys.includes(i0cProjectKey))
-  assert.ok(!buildingProjectKeys.includes(i0cProjectKey))
+  assert.ok(showcaseProjectKeys.includes(namiProjectKey))
+  assert.ok(!buildingProjectKeys.includes(namiProjectKey))
 })
