@@ -4,6 +4,15 @@ import json
 import sys
 from pathlib import Path
 
+from core import (
+    BASE_ANCHOR_HUE,
+    BASE_PALETTE,
+    EXPORT_SIZES,
+    PRESETS,
+    build_palette,
+    build_svg,
+    clamp,
+)
 from PIL import Image, ImageChops, features
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QImage, QLinearGradient, QPainter, QPen
@@ -27,17 +36,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from core import (
-    BASE_ANCHOR_HUE,
-    BASE_PALETTE,
-    EXPORT_SIZES,
-    PRESETS,
-    build_palette,
-    build_svg,
-    clamp,
-)
-
 
 APP_NAME = "Revaea Dream Field Studio"
 COMMON_SIZES = {16, 32, 48, 64, 128, 256, 512, 1024}
@@ -364,8 +362,7 @@ class StudioWindow(QMainWindow):
         layout.addWidget(title)
 
         description = QLabel(
-            "拖到哪种颜色，图标的核心主色 c6 就变成哪种颜色；"
-            "其他区域保持原来的相对色相关系。"
+            "拖到哪种颜色，图标的核心主色 c6 就变成哪种颜色；其他区域保持原来的相对色相关系。"
         )
         description.setWordWrap(True)
         description.setStyleSheet("color:#777;")
@@ -487,9 +484,7 @@ class StudioWindow(QMainWindow):
         self.small_icon_threshold_combo = QComboBox()
         self.small_icon_threshold_combo.addItems(["≤ 24 px", "≤ 32 px", "≤ 48 px"])
         self.small_icon_threshold_combo.setCurrentText("≤ 32 px")
-        self.small_icon_threshold_combo.currentIndexChanged.connect(
-            self.smallIconSettingsChanged
-        )
+        self.small_icon_threshold_combo.currentIndexChanged.connect(self.smallIconSettingsChanged)
         layout.addWidget(self.small_icon_threshold_combo, 2, 1, 1, 2)
 
         layout.addWidget(QLabel("优化强度"), 3, 0)
@@ -497,9 +492,7 @@ class StudioWindow(QMainWindow):
         self.small_icon_strength_slider = QSlider(Qt.Horizontal)
         self.small_icon_strength_slider.setRange(0, 100)
         self.small_icon_strength_slider.setValue(65)
-        self.small_icon_strength_slider.valueChanged.connect(
-            self.smallIconSettingsChanged
-        )
+        self.small_icon_strength_slider.valueChanged.connect(self.smallIconSettingsChanged)
         layout.addWidget(self.small_icon_strength_slider, 3, 1)
 
         self.small_icon_strength_label = QLabel("65%")
@@ -514,9 +507,7 @@ class StudioWindow(QMainWindow):
         self.preview_size_combo.currentIndexChanged.connect(self.previewSizeChanged)
         layout.addWidget(self.preview_size_combo, 4, 1, 1, 2)
 
-        description = QLabel(
-            "选择实际像素尺寸后，左侧会先按该尺寸栅格化，再放大显示。"
-        )
+        description = QLabel("选择实际像素尺寸后，左侧会先按该尺寸栅格化，再放大显示。")
         description.setWordWrap(True)
         description.setStyleSheet("color:#777;")
         layout.addWidget(description, 5, 0, 1, 3)
@@ -534,8 +525,7 @@ class StudioWindow(QMainWindow):
         layout.addWidget(title)
 
         description = QLabel(
-            "可一次导出 SVG、PNG、WebP、AVIF、JPEG、ICO、TIFF、BMP。"
-            "JPEG 和 BMP 会使用指定背景色。"
+            "可一次导出 SVG、PNG、WebP、AVIF、JPEG、ICO、TIFF、BMP。JPEG 和 BMP 会使用指定背景色。"
         )
         description.setWordWrap(True)
         description.setStyleSheet("color:#777;")
@@ -650,11 +640,7 @@ class StudioWindow(QMainWindow):
         return build_palette(self.hue, self.saturation, self.contrast)
 
     def useSmallIconMode(self, size, master=False):
-        return (
-            not master
-            and self.small_icon_enabled
-            and int(size) <= self.small_icon_threshold
-        )
+        return not master and self.small_icon_enabled and int(size) <= self.small_icon_threshold
 
     def currentSvg(self, size=1024, master=False):
         return build_svg(
@@ -681,8 +667,7 @@ class StudioWindow(QMainWindow):
 
         if self.small_icon_enabled:
             small_text = (
-                f"小尺寸 ≤{self.small_icon_threshold}px / "
-                f"{round(self.small_icon_strength * 100)}%"
+                f"小尺寸 ≤{self.small_icon_threshold}px / {round(self.small_icon_strength * 100)}%"
             )
         else:
             small_text = "小尺寸优化关闭"
@@ -757,9 +742,7 @@ class StudioWindow(QMainWindow):
         self.small_icon_threshold = int(number) if number else 32
 
         self.small_icon_strength = self.small_icon_strength_slider.value() / 100.0
-        self.small_icon_strength_label.setText(
-            f"{self.small_icon_strength_slider.value()}%"
-        )
+        self.small_icon_strength_label.setText(f"{self.small_icon_strength_slider.value()}%")
 
         self.refresh()
 
@@ -937,24 +920,14 @@ class StudioWindow(QMainWindow):
                 for name, checkbox in self.format_checks.items():
                     checkbox.setChecked(checkbox.isEnabled() and name in formats)
 
-            sizes = {
-                int(value)
-                for value in export.get("sizes", [])
-                if str(value).isdigit()
-            }
+            sizes = {int(value) for value in export.get("sizes", []) if str(value).isdigit()}
             if sizes:
                 for size, checkbox in self.size_checks.items():
                     checkbox.setChecked(size in sizes)
 
-            self.quality_spin.setValue(
-                max(50, min(100, int(export.get("quality", 95))))
-            )
-            self.webp_lossless_check.setChecked(
-                bool(export.get("webp_lossless", True))
-            )
-            self.webp_compat_check.setChecked(
-                bool(export.get("webp_compat", True))
-            )
+            self.quality_spin.setValue(max(50, min(100, int(export.get("quality", 95)))))
+            self.webp_lossless_check.setChecked(bool(export.get("webp_lossless", True)))
+            self.webp_compat_check.setChecked(bool(export.get("webp_compat", True)))
 
             opaque_background = export.get("opaque_background", "白色")
             if opaque_background in ("白色", "黑色", "跟随预览"):
@@ -975,11 +948,7 @@ class StudioWindow(QMainWindow):
             checkbox.setChecked(True)
 
     def selectedSizes(self):
-        return [
-            size
-            for size, checkbox in self.size_checks.items()
-            if checkbox.isChecked()
-        ]
+        return [size for size, checkbox in self.size_checks.items() if checkbox.isChecked()]
 
     def selectCommonFormats(self):
         for name, checkbox in self.format_checks.items():
@@ -991,11 +960,7 @@ class StudioWindow(QMainWindow):
                 checkbox.setChecked(True)
 
     def selectedFormats(self):
-        return [
-            name
-            for name, checkbox in self.format_checks.items()
-            if checkbox.isChecked()
-        ]
+        return [name for name, checkbox in self.format_checks.items() if checkbox.isChecked()]
 
     def renderImage(self, size):
         renderer = QSvgRenderer(self.currentSvg(size).encode("utf-8"))
@@ -1061,16 +1026,12 @@ class StudioWindow(QMainWindow):
             decoded.load()
 
         if decoded.size != source.size:
-            raise RuntimeError(
-                f"WebP 回读尺寸异常：写入 {source.size}，读回 {decoded.size}"
-            )
+            raise RuntimeError(f"WebP 回读尺寸异常：写入 {source.size}，读回 {decoded.size}")
 
         if lossless and self.webp_compat_check.isChecked():
             difference = ImageChops.difference(source, decoded)
             if difference.getbbox() is not None:
-                raise RuntimeError(
-                    "WebP 无损回读校验失败：编码后像素与源 RGBA 不一致。"
-                )
+                raise RuntimeError("WebP 无损回读校验失败：编码后像素与源 RGBA 不一致。")
 
     def saveRaster(self, image, path, format_name):
         quality = int(self.quality_spin.value())
