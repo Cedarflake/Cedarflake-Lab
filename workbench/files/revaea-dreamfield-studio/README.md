@@ -24,13 +24,17 @@ Active local workbench project.
 
 ## Run
 
+```powershell
 uv run --frozen python main.py
+```
 
 ## Validation
 
+```powershell
 uvx ruff check .
 uvx ruff format --check .
 uv run --frozen python -m unittest discover -s tests -p "test_*.py" -v
+```
 
 ## License
 
