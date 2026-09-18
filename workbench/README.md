@@ -11,6 +11,7 @@ Local Python utilities, small projects, and experiments.
 | `automation/clicker` | Mouse clicker and pointer position helpers. |
 | `files/scan-img-to` | Scan images and copy them to target directories. |
 | `files/sync-multi` | Multi-source directory sync utility. |
+| `files/revaea-dreamfield-studio` | Interactive studio for recoloring and exporting Revaea Dream Field icons. |
 | `media/adjust-gif` | GUI GIF speed adjuster. |
 | `media/ascii-art` | Convert images and videos into ASCII art. |
 | `media/cut-image` | Split an image into horizontal slices. |

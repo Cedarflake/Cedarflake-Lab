@@ -113,6 +113,10 @@ jobs:
         working-directory: workbench/network/campus-net
         run: xvfb-run -a uv run python -m unittest discover -s tests -p "test_*.py" -v
 
+      - name: Test Revaea Dream Field Studio
+        working-directory: workbench/files/revaea-dreamfield-studio
+        run: uv run --frozen python -m unittest discover -s tests -p "test_*.py" -v
+
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -137,6 +141,9 @@ jobs:
             arguments: .
           - name: campus-net
             directory: workbench/network/campus-net
+            arguments: .
+          - name: Revaea Dream Field Studio
+            directory: workbench/files/revaea-dreamfield-studio
             arguments: .
 
     name: Audit ${{ matrix.name }}

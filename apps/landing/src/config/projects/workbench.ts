@@ -126,4 +126,14 @@ export const workbenchProjectEntries = [
     section: "workbench",
     category: "network",
   },
+  {
+    title: "Revaea Dream Field Studio",
+    path: "workbench/files/revaea-dreamfield-studio",
+    updatedAt: "2026-09-18T13:39:00+08:00",
+    summary: "Interactive studio for recoloring and exporting Revaea Dream Field icons.",
+    kind: "workbench",
+    presentation: "workbench",
+    section: "workbench",
+    category: "files",
+  },
 ] as const satisfies readonly WorkbenchProject<WorkbenchCategory>[]
