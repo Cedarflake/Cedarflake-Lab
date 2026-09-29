@@ -2,6 +2,22 @@ import type { CatalogProject } from "../../types/project"
 
 export const buildingProjectEntries = [
   {
+    title: "InFalsusTouch",
+    repositoryUrl: "https://github.com/Cedarflake/InFalsusTouch",
+    externalAction: {
+      kind: "install",
+      url: "https://github.com/Cedarflake/InFalsusTouch/releases/tag/v0.5.0-preview.1",
+    },
+    updatedAt: "2026-09-29T16:16:11+08:00",
+    summary:
+      "An unofficial Android USB touch controller for In Falsus, with streamed gameplay, six touch keys, Field control, and multi-device co-op.",
+    label: "Touch controller",
+    lifecycle: "active",
+    kind: "app",
+    presentation: "catalog",
+    section: "building",
+  },
+  {
     title: "Cedarflake Ame",
     repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Ame",
     updatedAt: "2026-08-11T00:22:26+08:00",

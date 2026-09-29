@@ -24,6 +24,12 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 | `workbench/*`                        | Local Python utilities and small projects.                                     | —                                             |
 | `others/*`                           | Others.                                                                        | —                                             |
 
+## Related repositories
+
+- [InFalsusTouch](https://github.com/Cedarflake/InFalsusTouch): an unofficial Android USB touch controller for the PC rhythm game In Falsus, with streamed gameplay, six touch keys, Field control, and multi-device co-op. [Download the preview](https://github.com/Cedarflake/InFalsusTouch/releases/tag/v0.5.0-preview.1).
+
+InFalsusTouch is maintained in its own repository and does not currently declare a reuse license.
+
 ## Commands
 
 ```bash
