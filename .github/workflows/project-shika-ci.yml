@@ -338,10 +338,11 @@ jobs:
               exit 1
             fi
 
+            # An RSC-only request has an empty cache-busting hash in Next.js.
             if ! curl --fail --silent --show-error --max-time 15 \
               --header "RSC: 1" \
               --dump-header "${output_prefix}.rsc.headers" \
-              "${base_url}${route}" \
+              "${base_url}${route}?_rsc" \
               --output "${output_prefix}.rsc"; then
               cat "${server_log}"
               echo "::error::Failed to request ${route} RSC"
@@ -529,7 +530,7 @@ jobs:
             --header "RSC: 1" \
             --dump-header "/tmp/shika-admin.rsc.headers" \
             --write-out "%{http_code}" \
-            "${base_url}/admin" \
+            "${base_url}/admin?_rsc" \
             --output "/tmp/shika-admin.rsc")"
 
           if [[ "${admin_rsc_status}" == "200" ]]; then
