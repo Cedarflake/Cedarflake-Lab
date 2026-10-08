@@ -15,7 +15,7 @@
     "db:check": "drizzle-kit check --config=drizzle.config.ts",
     "db:migrate:local": "tsx ./scripts/migrate-local.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.remote.config.ts",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm db:check"
+    "check": "pnpm --workspace-root check:dependency-security && pnpm lint && pnpm typecheck && pnpm test && pnpm db:check"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.6.22",
@@ -24,7 +24,7 @@
     "drizzle-orm": "0.45.2",
     "kysely": "0.28.17",
     "lucide-react": "^1.23.0",
-    "next": "16.3.3",
+    "next": "16.3.8",
     "next-intl": "4.13.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -38,7 +38,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "drizzle-kit": "0.31.10",
     "eslint": "^9",
-    "eslint-config-next": "16.3.3",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
     "tsx": "4.22.4",
     "typescript": "^5"

@@ -46,9 +46,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit Liminal Drift dependencies
-        run: pnpm --config.registry=https://registry.npmjs.org/ --filter liminal-drift --fail-if-no-match audit --audit-level high
-
       - name: Check Liminal Drift
         run: pnpm --filter liminal-drift check
 
@@ -123,3 +120,7 @@ jobs:
           path: apps/liminal-drift/artifacts/
           if-no-files-found: error
           retention-days: 7
+
+      - name: Audit Liminal Drift dependencies
+        if: ${{ !cancelled() }}
+        run: pnpm --config.registry=https://registry.npmjs.org/ --filter liminal-drift --fail-if-no-match audit --audit-level high

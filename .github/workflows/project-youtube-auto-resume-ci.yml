@@ -61,11 +61,12 @@ jobs:
           BASE_REF: ${{ github.event.before }}
         run: pnpm --filter @cedarflake/youtube-auto-resume --fail-if-no-match version:check --base-ref="$BASE_REF"
 
-      - name: Audit YouTube userscript dependencies
-        run: pnpm --config.registry=https://registry.npmjs.org/ --filter @cedarflake/youtube-auto-resume --fail-if-no-match audit --audit-level high
-
       - name: Install Playwright browser
         run: pnpm --dir others/userscripts/youtube-auto-resume exec playwright install --with-deps chromium
 
       - name: Check YouTube userscript
         run: pnpm --filter @cedarflake/youtube-auto-resume --fail-if-no-match check
+
+      - name: Audit YouTube userscript dependencies
+        if: ${{ !cancelled() }}
+        run: pnpm --config.registry=https://registry.npmjs.org/ --filter @cedarflake/youtube-auto-resume --fail-if-no-match audit --audit-level high

@@ -6,3 +6,6 @@
 *.webp binary
 *.gif binary
 *.ico binary
+
+# Unified patches preserve a single-space prefix on blank context lines.
+patches/*.patch whitespace=-blank-at-eol
