@@ -26,13 +26,14 @@
     "render:email": "pnpm --filter personal_email render:email",
     "check:focus-orb-package": "pnpm --filter @cedarflake/focus-orb pack:check && pnpm --filter @cedarflake/focus-orb-demo exec tsc -p package-consumer/tsconfig.json --noEmit",
     "test:repository-contract": "tsx --test scripts/repository-contract/*.test.ts",
-    "typecheck:repository-contract": "tsc -p tsconfig.repository-contract.json --noEmit"
+    "typecheck:repository-contract": "tsc -p tsconfig.repository-contract.json --noEmit",
+    "check:dependency-security": "node scripts/checkBracesSecurity.cjs"
   },
   "devDependencies": {
     "@types/node": "22.10.5",
     "@vitejs/plugin-react": "4.3.4",
-    "js-yaml": "5.2.2",
-    "smol-toml": "1.7.1",
+    "js-yaml": "5.4.1",
+    "smol-toml": "1.9.0",
     "tsx": "4.22.4",
     "typescript": "5.7.3",
     "vite": "6.4.3"

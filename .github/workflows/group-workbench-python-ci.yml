@@ -163,4 +163,12 @@ jobs:
 
       - name: Audit dependencies
         working-directory: ${{ matrix.directory }}
-        run: uvx pip-audit --progress-spinner off ${{ matrix.arguments }}
+        run: |
+          if [ -f uv.lock ]; then
+            requirements=$(mktemp)
+            trap 'rm -f "$requirements"' EXIT
+            uv export --frozen --all-groups --no-emit-project --format requirements.txt --output-file "$requirements"
+            uvx pip-audit --progress-spinner off --no-deps --disable-pip -r "$requirements"
+          else
+            uvx pip-audit --progress-spinner off ${{ matrix.arguments }}
+          fi
