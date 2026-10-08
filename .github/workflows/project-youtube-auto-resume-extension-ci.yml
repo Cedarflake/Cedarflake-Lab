@@ -48,9 +48,6 @@ jobs:
       - name: Install dependencies
         run: pnpm --filter @cedarflake/youtube-auto-resume-extension --fail-if-no-match install --frozen-lockfile
 
-      - name: Audit extension dependencies
-        run: pnpm --config.registry=https://registry.npmjs.org/ --filter @cedarflake/youtube-auto-resume-extension --fail-if-no-match audit --audit-level high
-
       - name: Check extension
         run: pnpm --filter @cedarflake/youtube-auto-resume-extension --fail-if-no-match check
 
@@ -62,3 +59,7 @@ jobs:
 
       - name: Test extension runtime
         run: pnpm --filter @cedarflake/youtube-auto-resume-extension --fail-if-no-match test:e2e
+
+      - name: Audit extension dependencies
+        if: ${{ !cancelled() }}
+        run: pnpm --config.registry=https://registry.npmjs.org/ --filter @cedarflake/youtube-auto-resume-extension --fail-if-no-match audit --audit-level high

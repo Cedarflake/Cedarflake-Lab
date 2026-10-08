@@ -10,12 +10,15 @@ minimumReleaseAgeStrict: true
 
 overrides:
   "@esbuild-kit/core-utils>esbuild": 0.25.4
-  brace-expansion: 5.0.9
+  brace-expansion: 5.0.12
+  "fflate@>=0.6.0 <0.6.11": 0.6.11
   browserslist: 4.29.2
   "js-yaml@>=4.0.0 <5": 4.3.2
   kysely: 0.28.17
   postcss: 8.5.23
-  sharp: 0.35.4
+  sharp: 0.35.5
+  source-map-js: 1.2.2
+  "vitest@4.1.10": 4.1.11
   use-sync-external-store: 1.4.0
 
 allowBuilds:
@@ -24,10 +27,9 @@ allowBuilds:
   "@swc/core": true
   esbuild: true
   sharp: true
-
-ignoredBuiltDependencies:
-  - unrs-resolver
+  unrs-resolver: false
 
 # Keep minimatch 3 and 9 compatible with the patched brace-expansion API.
 patchedDependencies:
-  brace-expansion@5.0.9: patches/brace-expansion@5.0.9.patch
+  brace-expansion@5.0.12: patches/brace-expansion@5.0.12.patch
+  braces@3.0.3: patches/braces@3.0.3.patch
