@@ -1,6 +1,8 @@
 import { chromium, devices } from "playwright"
 
+import { browserLaunchOptions } from "./browserLaunchOptions.mjs"
 import { measureSceneDifference, screenshotCanvas } from "./browserVisualChecks.mjs"
+import { checkBackgroundPause } from "./checkBackgroundPause.mjs"
 
 const url = process.argv.find((value) => value.startsWith("http")) ?? "http://localhost:5173/"
 
@@ -41,6 +43,19 @@ async function readProgressValue(page, label) {
   }
 
   return value
+}
+
+/**
+ * @param {import("playwright").Page} page
+ * @param {number} limit
+ */
+async function waitForSpeedAbove(page, limit) {
+  await page.waitForFunction(
+    (speed) => Number(document.querySelector(".hud__metric--speed strong")?.textContent) > speed,
+    limit,
+    { timeout: 15000 },
+  )
+  return Number(await page.locator(".hud__metric--speed strong").textContent())
 }
 
 /**
@@ -163,10 +178,11 @@ async function setMockGamepad(page, state) {
   }, state)
 }
 
-const browser = await chromium.launch()
+const browser = await chromium.launch(browserLaunchOptions())
 let keyboardSceneDifference = 0
 
 try {
+  await checkBackgroundPause(browser, url)
   {
     const context = await browser.newContext({ ...devices["Pixel 7"] })
     const page = await context.newPage()
@@ -182,7 +198,7 @@ try {
   }
 
   {
-    const context = await browser.newContext()
+    const context = await browser.newContext({ viewport: { width: 960, height: 540 } })
     const page = await context.newPage()
 
     await page.goto(url, { waitUntil: "domcontentloaded" })
@@ -190,7 +206,7 @@ try {
     await startButton.waitFor()
     await Promise.all([startButton.click(), page.keyboard.down("w")])
     await page.locator("canvas").waitFor()
-    await page.waitForTimeout(900)
+    await waitForSpeedAbove(page, 5)
 
     const startupText = await page.locator("body").innerText()
     const startupSpeed = readMetric(startupText, "SPEED")
@@ -202,7 +218,7 @@ try {
     await page.evaluate(() => {
       window.dispatchEvent(new Event("blur"))
     })
-    await page.waitForTimeout(700)
+    await waitForSpeedAbove(page, startupSpeed + 3)
 
     const runningBlurText = await page.locator("body").innerText()
     const runningBlurSpeed = readMetric(runningBlurText, "SPEED")
@@ -225,8 +241,9 @@ try {
     }
 
     const beforeKeyboardMotion = await screenshotCanvas(page)
+    const beforeMotionSpeed = readMetric(await page.locator("body").innerText(), "SPEED")
     await page.keyboard.down("w")
-    await page.waitForTimeout(700)
+    await waitForSpeedAbove(page, beforeMotionSpeed + 5)
     const afterKeyboardMotion = await screenshotCanvas(page)
     keyboardSceneDifference = measureSceneDifference(beforeKeyboardMotion, afterKeyboardMotion)
 
@@ -234,35 +251,102 @@ try {
       throw new Error(`Expected W input to visibly move the scene, got ${keyboardSceneDifference}`)
     }
 
-    await page.keyboard.down("d")
-    await page.keyboard.down("Space")
-    const driftCharge = await waitForProgressAboveZero(page, "Drift charge", 4200)
-
-    if (driftCharge <= 0) {
-      throw new Error(`Expected keyboard drifting to build charge, got ${driftCharge}`)
+    await page.keyboard.up("w")
+    await page.keyboard.down("s")
+    await page.getByRole("dialog", { name: "Race ended" }).waitFor({ timeout: 240000 })
+    await page.keyboard.up("s")
+    await page.waitForTimeout(400)
+    const endedSignal = await page.locator(".signal-interference").evaluate((element) => ({
+      intensity: element.getAttribute("data-intensity"),
+      animation: getComputedStyle(element).animationPlayState,
+    }))
+    if (endedSignal.intensity !== "1.000" || endedSignal.animation !== "running") {
+      throw new Error(
+        `Expected persistent interference on the end dialog: ${JSON.stringify(endedSignal)}`,
+      )
     }
+    await page.getByRole("button", { name: "Drive again", exact: true }).click()
+    await page.waitForTimeout(800)
+    if ((await page.locator('[role="dialog"]').count()) !== 0) {
+      throw new Error("Expected one Drive again click to dismiss the end dialog")
+    }
+    if ((await page.locator(".signal-interference").getAttribute("data-intensity")) !== "0.060") {
+      throw new Error("Expected restart to reset interference to its mild baseline")
+    }
+    await page.keyboard.down("w")
+    await waitForSpeedAbove(page, 5)
+    await page.keyboard.up("w")
+    console.log("road-end restart ok", { singleClick: true, resetIntensity: "0.060" })
+    await context.close()
+  }
 
-    await page.keyboard.up("Space")
-    await page.keyboard.up("d")
+  {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    // A real reverse input must darken the edges, freeze on pause, and clear when driving forward.
+    await page.goto(url, { waitUntil: "domcontentloaded" })
+    await page.getByRole("button", { name: "Start driving" }).click()
+    await page.keyboard.down("s")
+    await page.waitForFunction(
+      () =>
+        Number(document.querySelector(".reverse-vignette")?.getAttribute("data-darkness")) > 0.08,
+      undefined,
+      { timeout: 30000 },
+    )
+    await page.keyboard.up("s")
+    await page.keyboard.press("Escape")
+    await page.getByRole("dialog", { name: "Paused" }).waitFor()
+    const pausedDarkness = await page.locator(".reverse-vignette").getAttribute("data-darkness")
+    await page.waitForTimeout(700)
+    if ((await page.locator(".reverse-vignette").getAttribute("data-darkness")) !== pausedDarkness)
+      throw new Error("Reverse darkness changed while paused")
+    await page.getByRole("button", { name: "Resume", exact: true }).click()
+    await page.keyboard.down("w")
+    await page.waitForFunction(
+      () =>
+        Number(document.querySelector(".reverse-vignette")?.getAttribute("data-darkness")) < 0.01,
+      undefined,
+      { timeout: 15000 },
+    )
+    await page.keyboard.up("w")
+    await context.close()
+  }
+
+  {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    // Keep input retention on the opening straight, before collisions or a
+    // previous drift can change speed independently of the held throttle.
+    await page.goto(url, { waitUntil: "domcontentloaded" })
+    await page.getByRole("button", { name: "Start driving" }).click()
+    await page.getByRole("button", { name: "Pause", exact: true }).waitFor()
+    await page.keyboard.down("w")
+    await waitForSpeedAbove(page, 25)
     await page.keyboard.down("Escape")
     await page.getByRole("dialog", { name: "Paused" }).waitFor()
     await page.keyboard.up("Escape")
-    const pausedText = await page.locator("body").innerText()
-    const pausedSpeed = readMetric(pausedText, "SPEED")
+    const pausedSpeed = Number(await page.locator(".hud__metric--speed strong").textContent())
+
+    if (pausedSpeed <= 0) {
+      throw new Error(`Expected the car to be moving before pause, got ${pausedSpeed}`)
+    }
+
     await page.getByRole("button", { name: "Resume" }).click()
-    await page.waitForTimeout(900)
+    await waitForSpeedAbove(page, pausedSpeed + 3)
 
     const heldResumeText = await page.locator("body").innerText()
     const heldResumeSpeed = readMetric(heldResumeText, "SPEED")
 
-    if (heldResumeSpeed < pausedSpeed - 3) {
+    if (heldResumeSpeed <= pausedSpeed + 3) {
       throw new Error(
         `Expected held W to survive pause and resume, got ${pausedSpeed} -> ${heldResumeSpeed}`,
       )
     }
 
     await page.keyboard.up("w")
-    const resumedSpeed = await waitForMetricBelow(page, "SPEED", heldResumeSpeed - 4, 4000)
+    const resumedSpeed = await waitForMetricBelow(page, "SPEED", heldResumeSpeed - 4, 15000)
 
     if (resumedSpeed >= heldResumeSpeed - 4) {
       throw new Error(
@@ -270,6 +354,29 @@ try {
       )
     }
 
+    await context.close()
+  }
+
+  {
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    await page.goto(url, { waitUntil: "domcontentloaded" })
+    await page.getByRole("button", { name: "Start driving" }).click()
+    await page.getByRole("button", { name: "Pause", exact: true }).waitFor()
+    await page.keyboard.down("w")
+    await waitForSpeedAbove(page, 59)
+    await page.keyboard.down("d")
+    await page.keyboard.down("Space")
+    const driftCharge = await waitForProgressAboveZero(page, "Drift charge", 15000)
+
+    if (driftCharge <= 0) {
+      throw new Error(`Expected keyboard drifting to build charge, got ${driftCharge}`)
+    }
+
+    await page.keyboard.up("Space")
+    await page.keyboard.up("d")
+    await page.keyboard.up("w")
     await context.close()
   }
 
@@ -318,7 +425,7 @@ try {
     await page.locator(".race-control-button[aria-label='Pause']").waitFor()
     await page.waitForTimeout(350)
     await setMockGamepad(page, { buttons: { 7: 1 } })
-    await page.waitForTimeout(900)
+    await waitForSpeedAbove(page, 5)
 
     const text = await page.locator("body").innerText()
     const gamepadSpeed = readMetric(text, "SPEED")

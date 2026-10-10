@@ -1,191 +1,133 @@
 import { useEffect, useMemo, useRef } from "react"
-import type { RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
-import { PlaneGeometry } from "three"
+import { Object3D } from "three"
+import type { Group, InstancedMesh } from "three"
 
-import { desertTerrain, resolveDesertGroundHeight } from "@/game/desertTerrain"
-import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
-import { wrapDistance } from "@/game/number"
-import { resolveRelativeTrackCenter, resolveTrackHeading } from "@/game/trackPath"
+import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { createRoadRibbon } from "@/game/roadGeometry"
+import { useRoadWorld } from "@/game/roadWorld"
+import { roadChunkLength, roadLookAhead, roadLookBehind, roadWindowStart } from "@/game/trackPath"
 
-interface TrackSegmentRef {
-  position: {
-    set: (x: number, y: number, z: number) => void
-  }
-  rotation: {
-    set: (x: number, y: number, z: number) => void
-  }
-}
+function RoadChunk({ start }: { start: number }) {
+  const world = useRoadWorld()
+  const groupRef = useRef<Group>(null)
+  const postsRef = useRef<InstancedMesh>(null)
+  const railsRef = useRef<InstancedMesh>(null)
+  const surfaces = useMemo(() => {
+    const half = trackConfig.roadHalfWidth
+    return [
+      {
+        geometry: createRoadRibbon(world.road, start, [-9, 9], -0.09),
+        color: "#9b8584",
+      },
+      { geometry: createRoadRibbon(world.road, start, [-half, half], 0), color: dreamPalette.road },
+      ...[-1, 1].map((side) => ({
+        geometry: createRoadRibbon(
+          world.road,
+          start,
+          [side * half - 0.2, side * half + 0.2],
+          0.025,
+        ),
+        color: dreamPalette.roadEdge,
+      })),
+      ...[-1, 0, 1].map((lane) => ({
+        geometry: createRoadRibbon(
+          world.road,
+          start,
+          [lane * trackConfig.laneWidth - 0.04, lane * trackConfig.laneWidth + 0.04],
+          0.018,
+          true,
+        ),
+        color: "#ebe5d9",
+      })),
+    ]
+  }, [start, world])
 
-interface RoadSurfaceRef {
-  visible: boolean
-}
-
-interface TrackProps {
-  distanceRef: RefObject<number>
-}
-
-const alternateRoadColor = "#d0cacb"
-
-function createDesertTerrainGeometry(side: -1 | 1) {
-  const width = desertTerrain.sideHalfWidth
-  const geometry = new PlaneGeometry(width, desertTerrain.length, 22, 96)
-  const centerX = side * (trackConfig.roadHalfWidth + desertTerrain.sideGap + width / 2)
-  const positions = geometry.getAttribute("position")
-
-  if (!positions) {
-    throw new Error("Desert terrain geometry is missing position data")
-  }
-
-  for (let index = 0; index < positions.count; index += 1) {
-    const localX = positions.getX(index)
-    const localZAxis = positions.getY(index)
-    const worldX = centerX + localX
-    const worldZ = desertTerrain.centerZ - localZAxis
-
-    positions.setZ(index, resolveDesertGroundHeight(worldX, worldZ))
-  }
-
-  geometry.rotateX(-Math.PI / 2)
-  geometry.translate(centerX, 0, desertTerrain.centerZ)
-  geometry.computeVertexNormals()
-
-  return geometry
-}
-
-export function Track({ distanceRef }: TrackProps) {
-  const segmentRefs = useRef<Array<TrackSegmentRef | null>>([])
-  const roadSurfaceRefs = useRef<Array<RoadSurfaceRef | null>>([])
-  const terrainGeometries = useMemo(
-    () => [createDesertTerrainGeometry(-1), createDesertTerrainGeometry(1)],
-    [],
-  )
-  const segmentIndexes = useMemo(
-    () => Array.from({ length: trackConfig.visibleSegments }, (_, index) => index),
-    [],
-  )
-
+  useEffect(() => () => surfaces.forEach(({ geometry }) => geometry.dispose()), [surfaces])
   useEffect(() => {
-    return () => {
-      terrainGeometries.forEach((geometry) => {
-        geometry.dispose()
-      })
+    const anchor = world.road.sample(start)
+    const transform = new Object3D()
+    let index = 0
+    for (const side of [-1, 1]) {
+      for (let station = start; station < start + roadChunkLength; station += 4) {
+        const point = world.road.atOffset(station, side * trackConfig.barrierOffset)
+        const end = world.road.atOffset(station + 4, side * trackConfig.barrierOffset)
+        transform.position.set(point.x - anchor.x, 0.43, point.z - anchor.z)
+        transform.rotation.set(0, point.heading, 0)
+        transform.scale.set(0.13, 1, 0.2)
+        transform.updateMatrix()
+        postsRef.current?.setMatrixAt(index, transform.matrix)
+        transform.position.set(
+          (point.x + end.x) / 2 - anchor.x,
+          0.72,
+          (point.z + end.z) / 2 - anchor.z,
+        )
+        transform.rotation.y = Math.atan2(point.x - end.x, point.z - end.z)
+        transform.scale.set(
+          trackConfig.barrierHalfWidth * 2,
+          0.36,
+          Math.hypot(end.x - point.x, end.z - point.z) + 0.03,
+        )
+        transform.updateMatrix()
+        railsRef.current?.setMatrixAt(index, transform.matrix)
+        index += 1
+      }
     }
-  }, [terrainGeometries])
-
+    for (const mesh of [postsRef.current, railsRef.current]) {
+      if (!mesh) continue
+      mesh.instanceMatrix.needsUpdate = true
+      mesh.computeBoundingSphere()
+    }
+  }, [start, world])
   useFrame(() => {
-    const distance = distanceRef.current
-    const offset = wrapDistance(distance, trackConfig.segmentLength)
-    const firstSegmentDistance = Math.max(0, distance - offset)
-
-    segmentRefs.current.forEach((segment, index) => {
-      if (!segment) return
-
-      const segmentDistance = firstSegmentDistance + index * trackConfig.segmentLength
-      const segmentParity = Math.floor(segmentDistance / trackConfig.segmentLength) % 2
-      const z = -(segmentDistance - distance) + renderWindowConfig.trackZOffset
-      const bend = resolveRelativeTrackCenter(segmentDistance, distance)
-      const heading = resolveTrackHeading(segmentDistance)
-      const baseRoad = roadSurfaceRefs.current[index * 2]
-      const alternateRoad = roadSurfaceRefs.current[index * 2 + 1]
-
-      segment.position.set(bend, -0.12, z)
-      segment.rotation.set(0, heading, 0)
-
-      if (baseRoad) {
-        baseRoad.visible = segmentParity === 0
-      }
-
-      if (alternateRoad) {
-        alternateRoad.visible = segmentParity === 1
-      }
-    })
+    const point = world.pose(start)
+    groupRef.current?.position.set(point.x, 0, point.z)
   })
 
   return (
-    <group>
-      {terrainGeometries.map((geometry, index) => (
+    <group ref={groupRef} name={`road-chunk-${start}`}>
+      {surfaces.map(({ geometry, color }, index) => (
         <mesh key={index} receiveShadow>
-          <primitive attach="geometry" object={geometry} />
+          <primitive object={geometry} attach="geometry" />
           <meshStandardMaterial
-            color={dreamPalette.sand}
-            emissive={dreamPalette.duneShadow}
-            emissiveIntensity={0.035}
-            roughness={0.94}
+            color={color}
+            roughness={0.88}
+            polygonOffset={index > 1}
+            polygonOffsetFactor={-1}
+            polygonOffsetUnits={-2}
           />
         </mesh>
       ))}
-      <mesh position={[0, desertTerrain.baseY - 0.035, desertTerrain.centerZ]}>
-        <boxGeometry
-          args={[
-            trackConfig.roadHalfWidth * 2 + desertTerrain.sideGap * 2,
-            0.05,
-            desertTerrain.length,
-          ]}
-        />
-        <meshStandardMaterial
-          color={dreamPalette.sand}
-          emissive={dreamPalette.duneShadow}
-          emissiveIntensity={0.035}
-          roughness={0.92}
-        />
-      </mesh>
+      <instancedMesh
+        ref={postsRef}
+        args={[undefined, undefined, roadChunkLength / 2]}
+        castShadow
+        receiveShadow
+      >
+        <boxGeometry />
+        <meshStandardMaterial color="#645b60" roughness={0.84} metalness={0.3} />
+      </instancedMesh>
+      <instancedMesh
+        ref={railsRef}
+        args={[undefined, undefined, roadChunkLength / 2]}
+        castShadow
+        receiveShadow
+      >
+        <boxGeometry />
+        <meshStandardMaterial color="#b1aaa5" roughness={0.68} metalness={0.4} />
+      </instancedMesh>
+    </group>
+  )
+}
 
-      {segmentIndexes.map((index) => (
-        <group
-          key={index}
-          ref={(segment) => {
-            segmentRefs.current[index] = segment
-          }}
-        >
-          <mesh
-            receiveShadow
-            ref={(road) => {
-              roadSurfaceRefs.current[index * 2] = road
-            }}
-          >
-            <boxGeometry
-              args={[trackConfig.roadHalfWidth * 2, 0.18, trackConfig.segmentLength + 0.36]}
-            />
-            <meshStandardMaterial color={dreamPalette.road} roughness={0.72} />
-          </mesh>
-          <mesh
-            receiveShadow
-            ref={(road) => {
-              roadSurfaceRefs.current[index * 2 + 1] = road
-            }}
-          >
-            <boxGeometry
-              args={[trackConfig.roadHalfWidth * 2, 0.18, trackConfig.segmentLength + 0.36]}
-            />
-            <meshStandardMaterial color={alternateRoadColor} roughness={0.72} />
-          </mesh>
-
-          <mesh position={[-trackConfig.roadHalfWidth - 0.12, 0.03, 0]}>
-            <boxGeometry args={[0.16, 0.2, trackConfig.segmentLength - 0.2]} />
-            <meshStandardMaterial
-              color={dreamPalette.roadEdge}
-              emissive={dreamPalette.roadEdge}
-              emissiveIntensity={0.25}
-            />
-          </mesh>
-          <mesh position={[trackConfig.roadHalfWidth + 0.12, 0.03, 0]}>
-            <boxGeometry args={[0.16, 0.2, trackConfig.segmentLength - 0.2]} />
-            <meshStandardMaterial
-              color={dreamPalette.roadEdge}
-              emissive={dreamPalette.roadEdge}
-              emissiveIntensity={0.25}
-            />
-          </mesh>
-
-          {[-1, 0, 1].map((lane) => (
-            <mesh key={lane} position={[lane * trackConfig.laneWidth, 0.04, 0]}>
-              <boxGeometry args={[0.08, 0.05, trackConfig.segmentLength * 0.44]} />
-              <meshBasicMaterial color="#ffffff" transparent opacity={0.34} />
-            </mesh>
-          ))}
-        </group>
+export function Track({ distance }: { distance: number }) {
+  const start = roadWindowStart(distance)
+  const count = (roadLookAhead + roadLookBehind) / roadChunkLength + 1
+  return (
+    <group name="endless-road">
+      {Array.from({ length: count }, (_, index) => (
+        <RoadChunk key={start + index * roadChunkLength} start={start + index * roadChunkLength} />
       ))}
     </group>
   )

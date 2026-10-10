@@ -1,0 +1,135 @@
+.display-texture {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-display-texture);
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 48%, rgba(16, 12, 23, 0.25) 100%),
+    linear-gradient(180deg, rgba(168, 187, 154, 0.025), rgba(84, 60, 96, 0.035));
+}
+
+.display-texture::before,
+.display-texture::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.display-texture::before {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 2px,
+      rgba(10, 7, 15, 0.12) 2px 3px,
+      transparent 3px 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(196, 112, 114, 0.055) 0 1px,
+      rgba(119, 179, 133, 0.04) 1px 2px,
+      rgba(121, 132, 188, 0.055) 2px 3px
+    );
+}
+
+.display-texture::after {
+  opacity: 0.09;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Cfilter id='grain' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch' seed='17'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cpath fill='%23888888' d='M0 0h192v192H0z' filter='url(%23grain)'/%3E%3C/svg%3E");
+  background-size: 192px 192px;
+  mix-blend-mode: soft-light;
+}
+
+.screen-surface,
+.screen-tracking,
+.screen-signal {
+  position: absolute;
+  inset: 0;
+}
+
+.screen-tracking {
+  animation: signal-drift var(--signal-duration) steps(1, end) infinite;
+}
+
+.signal-interference,
+.signal-burst {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-impact);
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0 24%,
+      rgba(140, 184, 173, 0.7) 24% 24.6%,
+      rgba(170, 116, 148, 0.45) 24.6% 25.8%,
+      transparent 25.8% 64%,
+      rgba(153, 177, 169, 0.6) 64% 66%,
+      transparent 66% 82%,
+      rgba(169, 126, 149, 0.65) 82% 82.8%,
+      transparent 82.8%
+    ),
+    repeating-linear-gradient(180deg, transparent 0 3px, rgba(17, 9, 24, 0.8) 3px 5px);
+}
+
+.signal-interference {
+  opacity: var(--signal-opacity, 0);
+  background-size:
+    100% 145%,
+    100% 100%;
+}
+
+.signal-interference {
+  animation: signal-tracking var(--signal-duration) steps(1, end) infinite;
+}
+
+.signal-burst {
+  opacity: 0;
+}
+
+.game-shell[data-status="paused"] .screen-tracking,
+.game-shell[data-status="paused"] .signal-interference {
+  animation-play-state: paused;
+}
+
+@keyframes signal-drift {
+  0%,
+  60%,
+  100% {
+    transform: none;
+  }
+  64%,
+  82% {
+    transform: translateX(var(--signal-shift)) skewX(var(--signal-skew)) scale(1.004);
+  }
+  70%,
+  90% {
+    transform: translateX(calc(var(--signal-shift) * -0.6)) scale(1.004);
+  }
+}
+
+@keyframes signal-tracking {
+  0%,
+  100% {
+    background-position:
+      0 0,
+      0 0;
+  }
+  28% {
+    background-position:
+      0 65%,
+      0 2px;
+  }
+  63% {
+    background-position:
+      0 100%,
+      0 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-tracking,
+  .signal-interference {
+    animation: none;
+  }
+}

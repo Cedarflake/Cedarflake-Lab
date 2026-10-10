@@ -6,14 +6,13 @@ import { AdditiveBlending, Color } from "three"
 import type { Group } from "three"
 import type { MeshBasicMaterial } from "three"
 
-import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
-import { resolveRelativeTrackPose, resolveTrackLaneOffset } from "@/game/trackPath"
+import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { useRoadWorld } from "@/game/roadWorld"
 import type { MemoryShard } from "@/shared/types"
 
 interface MemoryShardsProps {
   collectedMemoryShardEffectsRef: RefObject<Map<string, number>>
   collectedMemoryShardIdsRef: RefObject<Set<string>>
-  distanceRef: RefObject<number>
   elapsedTimeRef: RefObject<number>
   memoryShards: MemoryShard[]
 }
@@ -44,6 +43,23 @@ function MemoryShardNode({
   return (
     <group ref={nodeRef}>
       <group ref={coreRef}>
+        {[-1, 1].map((side) => (
+          <mesh
+            key={side}
+            position={[side * 0.29, side * 0.22, 0.08]}
+            rotation={[0.3, side * 0.5, 0.7]}
+            scale={[0.22, 0.46, 0.18]}
+          >
+            <octahedronGeometry args={[1, 0]} />
+            <meshStandardMaterial
+              color="#a3c0c9"
+              roughness={0.38}
+              metalness={0.28}
+              emissive="#51666f"
+              emissiveIntensity={0.4}
+            />
+          </mesh>
+        ))}
         <group ref={glowRef}>
           <mesh scale={[1.45, 1.45, 1.45]}>
             <octahedronGeometry args={[0.42, 0]} />
@@ -125,10 +141,10 @@ function MemoryShardNode({
 export function MemoryShards({
   collectedMemoryShardEffectsRef,
   collectedMemoryShardIdsRef,
-  distanceRef,
   elapsedTimeRef,
   memoryShards,
 }: MemoryShardsProps) {
+  const world = useRoadWorld()
   const burstCoreMaterialRefs = useRef<Array<MeshBasicMaterial | null>>([])
   const burstRingMaterialRefs = useRef<Array<MeshBasicMaterial | null>>([])
   const burstRefs = useRef<Array<Group | null>>([])
@@ -137,7 +153,6 @@ export function MemoryShards({
   const shardRefs = useRef<Array<Group | null>>([])
 
   useFrame(() => {
-    const distance = distanceRef.current
     const elapsedTime = elapsedTimeRef.current
     const collectedMemoryShardEffects = collectedMemoryShardEffectsRef.current
     const collectedMemoryShardIds = collectedMemoryShardIdsRef.current
@@ -148,27 +163,20 @@ export function MemoryShards({
 
       const core = coreRefs.current[index]
       const burst = burstRefs.current[index]
-      const pose = resolveRelativeTrackPose(memoryShard.distance, distance, 2)
-      const laneOffset = resolveTrackLaneOffset(
-        memoryShard.lane,
-        pose.heading,
-        trackConfig.laneWidth,
-      )
-      const phase = distance * 0.035 + index * 0.9
+      const pose = world.pose(memoryShard.distance, memoryShard.lane * trackConfig.laneWidth)
+      const phase = elapsedTime * 0.8 + memoryShard.distance * 0.035
       const blink = Math.sin(phase * 3.4) * 0.5 + 0.5
       const shimmer = Math.sin(phase * 8.2 + index) * 0.5 + 0.5
       const pulse = blink * 0.08 + shimmer * 0.025
       const glow = glowRefs.current[index]
 
-      shard.position.set(pose.x + laneOffset.x, 1.1 + Math.sin(phase) * 0.24, pose.z + laneOffset.z)
+      shard.position.set(pose.x, 1.1 + Math.sin(phase) * 0.24, pose.z)
       shard.rotation.set(
         Math.sin(phase) * 0.08,
         pose.heading + phase * 0.22,
         Math.cos(phase) * 0.08,
       )
-      shard.visible =
-        pose.z <= renderWindowConfig.memoryShards.near &&
-        pose.z >= renderWindowConfig.memoryShards.far
+      shard.visible = true
 
       if (collectedMemoryShardIds.has(memoryShard.id)) {
         const collectedAt = collectedMemoryShardEffects.get(memoryShard.id)

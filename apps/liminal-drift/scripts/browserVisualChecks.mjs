@@ -55,10 +55,10 @@ export function samplePng(buffer) {
  * @param {import("playwright").Page} page
  */
 export async function screenshotCanvas(page) {
-  const box = await page.locator("canvas").boundingBox()
+  const box = await page.locator(".game-shell").boundingBox()
 
   if (!box) {
-    throw new Error("Expected canvas bounds to be available")
+    throw new Error("Expected the game viewport bounds to be available")
   }
 
   return page.screenshot({ clip: box })

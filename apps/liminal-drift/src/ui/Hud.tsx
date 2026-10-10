@@ -13,6 +13,8 @@ export function Hud({ debugMode }: HudProps) {
   const bestScore = useGameStore((state) => state.bestScore)
   const speed = useGameStore((state) => state.speed)
   const distance = useGameStore((state) => state.distance)
+  const roadHint = useGameStore((state) => state.roadHint)
+  const roadOffset = useGameStore((state) => state.roadOffset)
   const integrity = useGameStore((state) => state.integrity)
   const combo = useGameStore((state) => state.combo)
   const driftCharge = useGameStore((state) => state.driftCharge)
@@ -30,6 +32,7 @@ export function Hud({ debugMode }: HudProps) {
       data-drift-ready={isDriftReady ? "true" : undefined}
       data-low-integrity={integrity <= trackConfig.lowIntegrityThreshold ? "true" : undefined}
       data-status={status}
+      data-road-offset={roadOffset.toFixed(2)}
       aria-label="Race telemetry"
       aria-hidden={status !== "running"}
     >
@@ -39,6 +42,20 @@ export function Hud({ debugMode }: HudProps) {
           <strong>{debugMode.label}</strong>
         </div>
       ) : null}
+
+      <div className="hud__wayfinding">
+        <span className="hud__route-mark" aria-hidden="true">
+          Exit / {String(Math.floor(distance / trackConfig.checkpointSpacing) + 1).padStart(3, "0")}
+        </span>
+        <div
+          className="hud__road-hint"
+          data-off-road={
+            Math.abs(roadOffset) > trackConfig.roadHalfWidth - 0.45 ? "true" : undefined
+          }
+        >
+          {roadHint}
+        </div>
+      </div>
 
       <div className="hud__bar-parameters" aria-label="Bar parameters">
         <div className="hud__bar-row">
@@ -86,23 +103,23 @@ export function Hud({ debugMode }: HudProps) {
       </div>
 
       <div className="hud__racer-parameters" aria-label="Racer parameters">
-        <div className="hud__dial hud__dial--score">
-          <span className="hud__dial-label">Score</span>
+        <div className="hud__metric hud__metric--score">
+          <span className="hud__metric-label">Score</span>
           <strong>{formatScoreNumber(score)}</strong>
           <small>Best {formatScoreNumber(bestScore)}</small>
         </div>
-        <div className="hud__dial">
-          <span className="hud__dial-label">Speed</span>
-          <strong>{formatRacerNumber(speed * 3.1)}</strong>
+        <div className="hud__metric hud__metric--speed">
+          <span className="hud__metric-label">Speed</span>
+          <strong>{formatRacerNumber(speed * 3.6)}</strong>
           <small>km/h</small>
         </div>
-        <div className="hud__dial">
-          <span className="hud__dial-label">Distance</span>
+        <div className="hud__metric hud__metric--distance">
+          <span className="hud__metric-label">Distance</span>
           <strong>{formatRacerNumber(distance)}</strong>
           <small>m</small>
         </div>
-        <div className="hud__dial">
-          <span className="hud__dial-label">Combo</span>
+        <div className="hud__metric hud__metric--combo">
+          <span className="hud__metric-label">Combo</span>
           <strong>{combo.toFixed(1)}x</strong>
           <small>{lastEvent}</small>
         </div>

@@ -12,6 +12,9 @@ interface GameState {
   score: number
   speed: number
   distance: number
+  roadOffset: number
+  roadHint: string
+  reverseDarkness: number
   integrity: number
   combo: number
   bestScore: number
@@ -22,6 +25,7 @@ interface GameState {
   driftCharge: number
   lastEvent: string
   impactId: number
+  screenImpactId: number
   feedbackId: number
   feedbackKind: FeedbackKind | null
   feedbackPoints: number
@@ -30,6 +34,8 @@ interface GameState {
   pause: () => void
   resume: () => void
   restart: () => void
+  endAtRoadBoundary: () => void
+  registerScreenImpact: () => void
   setTelemetry: (telemetry: GameTelemetry) => void
   addScore: (score: number, event: ScoreEvent) => void
   addDriftCharge: (score: number) => void
@@ -41,12 +47,18 @@ interface GameState {
 interface GameTelemetry {
   speed: number
   distance: number
+  roadOffset: number
+  roadHint: string
+  reverseDarkness?: number
 }
 
 const initialRunState = {
   score: 0,
   speed: 0,
   distance: 0,
+  roadOffset: 0,
+  roadHint: "Open road",
+  reverseDarkness: 0,
   integrity: 100,
   combo: 1,
   topSpeed: 0,
@@ -56,6 +68,7 @@ const initialRunState = {
   driftCharge: 0,
   lastEvent: "The exit is not where it was",
   impactId: 0,
+  screenImpactId: 0,
   feedbackId: 0,
   feedbackKind: null,
   feedbackPoints: 0,
@@ -81,11 +94,19 @@ export const useGameStore = create<GameState>((set) => ({
   resume: () => set((state) => (state.status === "paused" ? { status: "running" } : state)),
   restart: () =>
     set((state) => ({ status: "running", runId: state.runId + 1, ...initialRunState })),
+  endAtRoadBoundary: () =>
+    set({
+      status: "ended",
+      speed: 0,
+      reverseDarkness: 1,
+      lastEvent: "There is no road behind you",
+    }),
   setTelemetry: (telemetry) =>
     set((state) => ({
       ...telemetry,
       topSpeed: Math.max(state.topSpeed, telemetry.speed),
     })),
+  registerScreenImpact: () => set((state) => ({ screenImpactId: state.screenImpactId + 1 })),
   addScore: (score, event) =>
     set((state) => {
       const nextScore = state.score + Math.round(score * state.combo)
@@ -156,6 +177,7 @@ export const useGameStore = create<GameState>((set) => ({
         bestScore: resolveBestScore(state.bestScore, nextScore),
         lastEvent: willEndRun ? "The road folded in on itself" : "Static in the headlights",
         impactId: state.impactId + 1,
+        screenImpactId: state.screenImpactId + 1,
       }
     }),
   repair: (amount) =>

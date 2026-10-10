@@ -1,5 +1,6 @@
 :root {
-  --font-ui: Liminal-Drift-UI, sans-serif;
+  --font-ui: Liminal-Drift-Pixel, Liminal-Drift-UI;
+  --font-title: Liminal-Drift-Title, Liminal-Drift-Pixel;
   --color-text: #2c2631;
   --color-text-strong: #322936;
   --color-text-soft: rgba(62, 52, 68, 0.66);
@@ -40,4 +41,5 @@
   --z-overlay: 4;
   --z-impact: 5;
   --z-scene-error: 6;
+  --z-display-texture: 7;
 }

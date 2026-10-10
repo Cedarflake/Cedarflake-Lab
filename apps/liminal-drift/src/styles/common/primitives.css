@@ -1,67 +1,46 @@
 .ui-button {
-  min-height: 44px;
-  padding: 0 18px;
-  color: rgba(46, 38, 49, 0.94);
+  position: relative;
+  min-width: 260px;
+  min-height: 56px;
+  padding: 7px 26px 9px;
+  color: #d9d6c6;
   cursor: pointer;
-  background:
-    linear-gradient(180deg, rgba(207, 193, 126, 0.92), rgba(151, 136, 82, 0.9)), var(--color-accent);
-  border: 1px solid rgba(232, 222, 177, 0.52);
-  border-radius: var(--radius-control);
-  box-shadow:
-    var(--shadow-control),
-    inset 0 1px 0 rgba(245, 236, 196, 0.24);
-  transition:
-    background-color var(--duration-normal) var(--ease-standard),
-    box-shadow var(--duration-normal) var(--ease-standard),
-    transform var(--duration-normal) var(--ease-standard);
+  background: transparent;
+  border: 8px solid transparent;
+  border-image: url("/ui/psx/button-idle.png") 8 fill / 8px / 0 stretch;
+  border-radius: 0;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  text-shadow: 1px 1px #29202e;
 }
-
-.ui-button:hover {
-  background:
-    linear-gradient(180deg, rgba(217, 205, 141, 0.94), rgba(166, 151, 94, 0.92)),
-    var(--color-accent-hover);
-  box-shadow: var(--shadow-control-hover);
-  transform: translateY(-1px);
+.ui-button::before {
+  position: absolute;
+  top: calc(50% - 8px);
+  left: -38px;
+  width: 28px;
+  height: 16px;
+  content: "";
+  background: url("/ui/psx/selection-marker.png") center / contain no-repeat;
+  image-rendering: pixelated;
+  visibility: hidden;
 }
-
+.ui-button:is(:hover, :focus-visible) {
+  color: #f0edcc;
+  border-image-source: url("/ui/psx/button-selected.png");
+}
+.ui-button:is(:hover, :focus-visible)::before {
+  visibility: visible;
+}
 .ui-button:focus-visible {
-  outline: 3px solid var(--color-focus-ring);
-  outline-offset: 3px;
+  outline: 1px dotted #b7ba9b;
+  outline-offset: 2px;
 }
-
+.ui-button:active {
+  padding-top: 9px;
+  padding-bottom: 7px;
+  border-image-source: url("/ui/psx/button-pressed.png");
+}
 .ui-button--secondary {
-  color: rgba(230, 223, 207, 0.9);
-  background:
-    linear-gradient(180deg, rgba(229, 218, 189, 0.12), rgba(39, 34, 47, 0.36)),
-    rgba(55, 49, 61, 0.68);
-  border-color: rgba(199, 186, 137, 0.34);
-}
-
-.glass-panel {
-  color: var(--color-text);
-  background:
-    linear-gradient(180deg, rgba(225, 218, 205, 0.36), rgba(92, 82, 94, 0.34)), var(--color-surface);
-  border: var(--border-glass);
-  border-radius: var(--radius-control);
-  box-shadow: var(--shadow-panel);
-  backdrop-filter: var(--blur-panel);
-}
-
-.glass-card {
-  min-width: 0;
-  background:
-    linear-gradient(180deg, rgba(229, 218, 189, 0.12), rgba(39, 34, 47, 0.22)),
-    rgba(56, 50, 60, 0.42);
-  border: 1px solid rgba(207, 194, 152, 0.24);
-  border-radius: var(--radius-control);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-button {
-    transition: none;
-  }
-
-  .ui-button:hover {
-    transform: none;
-  }
+  color: #b6b4a9;
 }

@@ -7,6 +7,7 @@ import {
   resetBackgroundMusic,
 } from "@/app/backgroundMusic"
 import { preloadLoadingCakeAssets } from "@/app/loadingCakeAssets"
+import { ScreenSurface } from "@/app/ScreenSurface"
 import { resolveDebugMode } from "@/game/debugMode"
 import { useGameStore } from "@/game/useGameStore"
 import { useKeyboardInput } from "@/game/useInput"
@@ -239,7 +240,10 @@ export function App() {
   if (requiresDesktop) {
     return (
       <main className="game-shell" data-status="unsupported" tabIndex={-1}>
-        <DesktopRequired />
+        <ScreenSurface>
+          <DesktopRequired />
+          <div className="display-texture" aria-hidden="true" />
+        </ScreenSurface>
       </main>
     )
   }
@@ -252,25 +256,28 @@ export function App() {
       data-status={status}
       tabIndex={-1}
     >
-      <div className="scene-layer">
-        <SceneErrorBoundary
-          onError={() => {
-            setHasSceneError(true)
-          }}
-        >
-          <Suspense fallback={null}>
-            <LiminalRacerScene debugMode={debugMode} onReady={() => setHasSceneFrame(true)} />
-          </Suspense>
-        </SceneErrorBoundary>
-      </div>
-      {isLoadingVisible ? <SceneLoading isExiting={isLoadingExiting} /> : null}
-      {canShowGameUi ? (
-        <>
-          <DrivingFeedback />
-          <Hud debugMode={debugMode} />
-          <GameOverlay />
-        </>
-      ) : null}
+      <ScreenSurface>
+        <div className="scene-layer">
+          <SceneErrorBoundary
+            onError={() => {
+              setHasSceneError(true)
+            }}
+          >
+            <Suspense fallback={null}>
+              <LiminalRacerScene debugMode={debugMode} onReady={() => setHasSceneFrame(true)} />
+            </Suspense>
+          </SceneErrorBoundary>
+        </div>
+        {isLoadingVisible ? <SceneLoading isExiting={isLoadingExiting} /> : null}
+        {canShowGameUi ? (
+          <>
+            <DrivingFeedback />
+            <Hud debugMode={debugMode} />
+            <GameOverlay />
+          </>
+        ) : null}
+        <div className="display-texture" aria-hidden="true" />
+      </ScreenSurface>
     </main>
   )
 }

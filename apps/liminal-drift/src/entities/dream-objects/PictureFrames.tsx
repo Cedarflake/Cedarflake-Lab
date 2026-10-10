@@ -8,8 +8,10 @@ import type { Group } from "three"
 import { resolveDesertGroundHeight } from "@/game/desertTerrain"
 import { dreamPalette, sceneryConfig, trackConfig } from "@/game/gameConfig"
 
+import { ModelDetails } from "../ModelDetails"
+
 import { createSideSceneryItems } from "./shared"
-import { useScrollingScenery } from "./useScrollingScenery"
+import { useWorldScenery } from "./useWorldScenery"
 
 interface PictureFramesProps {
   distanceRef: RefObject<number>
@@ -27,15 +29,6 @@ const pictureFrameOuterWidth = pictureFrameVisualWidth + 0.44
 const pictureFrameOuterHeight = pictureFrameVisualHeight + 0.44
 const pictureFrameRailThickness = 0.16
 const { pictureFrames } = sceneryConfig
-
-function resolvePictureFrameFlicker(distance: number, index: number) {
-  const { flicker } = pictureFrames
-
-  return (
-    Math.sin(distance * flicker.distanceSpeed + index * flicker.phaseStride) >
-    flicker.visibleThreshold
-  )
-}
 
 function PictureFrameImage() {
   const texture = useLoader(TextureLoader, "/image/image.png")
@@ -80,20 +73,67 @@ function PictureFrameChrome({ index }: { index: number }) {
 
   return (
     <>
+      <ModelDetails
+        parts={[-1, 1].flatMap((side): Parameters<typeof ModelDetails>[0]["parts"] => [
+          {
+            position: [side * (pictureFrameOuterWidth / 2 - 0.1), 0, 0.08],
+            size: [0.035, pictureFrameOuterHeight, 0.1],
+            color: "#b9a18f",
+          },
+          {
+            position: [0, side * (pictureFrameOuterHeight / 2 - 0.1), 0.08],
+            size: [pictureFrameOuterWidth, 0.035, 0.1],
+            color: "#b9a18f",
+          },
+          {
+            position: [
+              (side * pictureFrameOuterWidth) / 2,
+              -pictureFrameOuterHeight / 2 + 0.05,
+              -0.05,
+            ],
+            size: [0.38, 0.12, 0.62],
+            color: frameTint,
+          },
+        ])}
+      />
       <mesh position={[0, pictureFrameOuterHeight / 2, 0]}>
-        <boxGeometry args={[pictureFrameOuterWidth, pictureFrameRailThickness, 0.1]} />
+        <boxGeometry
+          args={[
+            pictureFrameOuterWidth + pictureFrameRailThickness,
+            pictureFrameRailThickness,
+            0.1,
+          ]}
+        />
         <meshStandardMaterial color={frameTint} roughness={0.78} />
       </mesh>
       <mesh position={[0, -pictureFrameOuterHeight / 2, 0]}>
-        <boxGeometry args={[pictureFrameOuterWidth, pictureFrameRailThickness, 0.1]} />
+        <boxGeometry
+          args={[
+            pictureFrameOuterWidth + pictureFrameRailThickness,
+            pictureFrameRailThickness,
+            0.1,
+          ]}
+        />
         <meshStandardMaterial color={frameTint} roughness={0.8} />
       </mesh>
       <mesh position={[-pictureFrameOuterWidth / 2, 0, 0]}>
-        <boxGeometry args={[pictureFrameRailThickness, pictureFrameOuterHeight, 0.1]} />
+        <boxGeometry
+          args={[
+            pictureFrameRailThickness,
+            pictureFrameOuterHeight - pictureFrameRailThickness,
+            0.1,
+          ]}
+        />
         <meshStandardMaterial color={frameTint} roughness={0.82} />
       </mesh>
       <mesh position={[pictureFrameOuterWidth / 2, 0, 0]}>
-        <boxGeometry args={[pictureFrameRailThickness, pictureFrameOuterHeight, 0.1]} />
+        <boxGeometry
+          args={[
+            pictureFrameRailThickness,
+            pictureFrameOuterHeight - pictureFrameRailThickness,
+            0.1,
+          ]}
+        />
         <meshStandardMaterial color={frameTint} roughness={0.82} />
       </mesh>
       <mesh
@@ -128,28 +168,30 @@ function PictureFrameNode({ index, nodeRef }: PictureFrameNodeProps) {
 
 export function PictureFrames({ distanceRef }: PictureFramesProps) {
   const pictureFrameItems = useMemo(() => createSideSceneryItems(pictureFrames.count), [])
-  const setPictureFrameRef = useScrollingScenery({
+  const setPictureFrameRef = useWorldScenery({
+    isSolid: true,
     cycleDistance: pictureFrames.cycleDistance,
     distanceRef,
     items: pictureFrameItems,
     originDistance: ({ index }) => pictureFrames.originStart + index * pictureFrames.spacing,
-    speed: pictureFrames.speed,
-    visibilityRange: pictureFrames.visibility,
-    update: ({ camera, distance, item, node, z }) => {
+    update: ({ item, node, z }) => {
       const { index, side } = item
-      const phase = distance * pictureFrames.phaseDistanceSpeed + index * pictureFrames.phaseStride
       const sideBand = index % pictureFrames.sideBandCount
       const x =
         side *
         (trackConfig.roadHalfWidth +
           pictureFrames.baseSideOffset +
-          sideBand * pictureFrames.sideBandOffset +
-          Math.sin(phase * pictureFrames.swaySpeed) * pictureFrames.swayAmplitude)
-      const groundY = resolveDesertGroundHeight(x, z)
+          sideBand * pictureFrames.sideBandOffset)
+      const groundY = resolveDesertGroundHeight(x, -z)
 
-      node.position.set(x, groundY + pictureFrames.groundOffset, z)
-      node.lookAt(camera.position.x, node.position.y, camera.position.z)
-      node.visible = node.visible && resolvePictureFrameFlicker(distance, index)
+      node.position.set(
+        x,
+        groundY +
+          ((pictureFrameOuterHeight + pictureFrameRailThickness) / 2) * node.scale.y -
+          0.015,
+        z,
+      )
+      node.rotation.set(0, -side * 0.2, 0)
     },
   })
 

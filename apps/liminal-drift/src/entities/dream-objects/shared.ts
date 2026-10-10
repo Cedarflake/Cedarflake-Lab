@@ -1,5 +1,3 @@
-import { wrapDistance } from "@/game/number"
-
 export type ScenerySide = -1 | 1
 
 export interface SideSceneryItem {
@@ -14,11 +12,7 @@ export function createSideSceneryItems(length: number) {
   }))
 }
 
-export function resolveSceneryZ(
-  originDistance: number,
-  distance: number,
-  speed: number,
-  cycle: number,
-) {
-  return 10 - wrapDistance(originDistance - distance * speed, cycle)
+export function resolveSceneryDistance(origin: number, distance: number, cycle: number) {
+  const span = Math.max(cycle, 1440)
+  return origin + Math.ceil((distance - 640 - origin) / span) * span
 }

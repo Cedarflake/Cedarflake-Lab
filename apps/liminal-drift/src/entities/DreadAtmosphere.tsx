@@ -3,8 +3,9 @@ import type { RefObject } from "react"
 
 import { useFrame } from "@react-three/fiber"
 
-import { dreamPalette, renderWindowConfig, trackConfig } from "@/game/gameConfig"
-import { wrapDistance } from "@/game/number"
+import { dreamPalette, trackConfig } from "@/game/gameConfig"
+import { useRoadWorld } from "@/game/roadWorld"
+import { resolveSceneryDistance } from "./dream-objects/shared"
 
 interface DreadAtmosphereProps {
   distanceRef: RefObject<number>
@@ -31,6 +32,7 @@ interface DreadGroupRef {
 
 interface DreadLightRef {
   intensity: number
+  position: { set: (x: number, y: number, z: number) => void }
 }
 
 const peripheralCycleDistance = 560
@@ -45,15 +47,6 @@ function smoothstep(edge0: number, edge1: number, value: number) {
   const t = Math.min(Math.max((value - edge0) / (edge1 - edge0), 0), 1)
 
   return t * t * (3 - 2 * t)
-}
-
-function resolveAtmosphereZ(
-  originDistance: number,
-  distance: number,
-  speed: number,
-  cycle: number,
-) {
-  return 12 - wrapDistance(originDistance - distance * speed, cycle)
 }
 
 function RememberedShapeNode({
@@ -151,12 +144,13 @@ function SkyTearNode({
 }
 
 export function DreadAtmosphere({ distanceRef, speedRef }: DreadAtmosphereProps) {
+  const world = useRoadWorld()
   const peripheralRefs = useRef<Array<DreadGroupRef | null>>([])
   const skyTearRefs = useRef<Array<DreadGroupRef | null>>([])
   const lightRef = useRef<DreadLightRef | null>(null)
   const peripheralNodes = useMemo<DreadNode[]>(
     () =>
-      Array.from({ length: 24 }, (_, index) => ({
+      Array.from({ length: 8 }, (_, index) => ({
         index,
         side: index % 2 === 0 ? -1 : 1,
       })),
@@ -164,7 +158,7 @@ export function DreadAtmosphere({ distanceRef, speedRef }: DreadAtmosphereProps)
   )
   const skyTearNodes = useMemo<DreadNode[]>(
     () =>
-      Array.from({ length: 12 }, (_, index) => ({
+      Array.from({ length: 8 }, (_, index) => ({
         index,
         side: index % 2 === 0 ? -1 : 1,
       })),
@@ -180,44 +174,38 @@ export function DreadAtmosphere({ distanceRef, speedRef }: DreadAtmosphereProps)
       const node = peripheralRefs.current[index]
       if (!node) return
 
-      const z = resolveAtmosphereZ(36 + index * 41, distance, 0.92, peripheralCycleDistance)
-      const phase = distance * 0.018 + index * 1.31
+      const station = resolveSceneryDistance(36 + index * 53, distance, peripheralCycleDistance)
+      const phase = world.elapsed * 0.3 + index * 1.31
       const shoulder = trackConfig.roadHalfWidth + 3.4 + (index % 4) * 2.15
-      const blink = Math.sin(distance * 0.09 + index * 2.7) > 0.86
+      const blink = Math.sin(world.elapsed * 0.9 + index * 2.7) > 0.86
       const heightPulse = 1 + Math.sin(phase * 0.6) * 0.1 + (blink ? 0.58 : 0)
+      const pose = world.pose(station, side * (shoulder + Math.sin(phase * 0.7) * 0.56))
 
-      node.position.set(
-        side * (shoulder + Math.sin(phase * 0.7) * 0.56),
-        0.7 + Math.sin(phase) * 0.12,
-        z,
-      )
+      node.position.set(pose.x, 0.7 + Math.sin(phase) * 0.12, pose.z)
       node.scale.setScalar((0.86 + (index % 5) * 0.1) * heightPulse)
-      node.rotation.set(0, side > 0 ? -0.2 : 0.2, Math.sin(phase * 0.4) * 0.045)
-      node.visible =
-        z < renderWindowConfig.dreadPeripheral.near && z > renderWindowConfig.dreadPeripheral.far
+      node.rotation.set(0, pose.heading + (side > 0 ? -0.2 : 0.2), Math.sin(phase * 0.4) * 0.045)
+      node.visible = station > distance - 200 && station < distance + 360
     })
 
     skyTearNodes.forEach(({ index, side }) => {
       const node = skyTearRefs.current[index]
       if (!node) return
 
-      const z = resolveAtmosphereZ(96 + index * 78, distance, 0.38, skyTearCycleDistance)
-      const phase = distance * 0.011 + index * 0.93
-      const blink = Math.sin(distance * 0.041 + index * 3.2) > 0.96
+      const station = resolveSceneryDistance(96 + index * 78, distance, skyTearCycleDistance)
+      const phase = world.elapsed * 0.18 + index * 0.93
+      const blink = Math.sin(world.elapsed * 0.41 + index * 3.2) > 0.96
+      const pose = world.pose(station, side * (11.5 + (index % 3) * 6.2 + Math.sin(phase) * 1.6))
 
-      node.position.set(
-        side * (11.5 + (index % 3) * 6.2 + Math.sin(phase) * 1.6),
-        8.8 + (index % 3) * 2 + Math.cos(phase * 0.8) * 0.6,
-        z,
-      )
+      node.position.set(pose.x, 8.8 + (index % 3) * 2 + Math.cos(phase * 0.8) * 0.6, pose.z)
       node.scale.setScalar(1.28 + speedTension * 0.16 + (blink ? 0.4 : 0))
-      node.rotation.set(0, 0, side * 0.055 + Math.sin(phase * 0.55) * 0.055)
-      node.visible =
-        z < renderWindowConfig.dreadSkyTear.near && z > renderWindowConfig.dreadSkyTear.far
+      node.rotation.set(0, pose.heading, side * 0.055 + Math.sin(phase * 0.55) * 0.055)
+      node.visible = station > distance - 200 && station < distance + 360
     })
 
     const light = lightRef.current
     if (light) {
+      const pose = world.pose(distance + 58)
+      light.position.set(pose.x, 9, pose.z)
       const pulse = smoothstep(0.62, 0.94, Math.sin(distance * 0.025))
       const targetIntensity = 0.55 + speedTension * 0.74 + pulse * 2.2
 

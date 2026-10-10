@@ -48,7 +48,7 @@ export function GameOverlay() {
   const resume = useGameStore((state) => state.resume)
   const restart = useGameStore((state) => state.restart)
   const dialogRef = useDialogFocusTrap(status)
-  const [isDialogExiting, setIsDialogExiting] = useState(false)
+  const isDialogExiting = status === "running"
   const stats = useMemo<RunStatsData>(
     () => ({
       bestDriftScore,
@@ -67,25 +67,20 @@ export function GameOverlay() {
     void playBackgroundMusic().catch(() => undefined)
   }, [])
 
-  const runWithDialogExit = useCallback((action: () => void) => {
-    setIsDialogExiting(true)
-    action()
-  }, [])
-
   const handleStart = useCallback(() => {
     playMusicFromGesture()
-    runWithDialogExit(start)
-  }, [playMusicFromGesture, runWithDialogExit, start])
+    start()
+  }, [playMusicFromGesture, start])
 
   const handleResume = useCallback(() => {
     playMusicFromGesture()
-    runWithDialogExit(resume)
-  }, [playMusicFromGesture, resume, runWithDialogExit])
+    resume()
+  }, [playMusicFromGesture, resume])
 
   const handleRestart = useCallback(() => {
     playMusicFromGesture()
-    runWithDialogExit(restart)
-  }, [playMusicFromGesture, restart, runWithDialogExit])
+    restart()
+  }, [playMusicFromGesture, restart])
 
   const gamepadStatus = useGamepadOverlayControls({
     onPause: pause,
@@ -131,7 +126,6 @@ export function GameOverlay() {
       stats,
       status,
     })
-    setIsDialogExiting(false)
   }, [gamepadStatusText, hasNewBest, stats, status])
 
   useEffect(() => {
@@ -139,11 +133,8 @@ export function GameOverlay() {
       return
     }
 
-    setIsDialogExiting(true)
-
     const timeoutId = window.setTimeout(() => {
       setDialogSnapshot(null)
-      setIsDialogExiting(false)
     }, dialogExitMs)
 
     return () => {

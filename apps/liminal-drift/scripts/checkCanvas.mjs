@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { chromium, devices } from "playwright"
 
+import { browserLaunchOptions } from "./browserLaunchOptions.mjs"
 import {
   measurePeripheralDifference,
   measureSceneDifference,
@@ -291,6 +292,7 @@ async function assertDialogExitAnimation(page) {
  * @param {import("playwright").Page} page
  */
 async function assertControlLegend(page) {
+  await page.getByRole("button", { name: "Controls", exact: true }).click()
   const text = await page.getByRole("dialog", { name: "Start race" }).innerText()
 
   if (!text.includes("W / S / Up / Down") || !text.includes("Space / Shift")) {
@@ -300,6 +302,7 @@ async function assertControlLegend(page) {
   if (text.includes("Go / Brake") || text.includes("Drift button")) {
     throw new Error(`Expected touch legend to stay hidden on desktop, got "${text}"`)
   }
+  await page.getByRole("button", { name: "Controls", exact: true }).click()
 }
 
 /**
@@ -383,6 +386,20 @@ async function assertReducedMotionStyles(page) {
  * @param {import("playwright").Page} page
  */
 async function assertFontPreload(page) {
+  const bundledFonts = [
+    { file: "not-jam-ui-12.ttf", family: "Liminal-Drift-Pixel" },
+    { file: "not-jam-faithless-9.ttf", family: "Liminal-Drift-Title" },
+  ]
+  for (const font of bundledFonts) {
+    await page
+      .locator(`link[rel="preload"][href="/fonts/${font.file}"][as="font"]`)
+      .waitFor({ state: "attached" })
+    const isLoaded = await page.evaluate(async (family) => {
+      const faces = await document.fonts.load(`12px "${family}"`)
+      return faces.length > 0 && faces.every((face) => face.status === "loaded")
+    }, font.family)
+    if (!isLoaded) throw new Error(`Bundled UI font failed to load: ${font.family}`)
+  }
   const fontPreload = await page
     .locator('link[rel="preload"][href="/fonts/space-grotesk-latin.woff2"][as="font"]')
     .getAttribute("type")
@@ -415,7 +432,7 @@ async function assertDocumentMetadata(page) {
   }
 }
 
-const browser = await chromium.launch()
+const browser = await chromium.launch(browserLaunchOptions())
 
 try {
   {
@@ -436,7 +453,7 @@ try {
     await assertDocumentMetadata(page)
     await assertStartupLoadingSequence(page)
     await assertActiveButton(page, "Start driving")
-    await assertDialogTabWrap(page, "Start driving", "Start driving")
+    await assertDialogTabWrap(page, "Start driving", "Controls")
     await page.locator("canvas").waitFor()
     await assertAmbientGameHidden(page, true)
     const dialogExitAnimation = assertDialogExitAnimation(page)
@@ -458,12 +475,12 @@ try {
     await page.goto(url, { waitUntil: "domcontentloaded" })
     await page.getByRole("dialog", { name: "Start race" }).waitFor()
     await assertActiveButton(page, "Start driving")
-    await assertDialogTabWrap(page, "Start driving", "Start driving")
+    await assertDialogTabWrap(page, "Start driving", "Controls")
     await assertControlLegend(page)
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
 
-    const bestText = await page.locator(".hud__dial--score small").innerText()
+    const bestText = await page.locator(".hud__metric--score small").innerText()
 
     if (bestText !== "Best 0") {
       throw new Error(`Expected invalid negative best score to clamp to 0, got "${bestText}"`)
@@ -519,7 +536,7 @@ try {
 
     await page.getByRole("dialog", { name: "Start race" }).waitFor()
     await assertActiveButton(page, "Start driving")
-    await assertDialogTabWrap(page, "Start driving", "Start driving")
+    await assertDialogTabWrap(page, "Start driving", "Controls")
     await assertControlLegend(page)
     await page.getByRole("button", { name: "Start driving" }).click()
     await page.locator("canvas").waitFor()
@@ -531,6 +548,8 @@ try {
     await page.keyboard.down("w")
 
     await page.waitForTimeout(2600)
+    await page.keyboard.up("w")
+    await page.keyboard.down("s")
 
     const telemetryLines = (await page.locator(".hud").innerText())
       .split(/\r?\n/)
@@ -568,6 +587,14 @@ try {
       )
     }
 
+    // Stop before encoding several screenshots: real bends now require steering,
+    // and a slow screenshot must not leave the throttle held into the first bend.
+    await page.waitForFunction(() => {
+      const text = document.querySelector(".hud__metric--speed strong")?.textContent
+      return Boolean(text) && Number(text) < 1
+    })
+    await page.keyboard.up("s")
+
     await page.screenshot({
       path: join(outputPath, `${viewport.name}.png`),
       fullPage: true,
@@ -594,8 +621,6 @@ try {
         )}`,
       )
     }
-
-    await page.keyboard.up("w")
 
     await pressEscapeWithRepeat(page)
     await assertModalDialog(page, "Paused")

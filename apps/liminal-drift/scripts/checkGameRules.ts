@@ -1,3 +1,5 @@
+import "./checkDriving"
+
 import { readBestScore } from "../src/game/bestScoreStorage"
 import {
   memoryShardModelHalfDepth,
@@ -12,7 +14,6 @@ import {
   wallObstacleWidth,
 } from "../src/game/collision"
 import { resolveDebugModeFromSearch } from "../src/game/debugMode"
-import { resolveRunDifficulty } from "../src/game/difficulty"
 import {
   resolveActiveGamepad,
   resolveGamepadInput,
@@ -28,8 +29,6 @@ import {
   willEndRunAfterDamage,
 } from "../src/game/runState"
 import { resolveScoreFeedback } from "../src/game/scoring"
-import { resolveBoostedSpeed, resolveDrivingSpeed } from "../src/game/speed"
-import { resolveSteeringVelocity } from "../src/game/steering"
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -106,7 +105,7 @@ assert(
 )
 const fastCollisionDamage = resolveCollisionDamage({
   baseDamage: trackConfig.collisionDamage,
-  speed: trackConfig.maxSpeed + trackConfig.driftMaxSpeedBonus,
+  speed: trackConfig.maxSpeed + trackConfig.boostSpeed,
   speedReference: trackConfig.maxSpeed,
   minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
   maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
@@ -115,7 +114,7 @@ const fastCollisionDamage = resolveCollisionDamage({
 })
 const fastDriftCollisionDamage = resolveCollisionDamage({
   baseDamage: trackConfig.collisionDamage,
-  speed: trackConfig.maxSpeed + trackConfig.driftMaxSpeedBonus,
+  speed: trackConfig.maxSpeed + trackConfig.boostSpeed,
   speedReference: trackConfig.maxSpeed,
   minSpeedDamageMultiplier: trackConfig.collisionMinSpeedDamageMultiplier,
   maxSpeedDamageMultiplier: trackConfig.collisionMaxSpeedDamageMultiplier,
@@ -137,10 +136,6 @@ assert(clamp(0.4, 0, 1) === 0.4, "Expected clamp to preserve in-range values")
 assert(lerp(10, 20, 0.25) === 12.5, "Expected lerp to interpolate linearly")
 assert(wrapDistance(23, 10) === 3, "Expected wrapDistance to wrap positive distances")
 assert(wrapDistance(-2, 10) === 8, "Expected wrapDistance to wrap negative distances")
-assert(
-  resolveRunDifficulty().maxSpeed === 70,
-  "Expected ordinary max speed to be available without a startup distance ramp",
-)
 assert(!resolveDebugModeFromSearch("").isEnabled, "Expected debug mode to stay disabled by default")
 assert(
   !resolveDebugModeFromSearch("?debug=off").isEnabled,
@@ -157,47 +152,6 @@ assert(
 assert(
   resolveDebugModeFromSearch("?noObstacles=1").noObstacles,
   "Expected noObstacles query flag to disable obstacles",
-)
-assert(
-  resolveSteeringVelocity(1, 0, trackConfig.maxSpeed) === 0,
-  "Expected steering input to avoid moving a stationary car sideways",
-)
-assert(
-  resolveSteeringVelocity(1, 12, trackConfig.maxSpeed) > 0,
-  "Expected steering input to engage after the car starts moving",
-)
-assert(
-  resolveBoostedSpeed(40, trackConfig.boostSpeed, 70) === 56,
-  "Expected boost gates to add speed below the current cap",
-)
-assert(
-  resolveBoostedSpeed(84, trackConfig.boostSpeed, 96.8) === 100,
-  "Expected boost gates to push through the current speed cap",
-)
-assertClose(
-  resolveBoostedSpeed(96.8, trackConfig.boostSpeed, 96.8),
-  112.8,
-  "Expected boost gates to apply a temporary cap bonus at the drift speed cap",
-)
-assert(
-  resolveDrivingSpeed({
-    acceleration: trackConfig.baseAcceleration,
-    drag: trackConfig.drag,
-    frameDelta: 1 / 60,
-    speed: 0,
-    speedLimit: trackConfig.maxSpeed,
-  }) < 1,
-  "Expected startup throttle to avoid an artificial launch speed floor",
-)
-assert(
-  resolveDrivingSpeed({
-    acceleration: trackConfig.baseAcceleration,
-    drag: trackConfig.drag,
-    frameDelta: 1,
-    speed: 20,
-    speedLimit: trackConfig.maxSpeed,
-  }) === 40,
-  "Expected resumed throttle acceleration to follow the same speed integration",
 )
 assert(
   resolveObstacleHalfWidth({

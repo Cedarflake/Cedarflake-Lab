@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react"
+import type { CSSProperties } from "react"
 
 import { pulseHaptics } from "@/game/haptics"
 import { useGameStore } from "@/game/useGameStore"
@@ -11,6 +12,7 @@ export function DrivingFeedback() {
   const feedbackKind = useGameStore((state) => state.feedbackKind)
   const feedbackPoints = useGameStore((state) => state.feedbackPoints)
   const lastEvent = useGameStore((state) => state.lastEvent)
+  const reverseDarkness = useGameStore((state) => state.reverseDarkness)
   const integrityAlertOpacity =
     status === "running" && integrity < 36 ? Math.min((36 - integrity) / 36, 0.72) : 0
   const lastFeedbackIdRef = useRef(0)
@@ -37,17 +39,23 @@ export function DrivingFeedback() {
   return (
     <>
       <div
+        className="reverse-vignette"
+        aria-hidden="true"
+        data-darkness={reverseDarkness.toFixed(3)}
+        style={
+          {
+            opacity: Math.min(1, reverseDarkness * 3),
+            "--reverse-clear": `${52 - reverseDarkness * 104}%`,
+          } as CSSProperties
+        }
+      />
+      <div
         className="integrity-veil"
         style={{ opacity: integrityAlertOpacity }}
         aria-hidden="true"
       />
       {feedbackId > 0 && feedbackKind ? (
         <>
-          <div
-            key={`ripple-${feedbackId}`}
-            className={`feedback-ripple feedback-ripple--${feedbackKind}`}
-            aria-hidden="true"
-          />
           <output
             key={`toast-${feedbackId}`}
             className={`feedback-toast feedback-toast--${feedbackKind}`}

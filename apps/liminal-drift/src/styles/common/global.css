@@ -1,4 +1,20 @@
 @font-face {
+  font-family: Liminal-Drift-Pixel;
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/not-jam-ui-12.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: Liminal-Drift-Title;
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("/fonts/not-jam-faithless-9.ttf") format("truetype");
+}
+
+@font-face {
   font-family: Liminal-Drift-UI;
   font-style: normal;
   font-weight: 400 800;

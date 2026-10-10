@@ -1,345 +1,263 @@
 .overlay {
-  --overlay-edge-gap: clamp(14px, 3dvh, 24px);
-
+  --overlay-edge-gap: 24px;
   position: absolute;
   inset: 0;
   z-index: var(--z-overlay);
   display: grid;
   place-items: center;
-  padding: calc(var(--overlay-edge-gap) + env(safe-area-inset-top))
-    calc(24px + env(safe-area-inset-right))
-    calc(var(--overlay-edge-gap) + env(safe-area-inset-bottom))
-    calc(24px + env(safe-area-inset-left));
+  padding: calc(var(--overlay-edge-gap) + env(safe-area-inset-top)) 28px
+    calc(var(--overlay-edge-gap) + env(safe-area-inset-bottom));
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(229, 219, 190, 0.08), transparent 34%),
-    radial-gradient(circle at 50% 64%, rgba(31, 39, 38, 0.26), transparent 58%),
-    linear-gradient(180deg, rgba(35, 29, 41, 0.42), rgba(31, 43, 43, 0.48));
-  backdrop-filter: none;
+  background: rgba(21, 19, 25, 0.68);
   animation: overlay-fade-in 180ms var(--ease-out) both;
 }
-
 .overlay__panel {
-  --overlay-scrollbar-track: rgba(228, 220, 202, 0.12);
-  --overlay-scrollbar-thumb: rgba(99, 129, 126, 0.58);
-  --overlay-scrollbar-thumb-strong: rgba(154, 141, 104, 0.66);
-
   box-sizing: border-box;
   width: min(560px, 100%);
   max-block-size: calc(
-    100dvh - var(--overlay-edge-gap) - var(--overlay-edge-gap) - env(safe-area-inset-top) -
-      env(safe-area-inset-bottom)
+    100dvh - var(--overlay-edge-gap) * 2 - env(safe-area-inset-top) - env(safe-area-inset-bottom)
   );
-  padding: clamp(22px, 4dvh, 34px);
+  padding: 30px 34px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  scrollbar-color: var(--overlay-scrollbar-thumb) var(--overlay-scrollbar-track);
   scrollbar-width: thin;
-  background:
-    linear-gradient(180deg, rgba(226, 218, 198, 0.34), rgba(46, 39, 53, 0.42)),
-    linear-gradient(90deg, rgba(113, 137, 130, 0.14), transparent 42%, rgba(167, 151, 103, 0.12)),
-    rgba(61, 54, 64, 0.56);
-  border-color: rgba(216, 207, 184, 0.42);
-  box-shadow:
-    0 30px 90px rgba(21, 18, 26, 0.48),
-    inset 0 0 0 1px rgba(238, 230, 207, 0.14),
-    inset 0 -32px 72px rgba(28, 38, 37, 0.28);
+  scrollbar-color: #8d9180 #292530;
+  border: 12px solid transparent;
+  border-image: url("/ui/psx/button-idle.png") 10 fill / 12px / 0 stretch;
+  color: #e0dcc4;
+  text-align: center;
   animation: overlay-panel-enter 220ms var(--ease-out) both;
 }
-
+.overlay--start {
+  background: linear-gradient(
+    180deg,
+    rgba(30, 26, 32, 0.56),
+    rgba(27, 25, 31, 0.24) 40%,
+    rgba(25, 25, 29, 0.65)
+  );
+}
+.overlay--start .overlay__panel {
+  width: min(690px, 100%);
+  padding: 30px 36px 22px;
+  border: 0;
+  background: radial-gradient(ellipse, rgba(26, 24, 30, 0.55), transparent 72%);
+}
+.overlay h1 {
+  margin: 0;
+  color: #e0dbc7;
+  font-family: var(--font-title);
+  font-size: 45px;
+  font-weight: 400;
+  line-height: 1.15;
+  text-shadow:
+    -2px 0 rgba(135, 167, 144, 0.45),
+    2px 1px rgba(174, 123, 132, 0.48),
+    0 0 12px rgba(201, 210, 178, 0.3),
+    0 2px 4px #221e29;
+}
+.overlay--start h1 {
+  font-size: 54px;
+  letter-spacing: 0;
+}
+.overlay p {
+  margin: 18px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.8;
+}
+.overlay .overlay__whisper {
+  margin-top: 24px;
+  color: #c4c2b1;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px #251e2b;
+}
+.overlay__actions {
+  display: grid;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 30px;
+}
+.overlay--start .overlay__actions {
+  margin-top: 60px;
+}
+.overlay__controls {
+  width: min(460px, 100%);
+  margin: 22px auto 0;
+  padding: 12px 18px;
+  text-align: start;
+  border: 8px solid transparent;
+  border-image: url("/ui/psx/button-idle.png") 8 fill / 8px / 0 stretch;
+}
+.overlay__controls > p {
+  margin: 0;
+}
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin: 14px 0 0;
+}
+.controls dt {
+  margin-bottom: 5px;
+  color: #b2baab;
+  font-size: 12px;
+}
+.controls dd {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.overlay .overlay__gamepad-status {
+  margin-top: 28px;
+  color: #bbb8ac;
+  font-size: 12px;
+  text-shadow: 1px 1px 3px #201b25;
+}
+.overlay__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 28px;
+  margin: 28px 0 0;
+  text-align: start;
+}
+.overlay__stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.overlay__stats dt {
+  color: #b7b7a4;
+  font-size: 12px;
+}
+.overlay__stats dd {
+  margin: 0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.overlay .overlay__best-badge {
+  color: #d6d8a2;
+  font-size: 18px;
+}
+.race-control-button {
+  position: absolute;
+  top: calc(24px + env(safe-area-inset-top));
+  right: calc(28px + env(safe-area-inset-right));
+  z-index: var(--z-hud);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 92px;
+  min-height: 44px;
+  padding: 6px;
+  color: #dedcc7;
+  background: none;
+  border: 6px solid transparent;
+  border-image: url("/ui/psx/button-idle.png") 8 fill / 6px / 0 stretch;
+  cursor: pointer;
+  font-size: 12px;
+  text-shadow: 1px 1px #27202b;
+}
+.race-control-button:is(:hover, :focus-visible) {
+  border-image-source: url("/ui/psx/button-selected.png");
+}
+.race-control-button:focus-visible {
+  outline: 1px dotted #d4d7b5;
+  outline-offset: 3px;
+}
+.race-control-button:active {
+  border-image-source: url("/ui/psx/button-pressed.png");
+}
+.race-control-button__icon {
+  display: block;
+}
+.race-control-button[data-action="start"] .race-control-button__icon {
+  border-block: 4px solid transparent;
+  border-inline-start: 6px solid currentColor;
+}
+.race-control-button[data-action="pause"] .race-control-button__icon {
+  width: 6px;
+  height: 8px;
+  border-inline: 2px solid currentColor;
+}
 .overlay[data-exiting="true"] {
   pointer-events: none;
   animation: overlay-fade-out var(--duration-normal) var(--ease-standard) both;
 }
-
 .overlay[data-exiting="true"] .overlay__panel {
   animation: overlay-panel-exit var(--duration-normal) var(--ease-standard) both;
 }
-
-.overlay__panel::-webkit-scrollbar {
-  width: 12px;
+/* Visibility changes can commit a pause while the browser's animation clock is suspended. */
+.overlay--paused:not([data-exiting="true"]),
+.overlay--paused:not([data-exiting="true"]) .overlay__panel {
+  opacity: 1;
+  animation: none;
 }
-
-.overlay__panel::-webkit-scrollbar-track {
-  margin-block: 8px;
-  background: linear-gradient(180deg, transparent, var(--overlay-scrollbar-track), transparent);
-  border-radius: var(--radius-control);
-}
-
-.overlay__panel::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-      180deg,
-      var(--overlay-scrollbar-thumb-strong),
-      var(--overlay-scrollbar-thumb)
-    )
-    content-box;
-  border: 3px solid transparent;
-  border-radius: var(--radius-control);
-}
-
-.overlay__panel::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(215, 202, 153, 0.78), rgba(112, 164, 162, 0.72))
-    content-box;
-}
-
-.overlay__panel::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-.overlay__eyebrow {
-  margin: 0 0 10px;
-  color: rgba(215, 202, 151, 0.82);
-  font-size: 0.78rem;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.overlay h1 {
-  margin: 0;
-  color: rgba(239, 232, 209, 0.92);
-  font-size: 3.8rem;
-  font-weight: 760;
-  line-height: 0.96;
-  text-shadow:
-    0 1px 0 rgba(47, 39, 52, 0.66),
-    0 12px 38px rgba(21, 18, 26, 0.36);
-}
-
-.overlay p {
-  max-width: 44rem;
-  margin: 18px 0 0;
-  color: rgba(225, 218, 204, 0.78);
-  font-size: clamp(1rem, 2vw, 1.12rem);
-  line-height: 1.7;
-}
-
-.overlay__best-badge {
-  display: inline-block;
-  padding: 7px 12px;
-  color: rgba(239, 232, 209, 0.9);
-  font-weight: 740;
-  line-height: 1;
-  background: rgba(64, 57, 62, 0.62);
-  border: 1px solid rgba(190, 176, 122, 0.46);
-  border-radius: var(--radius-control);
-  box-shadow: 0 14px 34px rgba(21, 18, 26, 0.28);
-}
-
-.overlay__stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 22px 0 0;
-}
-
-.overlay__stat {
-  padding: 10px 11px;
-  background:
-    linear-gradient(180deg, rgba(224, 216, 195, 0.16), rgba(46, 39, 53, 0.22)),
-    rgba(60, 53, 61, 0.36);
-  border-color: rgba(213, 202, 176, 0.26);
-}
-
-.overlay__stats dt {
-  margin-block-end: 4px;
-  color: rgba(214, 200, 145, 0.72);
-  font-size: 0.66rem;
-  text-transform: uppercase;
-}
-
-.overlay__stats dd {
-  margin: 0;
-  overflow: hidden;
-  color: rgba(238, 232, 214, 0.9);
-  font-size: 0.96rem;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.overlay__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-block-start: 26px;
-}
-
-.race-control-button {
-  position: absolute;
-  right: calc(24px + env(safe-area-inset-right));
-  bottom: calc(24px + env(safe-area-inset-bottom));
-  z-index: var(--z-hud);
-  display: grid;
-  width: 58px;
-  aspect-ratio: 1;
-  place-items: center;
-  color: rgba(238, 232, 214, 0.92);
-  cursor: pointer;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(214, 202, 144, 0.24), transparent 45%),
-    rgba(48, 42, 53, 0.72);
-  border: 1px solid rgba(199, 186, 137, 0.48);
-  border-radius: 50%;
-  box-shadow:
-    0 18px 38px rgba(21, 18, 26, 0.32),
-    inset 0 0 18px rgba(230, 218, 170, 0.12);
-  backdrop-filter: var(--blur-hud);
-  transition:
-    background-color var(--duration-normal) var(--ease-standard),
-    box-shadow var(--duration-normal) var(--ease-standard),
-    transform var(--duration-normal) var(--ease-standard);
-}
-
-.race-control-button:hover {
-  background:
-    radial-gradient(circle at 50% 42%, rgba(220, 209, 151, 0.3), transparent 45%),
-    rgba(67, 58, 64, 0.78);
-  box-shadow:
-    0 22px 46px rgba(21, 18, 26, 0.38),
-    inset 0 0 20px rgba(230, 218, 170, 0.16);
-  transform: translateY(-1px);
-}
-
-.race-control-button:focus-visible {
-  outline: 3px solid var(--color-focus-ring);
-  outline-offset: 4px;
-}
-
-.race-control-button__icon {
-  display: block;
-  color: currentColor;
-}
-
-.race-control-button[data-action="start"] .race-control-button__icon {
-  width: 0;
-  height: 0;
-  margin-inline-start: 4px;
-  border-block: 11px solid transparent;
-  border-inline-start: 18px solid currentColor;
-}
-
-.race-control-button[data-action="pause"] .race-control-button__icon {
-  width: 18px;
-  height: 22px;
-  background: linear-gradient(
-    90deg,
-    currentColor 0 6px,
-    transparent 6px 12px,
-    currentColor 12px 18px
-  );
-}
-
-.controls {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin: 28px 0 0;
-}
-
-.controls__item {
-  padding: 12px;
-}
-
-.controls dt {
-  margin-block-end: 4px;
-  color: rgba(214, 200, 145, 0.7);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-}
-
-.controls dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.overlay__gamepad-status {
-  margin-block-start: 14px;
-  color: rgba(224, 216, 203, 0.66);
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-
 @keyframes overlay-fade-in {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
 }
-
 @keyframes overlay-panel-enter {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.995);
   }
-
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
-
 @keyframes overlay-fade-out {
   from {
     opacity: 1;
   }
-
   to {
     opacity: 0;
   }
 }
-
 @keyframes overlay-panel-exit {
   from {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
-
   to {
     opacity: 0;
-    transform: translateY(-4px) scale(0.996);
   }
 }
-
+@media (max-height: 700px) {
+  .overlay__panel {
+    padding: 20px 26px;
+  }
+  .overlay--start .overlay__panel {
+    padding: 18px 30px;
+  }
+  .overlay--start h1 {
+    font-size: 45px;
+  }
+  .overlay--start .overlay__actions {
+    margin-top: 30px;
+  }
+  .overlay__controls {
+    margin-top: 16px;
+    padding: 8px 12px;
+  }
+  .overlay .overlay__gamepad-status {
+    margin-top: 18px;
+  }
+  .overlay__stats {
+    gap: 10px 24px;
+    margin-top: 20px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .overlay,
   .overlay__panel {
     animation: none;
   }
-
   .overlay[data-exiting="true"] {
     opacity: 0;
-  }
-
-  .race-control-button {
-    transition: none;
-  }
-
-  .race-control-button:hover {
-    transform: none;
-  }
-}
-
-@media (max-height: 720px) {
-  .overlay__panel {
-    padding: 20px 24px;
-  }
-
-  .overlay h1 {
-    font-size: 3rem;
-  }
-
-  .overlay p {
-    margin-block-start: 12px;
-    line-height: 1.55;
-  }
-
-  .controls,
-  .overlay__actions,
-  .overlay__stats {
-    margin-block-start: 16px;
   }
 }

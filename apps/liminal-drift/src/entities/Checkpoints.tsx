@@ -1,17 +1,17 @@
 import { useRef } from "react"
-import type { RefObject } from "react"
 
 import { Torus } from "@react-three/drei"
 import { useFrame } from "@react-three/fiber"
 import type { Group } from "three"
 
-import { dreamPalette, renderWindowConfig } from "@/game/gameConfig"
-import { resolveRelativeTrackPose } from "@/game/trackPath"
+import { dreamPalette } from "@/game/gameConfig"
+import { useRoadWorld } from "@/game/roadWorld"
 import type { Checkpoint } from "@/shared/types"
+
+import { ModelDetails } from "./ModelDetails"
 
 interface CheckpointsProps {
   checkpoints: Checkpoint[]
-  distanceRef: RefObject<number>
 }
 
 interface CheckpointNodeProps {
@@ -25,6 +25,24 @@ function CheckpointNode({ checkpoint, nodeRef }: CheckpointNodeProps) {
 
   return (
     <group ref={nodeRef} rotation={[0, 0, Math.PI / 2]}>
+      <Torus args={[ringRadius + 0.12, 0.16, 6, 48]} castShadow>
+        <meshStandardMaterial color="#8d8286" roughness={0.86} metalness={0.15} />
+      </Torus>
+      <ModelDetails
+        parts={Array.from({ length: 16 }, (_, index) => {
+          const angle = (index * Math.PI) / 8
+          return {
+            position: [
+              Math.cos(angle) * (ringRadius + 0.12),
+              Math.sin(angle) * (ringRadius + 0.12),
+              0.03,
+            ],
+            size: [0.4, 0.075, 0.42],
+            rotation: [0, 0, angle],
+            color: index % 4 ? "#aa9c92" : "#c8c1a0",
+          }
+        })}
+      />
       <Torus args={[ringRadius, 0.1, 10, 72]}>
         <meshBasicMaterial color={dreamPalette.lemon} transparent opacity={0.74} />
       </Torus>
@@ -49,23 +67,20 @@ function CheckpointNode({ checkpoint, nodeRef }: CheckpointNodeProps) {
   )
 }
 
-export function Checkpoints({ checkpoints, distanceRef }: CheckpointsProps) {
+export function Checkpoints({ checkpoints }: CheckpointsProps) {
+  const world = useRoadWorld()
   const checkpointRefs = useRef<Array<Group | null>>([])
 
   useFrame(() => {
-    const distance = distanceRef.current
-
     checkpoints.forEach((checkpoint, index) => {
       const checkpointGroup = checkpointRefs.current[index]
       if (!checkpointGroup) return
 
-      const pose = resolveRelativeTrackPose(checkpoint.distance, distance, 2)
+      const pose = world.pose(checkpoint.distance)
 
       checkpointGroup.position.set(pose.x, 2.8, pose.z)
       checkpointGroup.rotation.set(0, pose.heading, Math.PI / 2)
-      checkpointGroup.visible =
-        pose.z <= renderWindowConfig.checkpoints.near &&
-        pose.z >= renderWindowConfig.checkpoints.far
+      checkpointGroup.visible = true
     })
   })
 

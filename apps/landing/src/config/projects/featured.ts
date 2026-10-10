@@ -33,9 +33,9 @@ export const featuredProjectEntries = [
       kind: "live",
       url: "https://4po7.test.i0c.cc/",
     },
-    updatedAt: "2026-07-11T12:40:45+08:00",
+    updatedAt: "2026-10-10T11:31:57+08:00",
     summary:
-      "A dreamcore 3D driving game about pastel highways, memory fragments, and half-remembered exits.",
+      "A dreamcore driving game with an endless curving highway, momentum-based drifting, and half-remembered exits.",
     kind: "app",
     presentation: "featured",
     section: "featured",
@@ -44,7 +44,7 @@ export const featuredProjectEntries = [
       tags: ["React Three Fiber", "Three.js", "Game"],
       cover: {
         src: "/covers/liminal-drift.png",
-        alt: "Liminal Drift pastel highway gameplay",
+        alt: "A grainy old-screen view of a car on a guarded desert highway through empty buildings and dream relics",
         width: 1440,
         height: 900,
       },

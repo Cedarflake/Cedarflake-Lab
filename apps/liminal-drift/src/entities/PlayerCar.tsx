@@ -9,6 +9,8 @@ import type { Group } from "three"
 import { dreamPalette } from "@/game/gameConfig"
 import { lerp } from "@/game/number"
 
+import { ModelDetails } from "./ModelDetails"
+
 interface WheelRef {
   rotation: {
     set: (x: number, y: number, z: number) => void
@@ -95,7 +97,7 @@ export function PlayerCar({ carRef, distanceRef, skidIntensityRef, steeringRef }
   }, [skidRayGeometry])
 
   useFrame(() => {
-    const wheelRotation = -distanceRef.current * 0.24
+    const wheelRotation = -distanceRef.current / 0.31
     const steeringAngle = -steeringRef.current * 0.26
     const skidOpacity = skidIntensityRef.current * 0.46
 
@@ -119,7 +121,51 @@ export function PlayerCar({ carRef, distanceRef, skidIntensityRef, steeringRef }
   })
 
   return (
-    <group ref={carRef}>
+    <group ref={carRef} name="player-car">
+      <ModelDetails
+        metalness={0.3}
+        parts={[
+          { position: [0, -0.06, 1.51], size: [1.85, 0.16, 0.19], color: "#756d72" },
+          { position: [0, -0.06, -1.51], size: [1.85, 0.16, 0.19], color: "#756d72" },
+          { position: [0, 0.18, 1.545], size: [0.35, 0.16, 0.03], color: "#d3c9a9" },
+          { position: [0, 0.17, 1.565], size: [0.22, 0.025, 0.01], color: "#50494d" },
+          { position: [0, 0.15, -1.535], size: [0.7, 0.2, 0.04], color: "#393039" },
+          { position: [0, 0.86, -0.24], size: [1.03, 0.085, 0.93], color: dreamPalette.car },
+          { position: [0, 0.43, -0.89], size: [1.35, 0.03, 0.045], color: "#70616b" },
+          { position: [0, 0.44, 0.52], size: [1.35, 0.03, 0.035], color: "#70616b" },
+          ...[-1, 1].flatMap((side): Parameters<typeof ModelDetails>[0]["parts"] => [
+            {
+              position: [side * 0.6, 0.66, -0.27],
+              size: [0.065, 0.45, 0.07],
+              color: dreamPalette.car,
+            },
+            {
+              position: [side * 0.57, 0.64, -0.73],
+              size: [0.065, 0.39, 0.08],
+              color: "#9f848c",
+              rotation: [-0.32, 0, 0],
+            },
+            {
+              position: [side * 0.57, 0.64, 0.29],
+              size: [0.065, 0.39, 0.08],
+              color: "#9f848c",
+              rotation: [0.4, 0, 0],
+            },
+            { position: [side * 0.966, 0.12, 0.01], size: [0.017, 0.33, 0.018], color: "#705861" },
+            { position: [side * 0.966, -0.02, -0.1], size: [0.02, 0.025, 1.45], color: "#594d56" },
+            { position: [side * 0.97, 0.28, 0.29], size: [0.025, 0.055, 0.17], color: "#b9b0a5" },
+            { position: [side * 0.99, 0.44, -0.63], size: [0.19, 0.14, 0.21], color: "#998189" },
+            { position: [side * 0.99, 0.44, -0.51], size: [0.15, 0.09, 0.02], color: "#72868b" },
+            { position: [side * 0.62, 0.17, -1.51], size: [0.4, 0.22, 0.05], color: "#efddba" },
+            { position: [side * 0.79, 0.17, -1.51], size: [0.06, 0.2, 0.06], color: "#a78468" },
+          ]),
+          ...[-0.22, 0, 0.22].map((x): Parameters<typeof ModelDetails>[0]["parts"][number] => ({
+            position: [x, 0.16, -1.56],
+            size: [0.035, 0.16, 0.02],
+            color: "#9e9399",
+          })),
+        ]}
+      />
       <RoundedBox
         castShadow
         receiveShadow
@@ -148,25 +194,18 @@ export function PlayerCar({ carRef, distanceRef, skidIntensityRef, steeringRef }
         smoothness={6}
         position={[0, 0.62, -0.24]}
       >
-        <meshPhysicalMaterial
-          color={cabinGlassColor}
-          roughness={0.24}
-          transmission={0.04}
-          thickness={0.35}
-          transparent
-          opacity={0.62}
-        />
+        <meshStandardMaterial color={cabinGlassColor} roughness={0.24} transparent opacity={0.62} />
       </RoundedBox>
 
-      <mesh position={[-0.48, 0.22, 1.66]}>
+      <mesh position={[-0.48, 0.22, 1.54]}>
         <boxGeometry args={[0.4, 0.12, 0.08]} />
         <meshBasicMaterial color={tailLightColor} />
       </mesh>
-      <mesh position={[0.48, 0.22, 1.66]}>
+      <mesh position={[0.48, 0.22, 1.54]}>
         <boxGeometry args={[0.4, 0.12, 0.08]} />
         <meshBasicMaterial color={tailLightColor} />
       </mesh>
-      <mesh position={[-0.48, 0.22, 1.72]}>
+      <mesh position={[-0.48, 0.22, 1.6]}>
         <boxGeometry args={[0.52, 0.16, 0.03]} />
         <meshBasicMaterial
           blending={AdditiveBlending}
@@ -176,7 +215,7 @@ export function PlayerCar({ carRef, distanceRef, skidIntensityRef, steeringRef }
           opacity={0.28}
         />
       </mesh>
-      <mesh position={[0.48, 0.22, 1.72]}>
+      <mesh position={[0.48, 0.22, 1.6]}>
         <boxGeometry args={[0.52, 0.16, 0.03]} />
         <meshBasicMaterial
           blending={AdditiveBlending}
@@ -204,9 +243,26 @@ export function PlayerCar({ carRef, distanceRef, skidIntensityRef, steeringRef }
                 <meshStandardMaterial color={wheelColor} roughness={0.68} />
               </mesh>
               <mesh position={[0, x > 0 ? -0.14 : 0.14, 0]}>
-                <boxGeometry args={[0.18, 0.025, 0.18]} />
-                <meshBasicMaterial color={dreamPalette.carGlow} transparent opacity={0.72} />
+                <cylinderGeometry args={[0.19, 0.19, 0.03, 12]} />
+                <meshStandardMaterial color="#aca5a0" roughness={0.55} metalness={0.4} />
               </mesh>
+              <mesh position={[0, x > 0 ? -0.162 : 0.162, 0]}>
+                <cylinderGeometry args={[0.067, 0.067, 0.02, 8]} />
+                <meshStandardMaterial color="#5d555d" metalness={0.5} roughness={0.6} />
+              </mesh>
+              {[0, 1, 2, 3, 4].map((spoke) => (
+                <mesh
+                  key={spoke}
+                  position={[
+                    Math.cos(spoke * Math.PI * 0.4) * 0.12,
+                    x > 0 ? -0.165 : 0.165,
+                    Math.sin(spoke * Math.PI * 0.4) * 0.12,
+                  ]}
+                >
+                  <cylinderGeometry args={[0.027, 0.027, 0.015, 6]} />
+                  <meshStandardMaterial color="#554e58" roughness={0.8} />
+                </mesh>
+              ))}
             </group>
           </group>
         </group>

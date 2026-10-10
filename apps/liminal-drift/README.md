@@ -2,7 +2,7 @@
 
 A dreamcore 3D driving game built with React 19, TypeScript, Vite, Three.js, React Three Fiber, Drei, and Zustand.
 
-Drive through a soft, empty highway made of pastel road plates, pool-blue edges, floating mall signs, memory shards, signal boost gates, near misses, and checkpoints that feel like half-remembered exits.
+Drive an endless, curving desert highway through empty buildings, roofless colonnades, dry pools, dunes, and floating dream relics. Memory shards, signal boost gates, and checkpoints mark exits that never arrive.
 
 Play online: [https://4po7.test.i0c.cc/](https://4po7.test.i0c.cc/)
 
@@ -12,10 +12,13 @@ Play online: [https://4po7.test.i0c.cc/](https://4po7.test.i0c.cc/)
 
 ## Gameplay
 
+- Steer through gentle bends, long turns, and S bends. The car has its own position, heading, and momentum; missing a turn hits the guardrail.
+- Brake before tighter bends. Solid guardrails contain the entire car, slow impacts, and let it slide along a glancing contact without damaging integrity. Head-on walls and pillars stop and damage it; holding the accelerator cannot drive through them. Hold the brake after stopping to reverse out.
+- Travelling back along the road, in reverse gear or after a U-turn, shrinks the visible opening according to the distance to the rear road boundary. Stopping preserves it; moving away reopens it. The view closes completely before the boundary can enter view, then the end-of-road dialog appears without collision damage.
 - Chase checkpoints to score and repair the car.
 - Hit signal boost gates for speed bursts and score pulses.
 - Collect memory shards for small score pulses between bigger hazards.
-- Drift through bends to bank charge, then release to cash out.
+- Hold drift while turning to reduce grip and build charge from actual sideways slip, then release to cash out. Holding drift while driving straight adds neither speed nor charge.
 - Slip past obstacles for near-miss rewards, but collisions damage integrity.
 - Keep a local best score across runs.
 
@@ -43,18 +46,34 @@ pnpm check:rules
 - `pnpm check` runs formatting checks, lint, procedural generation checks, game-rule checks, license policy checks, production build, and bundle budget checks.
 - `pnpm check:bundle` verifies the built JS/CSS assets stay within raw and gzip size budgets.
 - `pnpm check:canvas -- <url>` captures desktop and mobile screenshots, checks the 3D scene is visible and moving, verifies modal focus / telemetry / progress semantics, and covers blocked local storage, invalid best-score storage, reduced-motion CSS, and repeated Escape input.
-- `pnpm check:interaction -- <url>` verifies mobile Start + Go touch driving advances speed and distance, and that touch input resets when pausing.
+- `pnpm check:interaction -- <url>` verifies keyboard driving, drifting, reverse darkness, single-click restart at the road end, interference reset, pause/resume, background freezing with interrupted menu transitions, gamepad input, and the mobile desktop-required fallback.
 - `pnpm check:licenses` blocks strong copyleft and commercial-restriction licenses from the dependency tree.
-- `pnpm check:rules` verifies small gameplay rule boundaries that do not need a browser.
+- `pnpm check:rules` includes the world-driving simulation: guardrail containment without automatic steering, persistent solid contacts, reverse recovery, braking and slip, swept collisions and checkpoint crossings, 30/60/120 FPS consistency, continuous road seams, scenery in all four world quadrants, stable tile anchors, and bounded streaming storage.
+
+Install Chromium once with `pnpm --filter liminal-drift exec playwright install chromium` before browser checks. On machines with an unstable GPU driver, set `LIMINAL_SOFTWARE_RENDERING=1` to use Chromium's software renderer for both browser scripts. This mode verifies behavior and images, not hardware frame rate.
 
 ## Controls
 
-- Drive: `W` / `S` or `Up` / `Down`
+- Accelerate: `W` / `Up`; brake: `S` / `Down`. Hold the brake at a stop for 0.35 seconds to engage low-speed reverse.
 - Steer: `A` / `D` or `Left` / `Right`
 - Drift: `Space` or `Shift`
 - Pause: `Esc`
 - Gamepad: left stick / D-pad to steer, triggers to drive and brake, shoulders to drift
-- Touch: on-screen buttons on mobile viewports
+- Desktop keyboard or gamepad required; small/coarse-pointer viewports show a desktop-required message.
+
+## Driving World
+
+`trackPath.ts` generates an arc-length centerline with smooth heading and curvature transitions. Road strips, guardrails, shoulders, lane markings, and hazards use this path. The road extends 672 m ahead and behind, beyond the 320 m fog range even on bends. World positions use a shared floating origin so long runs retain rendering precision.
+
+`vehicle.ts` integrates velocity and heading at 120 Hz with limited tire grip. `solidCollision.ts` sweeps the vehicle footprint against oriented boxes, separates contacts, and removes inward velocity while preserving sliding. Damage cooldowns never disable physical blocking. `drivingSimulation.ts` owns contacts, route projection, checkpoint crossings, and drift events. The follow camera preserves the car's facing direction while reversing.
+
+`environment.ts` streams a 15 × 15 grid of 56 m world tiles around the vehicle in every direction. Buildings, ruins, pools, and rocks share their placement data with solid colliders; decorative facade parts use instanced meshes. Dunes sit on a continuous ground plane. Ground, sky, and fog meet beyond visibility, and tile recycling happens outside it. Roadside signs, graves, and frames also register their model bounds as colliders. Only explicitly floating relics and sky effects animate around fixed anchors.
+
+## Interface
+
+The menu overlays the live 3D scene with low-resolution textures from ROHHSA's PSX UI pack and the bundled Not Jam Faithless 9 / UI 12 fonts. Buttons have distinct idle, hover/focus, and pressed artwork. Controls expand inside the start menu; driving information stays at the screen edges. The assets are served locally, with no system-font dependency or separate background artwork. See [UI asset sources and licenses](docs/ui-assets.md).
+
+A display layer covers the scene and interface with fine scanlines, a faint RGB phosphor grid, monochrome grain, and shaded glass edges. A very light tracking disturbance affects the whole image, including menus. Obstacle and guardrail impacts briefly strengthen it for 360 ms; guardrail feedback does not imply damage. Approaching the rear road boundary continuously increases the interference with the closing vignette; it persists through the end dialog until restarting restores the normal low intensity. The effects do not intercept input or request external artwork. Reduced-motion mode removes image displacement and moving interference bands. Backgrounding pauses the run and clears driving input, including the moving interference; the pause menu appears immediately even when the browser suspends animation clocks.
 
 ## Project Structure
 
@@ -70,7 +89,8 @@ scripts/
   checkBundleBudget.mjs  Production bundle size budget check
   checkCanvas.mjs       Playwright screenshot and canvas pixel verification
   checkGameRules.ts     Gameplay rule boundary checks
-  checkInteraction.mjs  Playwright mobile touch driving smoke check
+  checkDriving.ts       World driving, road geometry, and streaming regression checks
+  checkInteraction.mjs  Playwright keyboard and gamepad driving checks
   checkLicenses.mjs     Dependency license policy check
 public/
   fonts/                Bundled UI font subset and license
@@ -79,6 +99,6 @@ public/
 ## Notes
 
 - The project targets React 19 and the current React Three Fiber 9 / Drei 10 line.
-- UI text uses a bundled Space Grotesk subset under the SIL Open Font License.
+- UI text uses bundled Not Jam fonts under CC0, with bundled Space Grotesk under SIL OFL for additional glyph coverage.
 - `pnpm-workspace.yaml` contains the pnpm 11 project settings, including engine checks against Node 22.22.2, strict 24-hour release-age checks, and the `use-sync-external-store` override used to keep peer dependencies clean.
-- Mobile rendering is verified with Playwright. The scene keeps the canvas DPR at `1` for stable headless mobile WebGL output.
+- Desktop rendering and the mobile fallback are verified with Playwright. The scene keeps canvas DPR at `1` to limit rendering cost.
