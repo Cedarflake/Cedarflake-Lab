@@ -44,6 +44,8 @@ pnpm render:email
 
 Use `pnpm --filter <package-name> <script>` for project-specific frontend/package commands.
 
+`pnpm audit:dependencies` audits the full pnpm workspace, including development dependencies, against the npm registry at the high severity threshold. The registry still reports `GHSA-vfj7-8cjw-p6xm` for the locally patched `braces@3.0.3`. This command recognizes that one mitigation only after checking the reviewed patch hash, all locked braces instances, and the installed package's security regression. Other high/critical advisories, missing patches, and audit errors fail the check. It does not add registry-wide ignore settings. Run `pnpm test:dependency-audit` to verify this gate. Replace the local mitigation when an upstream fix is published and reviewed.
+
 Python workbench checks:
 
 ```powershell

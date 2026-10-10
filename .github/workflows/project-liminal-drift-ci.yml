@@ -6,12 +6,24 @@ on:
     paths:
       - "apps/liminal-drift/**"
       - ".github/workflows/project-liminal-drift-ci.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "patches/**"
+      - "scripts/auditDependencies*.mjs"
+      - "scripts/checkBracesSecurity.cjs"
   push:
     branches:
       - main
     paths:
       - "apps/liminal-drift/**"
       - ".github/workflows/project-liminal-drift-ci.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "patches/**"
+      - "scripts/auditDependencies*.mjs"
+      - "scripts/checkBracesSecurity.cjs"
 
 permissions:
   contents: read
@@ -45,6 +57,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Audit workspace dependencies
+        run: |
+          pnpm test:dependency-audit
+          pnpm audit:dependencies
 
       - name: Check Liminal Drift
         run: pnpm --filter liminal-drift check
@@ -120,7 +137,3 @@ jobs:
           path: apps/liminal-drift/artifacts/
           if-no-files-found: error
           retention-days: 7
-
-      - name: Audit Liminal Drift dependencies
-        if: ${{ !cancelled() }}
-        run: pnpm --config.registry=https://registry.npmjs.org/ --filter liminal-drift --fail-if-no-match audit --audit-level high
