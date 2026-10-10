@@ -1,11 +1,10 @@
 import { create } from "zustand"
 
-import { willEndRunAfterDamage } from "@/game/runState"
-import { resolveScoreFeedback } from "@/game/scoring"
-import type { FeedbackKind, ScoreEvent } from "@/game/scoring"
-import type { GameStatus } from "@/shared/types"
-
+import type { GameStatus } from "../shared/types"
 import { readBestScore, saveBestScore } from "./bestScoreStorage"
+import { willEndRunAfterDamage } from "./runState"
+import { resolveScoreFeedback } from "./scoring"
+import type { FeedbackKind, ScoreEvent } from "./scoring"
 
 interface GameState {
   status: GameStatus

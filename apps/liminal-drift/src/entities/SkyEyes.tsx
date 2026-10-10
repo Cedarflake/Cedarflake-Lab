@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef } from "react"
 
 import { useFrame } from "@react-three/fiber"
 import { CanvasTexture, LinearFilter, TextureLoader } from "three"
+import type { Group } from "three"
 
+import { SkyApparitions } from "@/game/apparitions"
 import { useRoadWorld } from "@/game/roadWorld"
 import type { RoadWorld } from "@/game/roadWorld"
+import { useGameStore } from "@/game/useGameStore"
 
 import { resolveSceneryDistance } from "./dream-objects/shared"
 
@@ -16,64 +19,13 @@ interface FloatingBillboard {
   z: number
 }
 
-interface EyeJumpState {
-  jumpCount: number
-  jumpUntil: number
-  nextJumpDistance: number
-  offsetX: number
-  offsetY: number
-  offsetZ: number
-}
-
-interface BillboardRef {
-  lookAt: (x: number, y: number, z: number) => void
-  position: {
-    set: (x: number, y: number, z: number) => void
-  }
-  rotation: {
-    z: number
-  }
-  scale: {
-    set: (x: number, y: number, z: number) => void
-  }
-}
-
 const imageEyeTextureSrc = "/image/eyes-edit.png"
-const skyEyes: FloatingBillboard[] = [
-  { x: -18, y: 14.6, z: -44, scale: [7.4, 3.5, 1], opacity: 0.92 },
-  { x: 5, y: 11.8, z: -58, scale: [4.8, 2.22, 1], opacity: 0.44 },
-  { x: 25, y: 13.4, z: -76, scale: [6.2, 2.9, 1], opacity: 0.68 },
-  { x: -35, y: 17.1, z: -118, scale: [8.2, 3.9, 1], opacity: 0.5 },
-  { x: 38, y: 18.2, z: -142, scale: [7.1, 3.3, 1], opacity: 0.36 },
-]
 const eyeClouds: FloatingBillboard[] = [
   { x: 30, y: 12.8, z: -38, scale: [13.6, 5.2, 1], opacity: 0.62 },
   { x: -35, y: 11.4, z: -62, scale: [11.4, 4.4, 1], opacity: 0.56 },
   { x: 6, y: 16.2, z: -96, scale: [15.8, 5.8, 1], opacity: 0.46 },
   { x: -6, y: 20.4, z: -142, scale: [18.2, 6.2, 1], opacity: 0.36 },
 ]
-
-function createEyeJumpStates() {
-  return skyEyes.map((_, index) => ({
-    jumpCount: 0,
-    jumpUntil: 0,
-    nextJumpDistance: 82 + index * 68,
-    offsetX: 0,
-    offsetY: 0,
-    offsetZ: 0,
-  }))
-}
-
-function resolveJumpOffset(index: number, jumpCount: number) {
-  const seed = (index + 1) * 19.17 + jumpCount * 11.31
-  const side = Math.sin(seed) > 0 ? 1 : -1
-
-  return {
-    x: side * (8.4 + Math.abs(Math.sin(seed * 0.43)) * 9.6),
-    y: (Math.sin(seed * 0.71) - 0.18) * 2.4,
-    z: -8 - Math.abs(Math.cos(seed * 0.37)) * 24,
-  }
-}
 
 function drawEyeCloudTexture(canvas: HTMLCanvasElement) {
   const context = canvas.getContext("2d")
@@ -154,7 +106,7 @@ function createEyeCloudTexture() {
 
 function updateBillboards(
   billboards: FloatingBillboard[],
-  refs: Array<BillboardRef | null>,
+  refs: Array<Group | null>,
   elapsed: number,
   world: RoadWorld,
   cameraPosition: { x: number; y: number; z: number },
@@ -177,52 +129,11 @@ function updateBillboards(
   })
 }
 
-function updateSkyEyes(
-  refs: Array<BillboardRef | null>,
-  jumpStates: EyeJumpState[],
-  elapsed: number,
-  world: RoadWorld,
-  cameraPosition: { x: number; y: number; z: number },
-) {
-  skyEyes.forEach((eye, index) => {
-    const group = refs[index]
-    const jumpState = jumpStates[index]
-    if (!group || !jumpState) return
-
-    if (world.distance > jumpState.nextJumpDistance) {
-      jumpState.jumpCount += 1
-      jumpState.jumpUntil = elapsed + 0.72
-      jumpState.nextJumpDistance += 154 + index * 29 + (jumpState.jumpCount % 3) * 38
-
-      const offset = resolveJumpOffset(index, jumpState.jumpCount)
-      jumpState.offsetX = offset.x
-      jumpState.offsetY = offset.y
-      jumpState.offsetZ = offset.z
-    }
-
-    const phase = elapsed * 0.13 + index * 1.7
-    const station = resolveSceneryDistance(-eye.z, world.distance, 760)
-    const jumpAge = Math.max(0, jumpState.jumpUntil - elapsed)
-    const jumpPulse = Math.min(jumpAge / 0.22, 1)
-    const isJumping = jumpAge > 0
-    const x = eye.x + Math.sin(phase * 0.6) * 1.1 + (isJumping ? jumpState.offsetX : 0)
-    const y = eye.y + Math.sin(phase) * 0.7 + (isJumping ? jumpState.offsetY : 0)
-    const pose = world.pose(station + (isJumping ? jumpState.offsetZ : 0), x)
-    const pulseScale = 1 + jumpPulse * 0.12
-
-    group.position.set(pose.x, y, pose.z)
-    group.scale.set(eye.scale[0] * pulseScale, eye.scale[1] * (1 + jumpPulse * 0.18), eye.scale[2])
-    group.lookAt(cameraPosition.x, cameraPosition.y, cameraPosition.z)
-    group.rotation.z +=
-      Math.sin(phase * 0.48) * 0.025 + (isJumping ? Math.sin(elapsed * 38) * 0.012 : 0)
-  })
-}
-
 export function SkyEyes() {
   const world = useRoadWorld()
-  const eyeRefs = useRef<Array<BillboardRef | null>>([])
-  const cloudRefs = useRef<Array<BillboardRef | null>>([])
-  const eyeJumpStatesRef = useRef<EyeJumpState[] | null>(null)
+  const eyeRefs = useRef<Array<Group | null>>([])
+  const cloudRefs = useRef<Array<Group | null>>([])
+  const apparitions = useMemo(() => new SkyApparitions(), [])
   const eyeTexture = useMemo(() => {
     const texture = new TextureLoader().load(imageEyeTextureSrc)
     texture.minFilter = LinearFilter
@@ -230,10 +141,6 @@ export function SkyEyes() {
     return texture
   }, [])
   const cloudTexture = useMemo(() => createEyeCloudTexture(), [])
-
-  if (eyeJumpStatesRef.current === null) {
-    eyeJumpStatesRef.current = createEyeJumpStates()
-  }
 
   useEffect(() => {
     return () => {
@@ -244,10 +151,22 @@ export function SkyEyes() {
 
   useFrame((state) => {
     const elapsed = world.elapsed
-    const eyeJumpStates = eyeJumpStatesRef.current
-    if (!eyeJumpStates) return
-
-    updateSkyEyes(eyeRefs.current, eyeJumpStates, elapsed, world, state.camera.position)
+    const eyes = apparitions.update(
+      elapsed,
+      useGameStore.getState().integrity,
+      world.vehicleX,
+      world.vehicleZ,
+    )
+    for (const eye of eyes) {
+      const group = eyeRefs.current[eye.index]
+      if (!group) continue
+      group.visible = eye.visible
+      if (!eye.visible) continue
+      group.position.set(eye.x - world.origin.x, eye.y, eye.z - world.origin.z)
+      group.scale.set(eye.size, eye.size * 0.48, 1)
+      group.lookAt(state.camera.position)
+      group.rotation.z += Math.sin(elapsed * 0.13 + eye.index) * 0.025
+    }
     updateBillboards(eyeClouds, cloudRefs.current, elapsed, world, state.camera.position, 2.3)
   })
 
@@ -278,13 +197,14 @@ export function SkyEyes() {
         </group>
       ))}
 
-      {skyEyes.map((eye, index) => (
+      {apparitions.eyes.map((eye, index) => (
         <group
           key={`eye-${index}`}
+          name={`sky-eye-${index}`}
           ref={(node) => {
             eyeRefs.current[index] = node
           }}
-          scale={eye.scale}
+          visible={false}
         >
           <mesh>
             <planeGeometry args={[1, 0.58]} />

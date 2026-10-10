@@ -21,44 +21,52 @@ export function roadWindowStart(distance: number) {
   return Math.floor((distance - roadLookBehind) / roadChunkLength) * roadChunkLength
 }
 
-function noise(index: number) {
-  const value = Math.sin(index * 127.1 + 311.7) * 43758.5453
-  return value - Math.floor(value)
+export function createRoadSeed() {
+  return crypto.getRandomValues(new Uint32Array(1))[0] ?? 0
 }
 
-function sectionAt(index: number, heading: number) {
-  const opening = [
-    { length: 120, heading: 0 },
-    { length: 144, heading: -0.64 },
-    { length: 64, heading: -0.64 },
-    { length: 220, heading: 0.66 },
-    { length: 64, heading: 0.66 },
-    { length: 132, heading: -0.34 },
-    { length: 132, heading: 0.38 },
-    { length: 96, heading: 0.38 },
-  ]
-  const preset = opening[index]
-  if (preset) return preset
+function noise(seed: number, index: number, channel: number) {
+  let value = seed ^ Math.imul(index + 1, 0x9e3779b9) ^ Math.imul(channel + 1, 0x85ebca6b)
+  value = Math.imul(value ^ (value >>> 16), 0x21f0aaad)
+  value = Math.imul(value ^ (value >>> 15), 0x735a2d97)
+  return ((value ^ (value >>> 15)) >>> 0) / 0x100000000
+}
 
-  const isStraight = index % 3 === 1
-  const nextHeading = isStraight ? heading : (noise(index) - 0.5) * 1.9
+function sectionAt(seed: number, index: number, heading: number) {
+  const random = (channel: number) => noise(seed, index, channel)
+  if (index === 0) return { length: Math.ceil((48 + random(0) * 32) / 2) * 2, heading: 0 }
+
+  const isStraight = index > 1 && random(0) < 0.26
+  const preferredDirection = random(1) < 0.5 ? -1 : 1
+  const direction =
+    0.95 - preferredDirection * heading < 0.35 ? -preferredDirection : preferredDirection
+  const maximumTurn = Math.min(1.15, 0.95 - direction * heading)
+  const turn = direction * (0.35 + random(2) * (maximumTurn - 0.35))
+  const nextHeading = isStraight ? heading : heading + turn
   const angle = Math.abs(nextHeading - heading)
 
   // Bounded headings keep the streamed corridor from crossing itself. Length scales
   // with angle so random bends cannot exceed the designed curvature limit.
   return {
-    length: Math.ceil((isStraight ? 70 + noise(index + 7) * 90 : 100 + angle * 105) / 2) * 2,
+    length:
+      Math.ceil((isStraight ? 48 + random(3) * 104 : 86 + angle * 110 + random(3) * 72) / 2) * 2,
     heading: nextHeading,
   }
 }
 
 export class EndlessRoad {
+  readonly seed: number
   private points: RoadPoint[] = [{ x: 0, z: 0, heading: 0, distance: 0, curvature: 0 }]
   private firstIndex = 0
   private sectionIndex = 0
   private sectionStart = 0
   private sectionHeading = 0
-  private section = sectionAt(0, 0)
+  private section: ReturnType<typeof sectionAt>
+
+  constructor(seed = 0) {
+    this.seed = seed >>> 0
+    this.section = sectionAt(this.seed, 0, 0)
+  }
 
   get sampleCount() {
     return this.points.length
@@ -100,7 +108,7 @@ export class EndlessRoad {
         this.sectionStart += this.section.length
         this.sectionHeading = this.section.heading
         this.sectionIndex += 1
-        this.section = sectionAt(this.sectionIndex, this.sectionHeading)
+        this.section = sectionAt(this.seed, this.sectionIndex, this.sectionHeading)
       }
       const middle = this.headingAt(last.distance + roadSampleSpacing / 2)
       const nextDistance = last.distance + roadSampleSpacing

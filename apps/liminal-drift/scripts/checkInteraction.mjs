@@ -265,6 +265,25 @@ try {
         `Expected persistent interference on the end dialog: ${JSON.stringify(endedSignal)}`,
       )
     }
+    const endedColors = await page.locator(".screen-surface").evaluate((element) => {
+      const style = getComputedStyle(element)
+      const block = element.querySelector(".signal-block")
+      if (!block) throw new Error("Missing signal dropout blocks")
+      return {
+        negative: Number(style.getPropertyValue("--signal-negative")),
+        blocks: Number(style.getPropertyValue("--signal-block-opacity")),
+        blockAnimation: getComputedStyle(block).animationPlayState,
+      }
+    })
+    if (
+      endedColors.negative !== 0 ||
+      endedColors.blocks < 0.4 ||
+      endedColors.blockAnimation !== "running"
+    ) {
+      throw new Error(
+        `Expected colored dropouts to persist without whitening the black field: ${JSON.stringify(endedColors)}`,
+      )
+    }
     await page.getByRole("button", { name: "Drive again", exact: true }).click()
     await page.waitForTimeout(800)
     if ((await page.locator('[role="dialog"]').count()) !== 0) {
@@ -272,6 +291,14 @@ try {
     }
     if ((await page.locator(".signal-interference").getAttribute("data-intensity")) !== "0.060") {
       throw new Error("Expected restart to reset interference to its mild baseline")
+    }
+    if (
+      (await page.locator(".screen-color").getAttribute("data-corruption")) !== "false" ||
+      (await page
+        .locator(".signal-blocks")
+        .evaluate((element) => Number(getComputedStyle(element).opacity))) !== 0
+    ) {
+      throw new Error("Expected restart to clear damage color filters and colored dropouts")
     }
     await page.keyboard.down("w")
     await waitForSpeedAbove(page, 5)

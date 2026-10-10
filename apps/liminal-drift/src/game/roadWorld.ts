@@ -4,8 +4,8 @@ import { WorldEnvironment } from "./environment"
 import type { SolidBox } from "./solidCollision"
 import { EndlessRoad } from "./trackPath"
 
-export function createRoadWorld() {
-  const road = new EndlessRoad()
+export function createRoadWorld(seed = 0) {
+  const road = new EndlessRoad(seed)
   road.retainAround(0)
   road.ensure(1100)
   const environment = new WorldEnvironment()

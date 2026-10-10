@@ -23,6 +23,7 @@ interface WorldSceneryOptions<Item extends SideSceneryItem> {
   distanceRef: RefObject<number>
   items: readonly Item[]
   originDistance: (item: Item) => number
+  resolveDistance?: (item: Item, distance: number) => number
   update: (context: SceneryContext<Item>) => void
   isSolid?: boolean
 }
@@ -32,13 +33,14 @@ export function useWorldScenery<Item extends SideSceneryItem>({
   distanceRef,
   items,
   originDistance,
+  resolveDistance,
   update,
   isSolid = false,
 }: WorldSceneryOptions<Item>) {
   const world = useRoadWorld()
   const id = useId()
   const nodeRefs = useRef<Array<Group | null>>([])
-  const stations = useRef(new Map<number, number>())
+  const anchors = useRef(new Map<number, { distance: number; offset: number; heading: number }>())
   useEffect(
     () => () => {
       world.scenerySolids.delete(id)
@@ -51,20 +53,37 @@ export function useWorldScenery<Item extends SideSceneryItem>({
     items.forEach((item) => {
       const node = nodeRefs.current[item.index]
       if (!node) return
-      const station = resolveSceneryDistance(originDistance(item), distance, cycleDistance)
+      const defaultDistance = resolveSceneryDistance(originDistance(item), distance, cycleDistance)
+      const station = resolveDistance?.(item, defaultDistance) ?? defaultDistance
       node.visible = station >= distance - 640 && station < distance + 800
-      if (!node.visible) return
-      // Updates describe a prop in the road's local frame. Its world anchor is
-      // invariant until it is retired behind the fog and reused far ahead.
+      if (!node.visible) {
+        if (anchors.current.delete(item.index)) hasMoved = true
+        return
+      }
+      // Model updates use road-local coordinates; rendering and collision share
+      // the resulting anchor, including deliberate apparition relocations.
       update({ distance: station, elapsedTime: world.elapsed, item, node, z: -station })
-      const pose = world.pose(station, node.position.x)
+      const offset = node.position.x
+      const heading = node.rotation.y
+      const pose = world.pose(station, offset)
       node.position.x = pose.x
       node.position.z = pose.z
       node.rotation.y += pose.heading
-      node.userData = { station, worldX: pose.x + world.origin.x, worldZ: pose.z + world.origin.z }
-      if (stations.current.get(item.index) !== station) {
+      Object.assign(node.userData, {
+        station,
+        offset,
+        worldX: pose.x + world.origin.x,
+        worldZ: pose.z + world.origin.z,
+      })
+      const previous = anchors.current.get(item.index)
+      if (
+        isSolid &&
+        (previous?.distance !== station ||
+          previous.offset !== offset ||
+          previous.heading !== heading)
+      ) {
         hasMoved = true
-        stations.current.set(item.index, station)
+        anchors.current.set(item.index, { distance: station, offset, heading })
       }
     })
     if (isSolid && hasMoved) {
@@ -73,6 +92,6 @@ export function useWorldScenery<Item extends SideSceneryItem>({
   })
   return useCallback((index: number, node: Group | null) => {
     nodeRefs.current[index] = node
-    stations.current.delete(index)
+    anchors.current.delete(index)
   }, [])
 }

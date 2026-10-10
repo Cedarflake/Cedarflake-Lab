@@ -28,7 +28,7 @@ import {
 import { dreamPalette, trackConfig } from "@/game/gameConfig"
 import { clamp, lerp } from "@/game/number"
 import { createRoadWorld, RoadWorldContext } from "@/game/roadWorld"
-import { roadChunkLength } from "@/game/trackPath"
+import { createRoadSeed, roadChunkLength } from "@/game/trackPath"
 import { useGameStore } from "@/game/useGameStore"
 import { useInputStore } from "@/game/useInputStore"
 
@@ -76,7 +76,7 @@ function handleDrivingEvent(event: DrivingEvent) {
 }
 
 function RacerWorld({ debugMode, runId }: { debugMode: DebugMode; runId: number }) {
-  const world = useMemo(createRoadWorld, [])
+  const world = useMemo(() => createRoadWorld(createRoadSeed()), [])
   const simulation = useMemo(
     () =>
       new DrivingSimulation(world.road, () => [

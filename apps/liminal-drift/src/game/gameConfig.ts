@@ -86,11 +86,11 @@ export const sceneryConfig = {
   pictureFrames: {
     count: 7,
     cycleDistance: 900,
-    originStart: 126,
-    spacing: 91,
-    baseSideOffset: 4.6,
-    sideBandCount: 3,
-    sideBandOffset: 1.8,
+    originStart: 35,
+    minimumSpacing: 40,
+    spacingSpread: 65,
+    baseSideOffset: 3.6,
+    sideSpread: 30,
   },
   roadSigns: {
     count: 10,

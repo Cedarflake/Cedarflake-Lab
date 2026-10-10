@@ -42,9 +42,21 @@
 
 .screen-surface,
 .screen-tracking,
-.screen-signal {
+.screen-signal,
+.screen-color {
   position: absolute;
   inset: 0;
+}
+
+.signal-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.screen-color[data-corruption="true"] {
+  animation: signal-color var(--signal-duration) steps(1, end) infinite;
 }
 
 .screen-tracking {
@@ -87,9 +99,119 @@
   opacity: 0;
 }
 
+.signal-blocks {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-impact);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--signal-block-opacity);
+}
+
+.signal-block {
+  position: absolute;
+  top: 18%;
+  left: 6%;
+  width: 18%;
+  height: 6%;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 3px, rgba(9, 4, 22, 0.7) 3px 5px),
+    linear-gradient(90deg, #ab194b 0 36%, #61bbaa 36% 42%, #541637 42% 88%, #c391a8 88%);
+  transform: scaleX(var(--signal-block-scale));
+  transform-origin: left;
+  animation: signal-dropout var(--signal-duration) steps(1, end) infinite;
+}
+
+.signal-block:nth-child(2) {
+  top: 65%;
+  left: 68%;
+  width: 27%;
+  height: 9%;
+  animation-delay: -650ms;
+  filter: hue-rotate(48deg);
+}
+
+.signal-block:nth-child(3) {
+  top: 9%;
+  left: 79%;
+  width: 12%;
+  height: 14%;
+  animation-delay: -1200ms;
+  filter: hue-rotate(-35deg);
+}
+
+.signal-block:nth-child(4) {
+  top: 82%;
+  left: 0;
+  width: 36%;
+  height: 3%;
+  animation-delay: -1800ms;
+}
+
+.signal-block:nth-child(5) {
+  top: 6%;
+  left: 40%;
+  width: 22%;
+  height: 2%;
+  animation-delay: -2400ms;
+  filter: hue-rotate(160deg);
+}
+
+.signal-block:nth-child(6) {
+  top: 72%;
+  left: 37%;
+  width: 13%;
+  height: 4%;
+  animation-delay: -3000ms;
+}
+
 .game-shell[data-status="paused"] .screen-tracking,
-.game-shell[data-status="paused"] .signal-interference {
+.game-shell[data-status="paused"] .signal-interference,
+.game-shell[data-status="paused"] .screen-color,
+.game-shell[data-status="paused"] .signal-block {
   animation-play-state: paused;
+}
+
+@keyframes signal-color {
+  0%,
+  68%,
+  100% {
+    filter: var(--signal-fringe) hue-rotate(calc(var(--signal-hue) * 0.18))
+      saturate(var(--signal-saturation));
+  }
+  72%,
+  79% {
+    filter: var(--signal-fringe) invert(var(--signal-negative)) hue-rotate(var(--signal-hue))
+      saturate(var(--signal-saturation));
+  }
+  84%,
+  90% {
+    filter: var(--signal-fringe) hue-rotate(calc(var(--signal-hue) * -0.6)) saturate(1.3);
+  }
+}
+
+@keyframes signal-dropout {
+  0%,
+  20%,
+  54%,
+  100% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  25%,
+  35% {
+    opacity: 1;
+    translate: -8% 0;
+  }
+  40% {
+    opacity: 0.35;
+    translate: 12% 80%;
+  }
+  70%,
+  78% {
+    opacity: 0.8;
+    translate: 28% -130%;
+  }
 }
 
 @keyframes signal-drift {
@@ -129,7 +251,17 @@
 
 @media (prefers-reduced-motion: reduce) {
   .screen-tracking,
-  .signal-interference {
+  .signal-interference,
+  .screen-color[data-corruption="true"],
+  .signal-block {
     animation: none;
+  }
+
+  .screen-color[data-corruption="true"] {
+    filter: hue-rotate(calc(var(--signal-hue) * 0.12)) saturate(var(--signal-saturation));
+  }
+
+  .signal-block {
+    opacity: 0.18;
   }
 }

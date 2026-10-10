@@ -1,4 +1,6 @@
 import "./checkDriving"
+import "./checkScreenSignal"
+import "./checkApparitions"
 
 import { readBestScore } from "../src/game/bestScoreStorage"
 import {

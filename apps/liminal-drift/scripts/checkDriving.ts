@@ -18,7 +18,7 @@ import { createRoadRibbon } from "../src/game/roadGeometry"
 import { createRoadWorld } from "../src/game/roadWorld"
 import { resolveRearRoadVisibility } from "../src/game/roadVisibility"
 import { createSceneryColliders } from "../src/game/sceneryCollision"
-import { EndlessRoad, roadChunkLength } from "../src/game/trackPath"
+import { createRoadSeed, EndlessRoad, roadChunkLength } from "../src/game/trackPath"
 import {
   resolveRoadBarrier,
   resolveSolidMovement,
@@ -53,9 +53,46 @@ for (let s = 0; s < 1000; s += 2) {
   const projected = road.project(lane.x, lane.z, s)
   near(projected.offset, 5, 0.002)
 }
-assert(road.sample(264).x > 20, "Right turn must change world position")
-assert(road.sample(264).heading < -0.6, "Right turn must change world heading")
-assert(road.sample(548).heading > 0.6, "Long left turn must reverse the heading")
+assert(Math.abs(road.sample(320).x) > 20, "Turns must change world position")
+assert(Math.abs(road.sample(320).heading) > 0.3, "Turns must change world heading")
+const openingRoutes = new Set<string>()
+const laterRoutes = new Set<string>()
+const firstTurnDirections = new Set<number>()
+const firstTurnStarts = new Set<number>()
+for (const seed of Array.from({ length: 32 }, (_, index) => Math.imul(index + 1, 0x9e3779b9))) {
+  const seeded = new EndlessRoad(seed)
+  const streamed = new EndlessRoad(seed)
+  seeded.ensure(6000)
+  openingRoutes.add(JSON.stringify([seeded.sample(160), seeded.sample(320)]))
+  laterRoutes.add(JSON.stringify(seeded.sample(5000)))
+  firstTurnDirections.add(Math.sign(seeded.sample(160).heading))
+  let firstTurn = 0
+  for (let distance = 0; distance < 6000; distance += 2) {
+    const a = seeded.sample(distance)
+    const b = seeded.sample(distance + 2)
+    if (!firstTurn && Math.abs(b.heading) > 0.00001) firstTurn = distance
+    near(Math.hypot(b.x - a.x, b.z - a.z), 2, 1e-5)
+    assert(Math.abs(b.heading - a.heading) < 0.024, `Seed ${seed} has an undrivable turn`)
+    assert(b.z < a.z, "Random routes must advance without folding back across themselves")
+    if (distance % 96 === 0) {
+      streamed.retainAround(distance)
+      assert.deepEqual(streamed.sample(distance), a, "Streaming must preserve the seeded route")
+      assert.deepEqual(
+        streamed.sample(distance - 120),
+        seeded.sample(distance - 120),
+        "Looking back must not regenerate a different route",
+      )
+    }
+  }
+  assert(firstTurn >= 48 && firstTurn <= 80, "Each run needs a short, safe opening straight")
+  firstTurnStarts.add(firstTurn)
+}
+assert.equal(openingRoutes.size, 32, "Runs must differ in their opening bends")
+assert.equal(laterRoutes.size, 32, "Routes must not converge on a shared late-game template")
+assert.equal(firstTurnDirections.size, 2, "The first turn must vary between left and right")
+assert(firstTurnStarts.size >= 8, "First bends must not always start at the same station")
+const generatedSeeds = new Set(Array.from({ length: 8 }, createRoadSeed))
+assert.equal(generatedSeeds.size, 8, "New runs must receive fresh seeds")
 for (let s = 0; s < 900; s += roadChunkLength) {
   const a = createRoadRibbon(road, s, [-7.8, 7.8], 0)
   const b = createRoadRibbon(road, s + roadChunkLength, [-7.8, 7.8], 0)
