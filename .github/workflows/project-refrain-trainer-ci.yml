@@ -1,0 +1,45 @@
+name: "[Project] Refrain Trainer CI"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: powershell
+        working-directory: others/game-tools/refrain-trainer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and check owned native fixture
+        run: |
+          .\check.cmd
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Package and verify archive
+        run: .\package.ps1
+
+      - name: Upload preview and validation output
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: refrain-trainer-windows-preview
+          if-no-files-found: error
+          path: |
+            others/game-tools/refrain-trainer/dist/*.zip
+            others/game-tools/refrain-trainer/dist/*.sha256
+            others/game-tools/refrain-trainer/test-output/native-test-report.txt
+            others/game-tools/refrain-trainer/test-output/trainer-preview.png
