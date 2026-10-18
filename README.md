@@ -22,7 +22,9 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 | `apps/youtube-auto-resume-extension` | Chromium Manifest V3 YouTube playback assistant.                               | —                                             |
 | `packages/*`                         | Reusable frontend packages.                                                    | —                                             |
 | `workbench/*`                        | Local Python utilities and small projects.                                     | —                                             |
-| `others/*`                           | Others.                                                                        | —                                             |
+| `others/*`                           | Standalone game tools, userscripts, interface studies, and archived experiments. | —                                             |
+
+Archived tools include [Refrain Trainer](./others/game-tools/refrain-trainer/README.md), a one-off Chinese Windows trainer for Labyrinth of Refrain. See the [Others index](./others/README.md) for the full inventory.
 
 ## Related repositories
 

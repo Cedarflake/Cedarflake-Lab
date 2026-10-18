@@ -2,6 +2,18 @@ import type { CatalogProject } from "../../types/project"
 
 export const otherProjectEntries = [
   {
+    title: "Refrain Trainer",
+    path: "others/game-tools/refrain-trainer",
+    updatedAt: "2026-10-18T17:32:14+08:00",
+    summary:
+      "An archived, one-off Chinese Windows trainer for Labyrinth of Refrain, with one-hit kills, guaranteed Witch's Crest drops, and optional Legendary equipment.",
+    label: "Game trainer · Preview",
+    lifecycle: "archived",
+    kind: "other",
+    presentation: "catalog",
+    section: "others",
+  },
+  {
     title: "Google AI Mode Aurora Study",
     path: "others/interface-studies/google-ai-mode-aurora",
     updatedAt: "2026-07-12T22:02:53+08:00",
