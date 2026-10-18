@@ -5,14 +5,24 @@ on:
   pull_request:
     paths:
       - "others/userscripts/youtube-auto-resume/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+      - "patches/**"
+      - "scripts/auditDependencies*.mjs"
+      - "scripts/checkBracesSecurity.cjs"
       - ".github/workflows/project-youtube-auto-resume-ci.yml"
   push:
     branches:
       - main
     paths:
       - "others/userscripts/youtube-auto-resume/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+      - "patches/**"
+      - "scripts/auditDependencies*.mjs"
+      - "scripts/checkBracesSecurity.cjs"
       - ".github/workflows/project-youtube-auto-resume-ci.yml"
 
 permissions:
@@ -40,14 +50,14 @@ jobs:
           version: 11.7.0
 
       - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: pnpm --filter @cedarflake/youtube-auto-resume --fail-if-no-match install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Check userscript version
         if: github.event_name == 'pull_request'
@@ -67,6 +77,8 @@ jobs:
       - name: Check YouTube userscript
         run: pnpm --filter @cedarflake/youtube-auto-resume --fail-if-no-match check
 
-      - name: Audit YouTube userscript dependencies
+      - name: Audit workspace dependencies
         if: ${{ !cancelled() }}
-        run: pnpm --config.registry=https://registry.npmjs.org/ --filter @cedarflake/youtube-auto-resume --fail-if-no-match audit --audit-level high
+        run: |
+          pnpm test:dependency-audit
+          pnpm audit:dependencies

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { chromium, devices } from "playwright"
 
+import { observeStoppedSpeed } from "./browserDrivingChecks.mjs"
 import { browserLaunchOptions } from "./browserLaunchOptions.mjs"
 import {
   measurePeripheralDifference,
@@ -549,7 +550,6 @@ try {
 
     await page.waitForTimeout(2600)
     await page.keyboard.up("w")
-    await page.keyboard.down("s")
 
     const telemetryLines = (await page.locator(".hud").innerText())
       .split(/\r?\n/)
@@ -587,13 +587,31 @@ try {
       )
     }
 
-    // Stop before encoding several screenshots: real bends now require steering,
-    // and a slow screenshot must not leave the throttle held into the first bend.
+    // Latch the brief stop before holding the brake: slow protocol round trips
+    // must not miss it and wait forever after the brake has engaged reverse.
+    const stoppedSpeed = await page
+      .locator(".hud__metric--speed strong")
+      .evaluateHandle(observeStoppedSpeed)
+    try {
+      await page.keyboard.down("s")
+      await page.waitForFunction((observation) => observation.hasStopped, stoppedSpeed)
+    } finally {
+      try {
+        await page.keyboard.up("s")
+      } finally {
+        try {
+          await stoppedSpeed.evaluate((observation) => observation.disconnect())
+        } finally {
+          await stoppedSpeed.dispose()
+        }
+      }
+    }
+    // A delayed key release can briefly engage reverse. Verify the current car
+    // has coasted to rest as well, before encoding screenshots with no held keys.
     await page.waitForFunction(() => {
       const text = document.querySelector(".hud__metric--speed strong")?.textContent
       return Boolean(text) && Number(text) < 1
     })
-    await page.keyboard.up("s")
 
     await page.screenshot({
       path: join(outputPath, `${viewport.name}.png`),

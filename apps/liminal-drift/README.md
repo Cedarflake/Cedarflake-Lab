@@ -44,7 +44,7 @@ pnpm check:rules
 
 ## Verification
 
-- `pnpm check` runs formatting checks, lint, procedural generation checks, game-rule checks, license policy checks, production build, and bundle budget checks.
+- `pnpm check` runs formatting checks, lint, procedural generation checks, game-rule checks, browser-helper regressions, license policy checks, production build, and bundle budget checks.
 - `pnpm check:bundle` verifies the built JS/CSS assets stay within raw and gzip size budgets.
 - `pnpm check:canvas -- <url>` captures desktop and mobile screenshots, checks the 3D scene is visible and moving, verifies modal focus / telemetry / progress semantics, and covers blocked local storage, invalid best-score storage, reduced-motion CSS, and repeated Escape input.
 - `pnpm check:interaction -- <url>` verifies keyboard driving, drifting, reverse darkness, single-click restart at the road end, interference reset, pause/resume, background freezing with interrupted menu transitions, gamepad input, and the mobile desktop-required fallback.
