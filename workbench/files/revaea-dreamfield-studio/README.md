@@ -11,6 +11,7 @@ Active local workbench project.
 
 - Interactive hue control
 - Saturation and contrast adjustment
+- Color, grayscale, pure-black, and pure-white modes with adjustable opacity
 - Small-icon optimization
 - SVG, PNG, WebP, AVIF, JPEG, ICO, TIFF, and BMP export
 - Multi-size icon export
