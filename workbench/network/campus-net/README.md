@@ -127,6 +127,10 @@ Copy-Item -LiteralPath config.legacy.example.json -Destination config.json
 
 ## 开发与构建
 
+图形界面使用 ttkbootstrap 2.2.5+ 与 Pillow 13，保留现有深色、浅色主题。
+旧版 ttkbootstrap 1.x 的 Pillow 上限会阻止安装安全版本，因此请通过 `uv sync --group dev`
+同步依赖，不要复用旧版虚拟环境中的依赖组合。Python 最低版本仍为 3.11。
+
 本项目使用 `uv` 管理 Python 3.11+ 环境：
 
 ```powershell
