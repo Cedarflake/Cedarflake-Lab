@@ -499,7 +499,7 @@ class CampusNetApp:
         self.form_stack = ScrolledFrame(
             form_panel,
             padding=(0, 0, 8, 0),
-            autohide=False,
+            auto_hide=False,
             height=240,
             width=500,
         )
