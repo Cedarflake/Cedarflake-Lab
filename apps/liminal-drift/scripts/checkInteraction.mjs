@@ -1,3 +1,6 @@
+import { mkdir } from "node:fs/promises"
+import { fileURLToPath } from "node:url"
+
 import { chromium, devices } from "playwright"
 
 import { browserLaunchOptions } from "./browserLaunchOptions.mjs"
@@ -5,6 +8,9 @@ import { measureSceneDifference, screenshotCanvas } from "./browserVisualChecks.
 import { checkBackgroundPause } from "./checkBackgroundPause.mjs"
 
 const url = process.argv.find((value) => value.startsWith("http")) ?? "http://localhost:5173/"
+const outputDir = new URL("../artifacts/", import.meta.url)
+
+await mkdir(outputDir, { recursive: true })
 
 /**
  * @param {string} baseUrl
@@ -284,6 +290,9 @@ try {
         `Expected colored dropouts to persist without whitening the black field: ${JSON.stringify(endedColors)}`,
       )
     }
+    await page.screenshot({
+      path: fileURLToPath(new URL("desktop-road-end.png", outputDir)),
+    })
     await page.getByRole("button", { name: "Drive again", exact: true }).click()
     await page.waitForTimeout(800)
     if ((await page.locator('[role="dialog"]').count()) !== 0) {
@@ -303,6 +312,14 @@ try {
     await page.keyboard.down("w")
     await waitForSpeedAbove(page, 5)
     await page.keyboard.up("w")
+    const hasRunningTracking = await page
+      .locator(".screen-tracking")
+      .evaluate((element) =>
+        element.getAnimations().some((animation) => animation.playState === "running"),
+      )
+    if (!hasRunningTracking) {
+      throw new Error("Expected normal screen drift to resume after restarting the run")
+    }
     console.log("road-end restart ok", { singleClick: true, resetIntensity: "0.060" })
     await context.close()
   }
