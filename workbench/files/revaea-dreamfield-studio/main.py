@@ -12,6 +12,7 @@ from core import (
     build_palette,
     build_svg,
     clamp,
+    monochrome_palette,
 )
 from PIL import Image, ImageChops, features
 from PySide6.QtCore import QRectF, QSize, Qt, Signal
@@ -263,6 +264,8 @@ class StudioWindow(QMainWindow):
         self.saturation = 1.0
         self.contrast = 1.0
         self.optical_scale = 1.0
+        self.color_mode = "color"
+        self.opacity = 1.0
         self.small_icon_enabled = True
         self.small_icon_threshold = 32
         self.small_icon_strength = 0.65
@@ -443,10 +446,29 @@ class StudioWindow(QMainWindow):
             100,
             100,
         )
+        layout.addWidget(QLabel("颜色模式"), 4, 0)
+
+        self.color_mode_combo = QComboBox()
+        self.color_mode_combo.addItem("彩色", "color")
+        self.color_mode_combo.addItem("灰度黑白", "grayscale")
+        self.color_mode_combo.addItem("纯黑", "black")
+        self.color_mode_combo.addItem("纯白", "white")
+        self.color_mode_combo.currentIndexChanged.connect(self.adjustmentsChanged)
+        layout.addWidget(self.color_mode_combo, 4, 1, 1, 2)
+
+        self.opacity_slider, self.opacity_label = self.addSliderRow(
+            layout,
+            5,
+            "透明度",
+            0,
+            100,
+            100,
+        )
 
         self.saturation_slider.valueChanged.connect(self.adjustmentsChanged)
         self.contrast_slider.valueChanged.connect(self.adjustmentsChanged)
         self.scale_slider.valueChanged.connect(self.adjustmentsChanged)
+        self.opacity_slider.valueChanged.connect(self.adjustmentsChanged)
 
         return frame
 
@@ -650,10 +672,18 @@ class StudioWindow(QMainWindow):
             optical_scale=self.optical_scale,
             small_icon=self.useSmallIconMode(size, master),
             small_strength=self.small_icon_strength,
+            color_mode=self.color_mode,
+            opacity=self.opacity,
         )
 
     def refresh(self):
         palette = self.currentPalette()
+        if self.color_mode == "grayscale":
+            palette = monochrome_palette(palette)
+        elif self.color_mode == "black":
+            palette = {name: "#000000" for name in palette}
+        elif self.color_mode == "white":
+            palette = {name: "#FFFFFF" for name in palette}
         self.palette_strip.setPalette(palette)
 
         if self.preview_pixel_size is None:
@@ -677,6 +707,8 @@ class StudioWindow(QMainWindow):
             f"饱和度 {round(self.saturation * 100)}% · "
             f"明暗层次 {round(self.contrast * 100)}% · "
             f"图标占比 {round(self.optical_scale * 100)}% · "
+            f"{self.color_mode_combo.currentText()} · "
+            f"透明度 {round(self.opacity * 100)}% · "
             f"{small_text} · 预览 {preview_text}"
         )
 
@@ -724,10 +756,13 @@ class StudioWindow(QMainWindow):
         self.saturation = self.saturation_slider.value() / 100.0
         self.contrast = self.contrast_slider.value() / 100.0
         self.optical_scale = self.scale_slider.value() / 100.0
+        self.color_mode = self.color_mode_combo.currentData()
+        self.opacity = self.opacity_slider.value() / 100.0
 
         self.saturation_label.setText(f"{self.saturation_slider.value()}%")
         self.contrast_label.setText(f"{self.contrast_slider.value()}%")
         self.scale_label.setText(f"{self.scale_slider.value()}%")
+        self.opacity_label.setText(f"{self.opacity_slider.value()}%")
 
         if not self.applying_preset:
             self.setPresetName("自定义")
@@ -771,6 +806,8 @@ class StudioWindow(QMainWindow):
             self.saturation_slider.setValue(100)
             self.contrast_slider.setValue(100)
             self.scale_slider.setValue(100)
+            self.color_mode_combo.setCurrentIndex(0)
+            self.opacity_slider.setValue(100)
 
             self.small_icon_check.setChecked(True)
             self.small_icon_threshold_combo.setCurrentText("≤ 32 px")
@@ -794,6 +831,8 @@ class StudioWindow(QMainWindow):
                 "saturation": float(self.saturation),
                 "contrast": float(self.contrast),
                 "optical_scale": float(self.optical_scale),
+                "color_mode": self.color_mode,
+                "opacity": float(self.opacity),
             },
             "small_icon": {
                 "enabled": bool(self.small_icon_enabled),
@@ -878,6 +917,10 @@ class StudioWindow(QMainWindow):
         saturation = clamp(float(visual.get("saturation", 1.0)), 0.4, 1.6)
         contrast = clamp(float(visual.get("contrast", 1.0)), 0.6, 1.45)
         scale = clamp(float(visual.get("optical_scale", 1.0)), 0.82, 1.0)
+        color_mode = visual.get("color_mode")
+        if color_mode not in ("color", "grayscale", "black", "white"):
+            color_mode = "grayscale" if visual.get("monochrome", False) else "color"
+        opacity = clamp(float(visual.get("opacity", 1.0)))
 
         self.applying_preset = True
 
@@ -892,6 +935,8 @@ class StudioWindow(QMainWindow):
             self.saturation_slider.setValue(round(saturation * 100))
             self.contrast_slider.setValue(round(contrast * 100))
             self.scale_slider.setValue(round(scale * 100))
+            self.color_mode_combo.setCurrentIndex(self.color_mode_combo.findData(color_mode))
+            self.opacity_slider.setValue(round(opacity * 100))
             self.setPresetName("自定义")
 
             enabled = bool(small.get("enabled", True))
@@ -976,7 +1021,7 @@ class StudioWindow(QMainWindow):
 
         raw = bytes(image.constBits())
 
-        return Image.frombuffer(
+        rendered = Image.frombuffer(
             "RGBA",
             (size, size),
             raw,
@@ -985,6 +1030,14 @@ class StudioWindow(QMainWindow):
             image.bytesPerLine(),
             1,
         ).copy()
+
+        if self.color_mode in ("black", "white"):
+            color = 0 if self.color_mode == "black" else 255
+            solid = Image.new("RGBA", rendered.size, (color, color, color, 0))
+            solid.putalpha(rendered.getchannel("A"))
+            return solid
+
+        return rendered
 
     def opaqueBackground(self):
         mode = self.opaque_background_combo.currentText()

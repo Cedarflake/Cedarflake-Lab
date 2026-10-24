@@ -143,6 +143,7 @@ class CampusNetApp:
             "session_id": StringVar(master=root),
         }
         self._secret_entries: list[ttk.Entry] = []
+        self._secret_toggles: list[tuple[ttk.Frame, ttk.Checkbutton]] = []
         self._version_buttons: list[ttk.Radiobutton] = []
         self._status_style = "info"
         self._interface_status_style = "secondary"
@@ -160,6 +161,7 @@ class CampusNetApp:
         self._configure_styles()
         self._load_brand_images()
         self._build_layout()
+        self._align_secret_toggles()
         if self._restore_maximized:
             self.root.after_idle(self._restore_window_maximized)
         self._show_version_form()
@@ -499,7 +501,7 @@ class CampusNetApp:
         self.form_stack = ScrolledFrame(
             form_panel,
             padding=(0, 0, 8, 0),
-            autohide=False,
+            auto_hide=False,
             height=240,
             width=500,
         )
@@ -899,13 +901,24 @@ class CampusNetApp:
             style="ToggleControl.TFrame",
         )
         toggle_control.pack(fill="x")
-        ttk.Checkbutton(
+        toggle = ttk.Checkbutton(
             toggle_control,
             text=text,
             variable=self.show_secrets_var,
             command=self._toggle_secrets,
             bootstyle="primary-square-toggle",
-        ).pack(anchor="w")
+        )
+        toggle.pack(anchor="w")
+        self._secret_toggles.append((toggle_control, toggle))
+
+    def _align_secret_toggles(self) -> None:
+        self.root.update_idletasks()
+        target_height = self.v2_carrier_combo.winfo_reqheight()
+        for control, toggle in self._secret_toggles:
+            border_height = control.master.winfo_reqheight() - control.winfo_reqheight()
+            vertical_padding = max(0, target_height - border_height - toggle.winfo_reqheight())
+            top_padding = vertical_padding // 2
+            control.configure(padding=(9, top_padding, 9, vertical_padding - top_padding))
 
     def _add_combobox(
         self,
@@ -991,6 +1004,7 @@ class CampusNetApp:
         )
         self.root.style.theme_use(theme)
         self._configure_styles()
+        self._align_secret_toggles()
         self._apply_text_theme()
 
     def _apply_text_theme(self) -> None:

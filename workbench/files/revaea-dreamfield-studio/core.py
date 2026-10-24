@@ -93,6 +93,17 @@ def strengthen_small_palette(palette, strength):
     return result
 
 
+def monochrome_palette(palette):
+    result = {}
+
+    for name, color in palette.items():
+        red, green, blue = hex_to_rgb(color)
+        gray = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+        result[name] = rgb_to_hex(gray, gray, gray)
+
+    return result
+
+
 def radial_gradient(name, color, center_opacity=1.0, middle_opacity=0.72):
     return f"""
     <radialGradient id="{name}" cx="50%" cy="50%" r="50%">
@@ -110,8 +121,15 @@ def build_svg(
     optical_scale=1.0,
     small_icon=False,
     small_strength=0.65,
+    color_mode="color",
+    opacity=1.0,
 ):
+    if color_mode not in ("color", "grayscale", "black", "white"):
+        raise ValueError(f"Unsupported color mode: {color_mode!r}")
+
     strength = clamp(float(small_strength))
+    opacity = clamp(float(opacity))
+    haze_soft = 0.18
 
     if small_icon:
         palette = strengthen_small_palette(palette, strength)
@@ -121,6 +139,15 @@ def build_svg(
     else:
         haze_top = 0.54
         haze_middle = 0.22
+
+    if color_mode == "grayscale":
+        palette = monochrome_palette(palette)
+    elif color_mode in ("black", "white"):
+        color = "#000000" if color_mode == "black" else "#FFFFFF"
+        palette = {name: color for name in palette}
+        haze_top = 0.0
+        haze_middle = 0.0
+        haze_soft = 0.0
 
     gradients = "\n".join(
         [
@@ -156,12 +183,12 @@ def build_svg(
 
     <radialGradient id="white-haze">
       <stop offset="0" stop-color="#fff" stop-opacity="{haze_top:.4f}"/>
-      <stop offset=".48" stop-color="#fff" stop-opacity=".18"/>
+      <stop offset=".48" stop-color="#fff" stop-opacity="{haze_soft:.3f}"/>
       <stop offset="1" stop-color="#fff" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <g transform="translate(1000 1000) scale({optical_scale:.5f}) translate(-1000 -1000)">
+  <g opacity="{opacity:.3f}" transform="translate(1000 1000) scale({optical_scale:.5f}) translate(-1000 -1000)">
     <g mask="url(#shape)">
       <rect width="2000" height="2000" fill="url(#base)"/>
       <ellipse cx="430" cy="500" rx="930" ry="790" fill="url(#f1)" transform="rotate(-12 430 500)"/>

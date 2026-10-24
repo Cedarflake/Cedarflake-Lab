@@ -11,6 +11,7 @@ Active local workbench project.
 
 - Interactive hue control
 - Saturation and contrast adjustment
+- Color, grayscale, pure-black, and pure-white modes with adjustable opacity
 - Small-icon optimization
 - SVG, PNG, WebP, AVIF, JPEG, ICO, TIFF, and BMP export
 - Multi-size icon export
@@ -29,6 +30,10 @@ uv run --frozen python main.py
 ```
 
 ## Validation
+
+The raster export tests use Qt's offscreen platform. Linux runners still need
+the EGL and OpenGL runtime libraries; on Ubuntu, install `libegl1 libopengl0`
+before running the tests. CI installs these packages explicitly.
 
 ```powershell
 uvx ruff check .

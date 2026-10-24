@@ -4,6 +4,6 @@ version = "0.1.0"
 description = "Interactive studio for recoloring and exporting Revaea Dream Field icons."
 requires-python = ">=3.11"
 dependencies = [
-    "pillow",
+    "pillow>=13.0.0",
     "pyside6",
 ]

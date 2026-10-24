@@ -49,6 +49,13 @@ class ColorTests(unittest.TestCase):
         self.assertEqual(set(optimized), set(palette))
         self.assertNotEqual(optimized, palette)
 
+    def test_monochrome_palette_has_equal_rgb_channels(self):
+        palette = core.monochrome_palette(core.BASE_PALETTE)
+
+        for color in palette.values():
+            self.assertEqual(color[1:3], color[3:5])
+            self.assertEqual(color[3:5], color[5:7])
+
 
 class SvgTests(unittest.TestCase):
     def make_svg(self, **kwargs):
@@ -83,6 +90,38 @@ class SvgTests(unittest.TestCase):
         normal = self.make_svg(width=32, height=32, small_icon=False)
         optimized = self.make_svg(width=32, height=32, small_icon=True, small_strength=0.65)
         self.assertNotEqual(normal, optimized)
+
+    def test_svg_supports_grayscale_and_opacity(self):
+        svg = self.make_svg(color_mode="grayscale", opacity=0.42)
+        root = ET.fromstring(svg)
+        namespace = "{http://www.w3.org/2000/svg}"
+        artwork = root.find(f"{namespace}g")
+
+        self.assertEqual(artwork.attrib["opacity"], "0.420")
+
+        for stop in root.iter(f"{namespace}stop"):
+            color = stop.attrib.get("stop-color")
+            if color:
+                if len(color) == 4:
+                    color = "#" + "".join(channel * 2 for channel in color[1:])
+                self.assertEqual(color[1:3], color[3:5])
+                self.assertEqual(color[3:5], color[5:7])
+
+    def test_svg_supports_pure_black_and_white(self):
+        namespace = "{http://www.w3.org/2000/svg}"
+
+        for mode, expected_color in (("black", "#000000"), ("white", "#FFFFFF")):
+            with self.subTest(mode=mode):
+                root = ET.fromstring(self.make_svg(color_mode=mode))
+                colors = {
+                    stop.attrib["stop-color"]
+                    for stop in root.iter(f"{namespace}stop")
+                    if stop.attrib.get("stop-color") != "#fff"
+                }
+                self.assertEqual(colors, {expected_color})
+
+                haze = root.find(f".//{namespace}radialGradient[@id='white-haze']")
+                self.assertTrue(all(float(stop.attrib["stop-opacity"]) == 0 for stop in haze))
 
     def test_different_hues_produce_different_svg(self):
         first = core.build_svg(core.build_palette(120, 1.0, 1.0))

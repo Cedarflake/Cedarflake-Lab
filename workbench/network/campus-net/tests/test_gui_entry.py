@@ -103,7 +103,8 @@ class TestGuiEntry(unittest.TestCase):
                 root.update_idletasks()
 
                 self.assertIsInstance(app.form_stack, ScrolledFrame)
-                self.assertEqual(app.form_stack.vscroll.winfo_manager(), "pack")
+                self.assertFalse(app.form_stack.auto_hide)
+                self.assertEqual(app.form_stack.vbar.winfo_manager(), "grid")
                 self.assertTrue(app_icon_path().is_file())
                 self.assertIsNotNone(app._header_logo_photo)
 
@@ -128,7 +129,7 @@ class TestGuiEntry(unittest.TestCase):
                         bindtags.index(COMBOBOX_WHEEL_GUARD_TAG),
                         bindtags.index("TCombobox"),
                     )
-                app.form_stack._add_scroll_binding(app.form_stack)
+                app.form_stack.enable_scrolling()
                 app.v2_carrier_combo.event_generate("<MouseWheel>", delta=-120)
                 root.update()
                 self.assertEqual(app.v2_vars["carrier"].get(), "中国电信")
@@ -150,6 +151,11 @@ class TestGuiEntry(unittest.TestCase):
 
                 app.theme_display_var.set("浅色")
                 app._change_theme()
+                root.update_idletasks()
+                self.assertLessEqual(
+                    abs(toggle_border.winfo_reqheight() - app.v2_carrier_combo.winfo_reqheight()),
+                    3,
+                )
                 self.assertEqual(
                     root.style.lookup("Success.Interface.TLabel", "foreground"),
                     "#0f766e",
