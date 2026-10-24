@@ -151,6 +151,11 @@ class TestGuiEntry(unittest.TestCase):
 
                 app.theme_display_var.set("浅色")
                 app._change_theme()
+                root.update_idletasks()
+                self.assertLessEqual(
+                    abs(toggle_border.winfo_reqheight() - app.v2_carrier_combo.winfo_reqheight()),
+                    3,
+                )
                 self.assertEqual(
                     root.style.lookup("Success.Interface.TLabel", "foreground"),
                     "#0f766e",
