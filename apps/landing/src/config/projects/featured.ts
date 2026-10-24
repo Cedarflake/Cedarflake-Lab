@@ -33,7 +33,7 @@ export const featuredProjectEntries = [
       kind: "live",
       url: "https://4po7.test.i0c.cc/",
     },
-    updatedAt: "2026-10-24T17:14:25Z",
+    updatedAt: "2026-10-24T17:51:49Z",
     summary:
       "A dreamcore driving game with an endless curving highway, momentum-based drifting, and half-remembered exits.",
     kind: "app",

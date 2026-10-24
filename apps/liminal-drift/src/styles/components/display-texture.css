@@ -63,6 +63,11 @@
   animation: signal-drift var(--signal-duration) steps(1, end) infinite;
 }
 
+/* Keep restart controls stationary while the end-screen interference continues. */
+.game-shell[data-status="ended"] .screen-tracking {
+  animation: none;
+}
+
 .signal-interference,
 .signal-burst {
   position: absolute;
