@@ -19,7 +19,7 @@ export const workbenchProjectEntries = [
   {
     title: "NyaAI",
     path: "workbench/ai/nya-ai",
-    updatedAt: "2026-07-11T10:05:30+08:00",
+    updatedAt: "2026-10-24T17:14:25Z",
     summary: "OpenAI-compatible Flask chat API with switchable providers.",
     kind: "workbench",
     presentation: "workbench",
@@ -89,7 +89,7 @@ export const workbenchProjectEntries = [
   {
     title: "Cedarflake ASCII Art",
     path: "workbench/media/ascii-art",
-    updatedAt: "2026-07-11T17:48:28+08:00",
+    updatedAt: "2026-10-24T17:14:25Z",
     summary: "Turn images and video into text, rendered frames, and playable ASCII video.",
     kind: "workbench",
     presentation: "workbench",
@@ -119,7 +119,7 @@ export const workbenchProjectEntries = [
   {
     title: "Campus Net",
     path: "workbench/network/campus-net",
-    updatedAt: "2026-07-11T10:07:05+08:00",
+    updatedAt: "2026-10-24T17:14:25Z",
     summary: "Ruijie campus portal auto-login utility for local use.",
     kind: "workbench",
     presentation: "workbench",
@@ -129,7 +129,7 @@ export const workbenchProjectEntries = [
   {
     title: "Revaea Dream Field Studio",
     path: "workbench/files/revaea-dreamfield-studio",
-    updatedAt: "2026-09-18T13:39:00+08:00",
+    updatedAt: "2026-10-24T17:14:25Z",
     summary: "Interactive studio for recoloring and exporting Revaea Dream Field icons.",
     kind: "workbench",
     presentation: "workbench",
