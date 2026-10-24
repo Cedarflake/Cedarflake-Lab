@@ -113,6 +113,11 @@ jobs:
         working-directory: workbench/network/campus-net
         run: xvfb-run -a uv run python -m unittest discover -s tests -p "test_*.py" -v
 
+      - name: Install Qt test runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libegl1 libopengl0
+
       - name: Test Revaea Dream Field Studio
         working-directory: workbench/files/revaea-dreamfield-studio
         run: uv run --frozen python -m unittest discover -s tests -p "test_*.py" -v

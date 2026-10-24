@@ -8,7 +8,7 @@ export const featuredProjectEntries = [
       kind: "live",
       url: "https://3kf1.test.i0c.cc/",
     },
-    updatedAt: "2026-07-11T11:20:33+08:00",
+    updatedAt: "2026-10-24T17:14:25Z",
     summary:
       "A motion-led recreation of the animated Copilot Tasks preview, rebuilt in React for close study.",
     kind: "app",
@@ -33,7 +33,7 @@ export const featuredProjectEntries = [
       kind: "live",
       url: "https://4po7.test.i0c.cc/",
     },
-    updatedAt: "2026-10-10T16:25:32+08:00",
+    updatedAt: "2026-10-24T17:14:25Z",
     summary:
       "A dreamcore driving game with an endless curving highway, momentum-based drifting, and half-remembered exits.",
     kind: "app",
@@ -57,7 +57,7 @@ export const featuredProjectEntries = [
       kind: "live",
       url: "https://7gkp.test.i0c.cc/",
     },
-    updatedAt: "2026-07-11T11:20:33+08:00",
+    updatedAt: "2026-10-24T17:14:25Z",
     summary:
       "A kinetic scene-swap study that turns a rhythm-game-inspired opening into a reusable transition.",
     kind: "app",
