@@ -18,7 +18,7 @@ function auditResult(advisories = []) {
   const vulnerabilities = { info: 0, low: 0, moderate: 0, high: 0, critical: 0 }
   for (const advisory of advisories) vulnerabilities[advisory.severity] += 1
   return {
-    status: vulnerabilities.high + vulnerabilities.critical > 0 ? 1 : 0,
+    status: advisories.length > 0 ? 1 : 0,
     stdout: JSON.stringify({
       advisories: Object.fromEntries(advisories.map((advisory, index) => [index, advisory])),
       metadata: { vulnerabilities },
@@ -82,6 +82,25 @@ test("retains the high severity threshold", () => {
   const audit = evaluateAudit(auditResult([advisory]), () => assert.fail("Unexpected exemption"))
   assert.deepEqual(audit.blocking, [])
   assert.equal(audit.counts.moderate, 1)
+})
+
+test("retains low advisories from an unfiltered audit without blocking the high severity gate", () => {
+  const advisory = {
+    github_advisory_id: "GHSA-gcqx-w48m-w2h4",
+    module_name: "deepmerge",
+    severity: "low",
+    findings: [{ version: "4.3.1", paths: ["personal-email>html-to-text>deepmerge"] }],
+  }
+  const result = auditResult([advisory])
+  assert.equal(result.status, 1)
+  const audit = evaluateAudit(result, () => assert.fail("Unexpected exemption"))
+  assert.deepEqual(audit.blocking, [])
+  assert.deepEqual(audit.mitigated, [])
+  assert.equal(audit.counts.low, 1)
+
+  const filtered = JSON.parse(result.stdout)
+  filtered.advisories = {}
+  assert.throws(() => evaluateAudit({ status: 0, stdout: JSON.stringify(filtered) }, () => {}))
 })
 
 test("fails closed on process, registry, schema, and incomplete-report errors", () => {
