@@ -91,8 +91,8 @@ export function evaluateAudit(result, verifyPatch) {
     )
   }
   assert(
-    result.status === 0 || counts.high + counts.critical > 0,
-    "Audit failed without a matching high or critical advisory",
+    result.status === 0 || severities.some((severity) => counts[severity] > 0),
+    "Audit failed without a matching advisory",
   )
   return { blocking, mitigated, counts }
 }
@@ -105,8 +105,6 @@ function main() {
       process.env.npm_execpath,
       "--config.registry=https://registry.npmjs.org/",
       "audit",
-      "--audit-level",
-      "high",
       "--json",
     ],
     { cwd: root, encoding: "utf8", timeout: 120000, maxBuffer: 8 * 1024 * 1024 },
