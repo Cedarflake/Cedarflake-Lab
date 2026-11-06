@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import colorsys
+import random
+from functools import lru_cache
 
 SHAPE_PATH = "M1000.5 32C1091.62 32 1177.73 68.5982 1254.04 133.638C1304.28 176.46 1367.32 202.573 1433.13 207.818C1533.07 215.785 1619.84 250.793 1684.27 315.228C1748.71 379.662 1783.72 466.428 1791.68 566.373C1796.93 632.179 1823.04 695.22 1865.86 745.461C1930.9 821.767 1967.5 907.875 1967.5 999C1967.5 1090.12 1930.9 1176.23 1865.86 1252.54C1823.04 1302.78 1796.93 1365.82 1791.68 1431.62C1783.72 1531.57 1748.71 1618.34 1684.27 1682.77C1619.84 1747.21 1533.07 1782.22 1433.12 1790.18C1367.32 1795.43 1304.28 1821.54 1254.04 1864.36C1177.73 1929.4 1091.62 1966 1000.5 1966C909.375 1966 823.267 1929.4 746.962 1864.36C696.721 1821.54 633.68 1795.43 567.874 1790.18C467.928 1782.22 381.162 1747.21 316.727 1682.77C252.292 1618.34 217.284 1531.57 209.317 1431.62C204.072 1365.82 177.959 1302.78 135.137 1252.54C70.0979 1176.23 33.4999 1090.12 33.4999 999C33.4999 907.875 70.0975 821.768 135.137 745.462C177.959 695.221 204.072 632.18 209.317 566.374C217.284 466.428 252.293 379.662 316.727 315.228C381.162 250.793 467.928 215.784 567.874 207.817C633.68 202.572 696.722 176.459 746.963 133.637C823.268 68.5978 909.375 32 1000.5 32ZM1001.05 662C951.869 662 906.871 692.51 872.216 743.026C865.539 752.758 854.781 758.969 843.015 759.885C781.938 764.639 733.016 788.354 708.425 830.947C683.834 873.54 687.756 927.765 714.177 983.036C719.267 993.684 719.268 1006.11 714.178 1016.75C687.757 1072.03 683.834 1126.25 708.425 1168.84C733.016 1211.44 781.938 1235.15 843.015 1239.91C854.781 1240.82 865.539 1247.03 872.216 1256.76C906.871 1307.28 951.869 1337.79 1001.05 1337.79C1050.23 1337.79 1095.23 1307.28 1129.89 1256.76C1136.56 1247.03 1147.32 1240.82 1159.09 1239.91C1220.16 1235.15 1269.09 1211.44 1293.68 1168.84C1318.27 1126.25 1314.35 1072.03 1287.92 1016.75C1282.83 1006.11 1282.83 993.684 1287.92 983.036C1314.35 927.765 1318.27 873.54 1293.68 830.947C1269.09 788.355 1220.16 764.639 1159.09 759.885C1147.32 758.969 1136.56 752.758 1129.89 743.026C1095.23 692.509 1050.23 662 1001.05 662Z"
 
@@ -31,6 +33,13 @@ PRESETS = {
 }
 
 EXPORT_SIZES = [16, 20, 24, 32, 40, 48, 64, 96, 128, 256, 512, 1024]
+
+MATERIALS = {
+    "none": ("原始", "保留柔和渐变，不添加表面纹理。"),
+    "matte": ("细砂雾面", "细密颗粒打散平滑表面，保留柔和的颜色过渡。"),
+    "paper": ("纤维纸纹", "细小纤维与浅色肌理，呈现轻柔的纸面触感。"),
+    "pearl": ("柔光珠光", "宽柔的反光与细微颗粒，让颜色呈现温润光泽。"),
+}
 
 
 def clamp(value, low=0.0, high=1.0):
@@ -68,11 +77,14 @@ def rotate_color(color, hue_shift, saturation_scale, contrast_scale):
     return rgb_to_hex(red, green, blue)
 
 
-def build_palette(target_hue, saturation_scale, contrast_scale):
-    hue_shift = ((float(target_hue) - BASE_ANCHOR_HUE + 180.0) % 360.0) - 180.0
+def build_palette(
+    target_hue, saturation_scale, contrast_scale, base_palette=None, anchor_hue=BASE_ANCHOR_HUE
+):
+    hue_shift = ((float(target_hue) - anchor_hue + 180.0) % 360.0) - 180.0
+    source = BASE_PALETTE if base_palette is None else base_palette
     return {
         name: rotate_color(color, hue_shift, saturation_scale, contrast_scale)
-        for name, color in BASE_PALETTE.items()
+        for name, color in source.items()
     }
 
 
@@ -114,6 +126,52 @@ def radial_gradient(name, color, center_opacity=1.0, middle_opacity=0.72):
     </radialGradient>"""
 
 
+@lru_cache(maxsize=48)
+def material_surface(material, scale, seed):
+    rng = random.Random(seed)
+    marks = []
+    for index in range(180):
+        x, y = rng.uniform(4, 252), rng.uniform(4, 252)
+        radius = rng.uniform(0.7, 2.1)
+        color = "#FFFFFF" if index % 2 else "#21182D"
+        alpha = rng.uniform(0.15, 0.55)
+        marks.append(
+            f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{radius:.2f}" '
+            f'fill="{color}" opacity="{alpha:.3f}"/>'
+        )
+    if material == "paper":
+        for index in range(72):
+            x, y = rng.uniform(16, 224), rng.uniform(16, 224)
+            dx, dy = rng.uniform(6, 20), rng.uniform(-7, 7)
+            color = "#FFFFFF" if index % 2 else "#302633"
+            marks.append(
+                f'<path d="M{x:.2f} {y:.2f} q{dx / 2:.2f} {dy - 2:.2f} '
+                f'{dx:.2f} {dy:.2f}" fill="none" stroke="{color}" '
+                f'stroke-width="{rng.uniform(0.5, 1.5):.2f}" opacity="0.24"/>'
+            )
+    definitions = f"""
+    <pattern id="surface-grain" patternUnits="userSpaceOnUse"
+             width="256" height="256" patternTransform="scale({scale:.3f})">
+      {"".join(marks)}
+    </pattern>
+    {radial_gradient("surface-light", "#FFFFFF", 0.65, 0.20)}
+    {radial_gradient("surface-shade", "#261B38", 0.35, 0.10)}"""
+    surface = '<rect width="2000" height="2000" fill="url(#surface-grain)"/>'
+    if material == "paper":
+        surface += '<rect width="2000" height="2000" fill="#FFFFFF" opacity="0.08"/>'
+    elif material == "pearl":
+        angle = -32 + rng.uniform(-8, 8)
+        surface = f"""
+        <ellipse cx="660" cy="630" rx="260" ry="1100"
+                 transform="rotate({angle:.2f} 660 630)" fill="url(#surface-light)"/>
+        <ellipse cx="1300" cy="1200" rx="300" ry="1100"
+                 transform="rotate({angle:.2f} 1300 1200)" fill="url(#surface-shade)"/>
+        <ellipse cx="1580" cy="1080" rx="170" ry="860"
+                 transform="rotate({angle:.2f} 1580 1080)" fill="url(#surface-light)"/>
+        <g opacity="0.35">{surface}</g>"""
+    return definitions, surface
+
+
 def build_svg(
     palette,
     width=1024,
@@ -123,9 +181,16 @@ def build_svg(
     small_strength=0.65,
     color_mode="color",
     opacity=1.0,
+    material="none",
+    material_strength=0.45,
+    material_scale=1.0,
+    material_seed=42,
+    unmasked=False,
 ):
     if color_mode not in ("color", "grayscale", "black", "white"):
         raise ValueError(f"Unsupported color mode: {color_mode!r}")
+    if material not in MATERIALS:
+        raise ValueError(f"Unsupported material: {material!r}")
 
     strength = clamp(float(small_strength))
     opacity = clamp(float(opacity))
@@ -139,6 +204,9 @@ def build_svg(
     else:
         haze_top = 0.54
         haze_middle = 0.22
+
+    if unmasked:
+        optical_scale = 1.0
 
     if color_mode == "grayscale":
         palette = monochrome_palette(palette)
@@ -162,6 +230,20 @@ def build_svg(
         ]
     )
 
+    surface_defs, surface = "", ""
+    surface_strength = clamp(float(material_strength))
+    if small_icon:
+        surface_strength *= 0.18
+    if material != "none" and surface_strength > 0 and color_mode not in ("black", "white"):
+        surface_defs, surface = material_surface(
+            material, clamp(float(material_scale), 0.5, 2.0), int(material_seed)
+        )
+        if color_mode == "grayscale":
+            surface_defs = surface_defs.replace("#261B38", "#242424")
+            surface_defs = surface_defs.replace("#21182D", "#202020")
+            surface_defs = surface_defs.replace("#302633", "#2A2A2A")
+        surface = f'<g id="material-surface" opacity="{surface_strength:.4f}">{surface}</g>'
+
     return f"""<svg xmlns="http://www.w3.org/2000/svg"
  width="{width}" height="{height}" viewBox="0 0 2000 2000"
  preserveAspectRatio="xMidYMid meet">
@@ -180,6 +262,7 @@ def build_svg(
     </linearGradient>
 
     {gradients}
+    {surface_defs}
 
     <radialGradient id="white-haze">
       <stop offset="0" stop-color="#fff" stop-opacity="{haze_top:.4f}"/>
@@ -189,7 +272,7 @@ def build_svg(
   </defs>
 
   <g opacity="{opacity:.3f}" transform="translate(1000 1000) scale({optical_scale:.5f}) translate(-1000 -1000)">
-    <g mask="url(#shape)">
+    <g {"" if unmasked else 'mask="url(#shape)"'}>
       <rect width="2000" height="2000" fill="url(#base)"/>
       <ellipse cx="430" cy="500" rx="930" ry="790" fill="url(#f1)" transform="rotate(-12 430 500)"/>
       <ellipse cx="1570" cy="420" rx="930" ry="820" fill="url(#f2)" transform="rotate(13 1570 420)"/>
@@ -201,6 +284,7 @@ def build_svg(
       <ellipse cx="1030" cy="2030" rx="920" ry="570" fill="url(#f8)"/>
       <ellipse cx="1010" cy="120" rx="1040" ry="630" fill="url(#white-haze)"/>
       <ellipse cx="1290" cy="720" rx="960" ry="720" fill="url(#white-haze)" opacity="{haze_middle:.4f}"/>
+      {surface}
     </g>
   </g>
 </svg>"""
