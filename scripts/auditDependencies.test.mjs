@@ -1,13 +1,9 @@
 import assert from "node:assert/strict"
-import { readFileSync } from "node:fs"
 import test from "node:test"
 
-import { load as loadYaml } from "js-yaml"
+import { evaluateAudit } from "./auditDependencies.mjs"
 
-import { assertBracesPatch, evaluateAudit } from "./auditDependencies.mjs"
-
-const patchHash = "ddeca82af6f30abb5c2e545320680269695f8d543891a32a078029087b433a35"
-const patchedBraces = {
+const advisory = {
   github_advisory_id: "GHSA-vfj7-8cjw-p6xm",
   module_name: "braces",
   severity: "high",
@@ -16,91 +12,53 @@ const patchedBraces = {
 
 function auditResult(advisories = []) {
   const vulnerabilities = { info: 0, low: 0, moderate: 0, high: 0, critical: 0 }
-  for (const advisory of advisories) vulnerabilities[advisory.severity] += 1
+  for (const finding of advisories) vulnerabilities[finding.severity] += 1
   return {
     status: advisories.length > 0 ? 1 : 0,
     stdout: JSON.stringify({
-      advisories: Object.fromEntries(advisories.map((advisory, index) => [index, advisory])),
+      advisories: Object.fromEntries(advisories.map((finding, index) => [index, finding])),
       metadata: { vulnerabilities },
     }),
   }
 }
 
-function patchInputs() {
-  return {
-    workspace: loadYaml(readFileSync(new URL("../pnpm-workspace.yaml", import.meta.url), "utf8")),
-    lockfile: loadYaml(readFileSync(new URL("../pnpm-lock.yaml", import.meta.url), "utf8")),
-  }
-}
-
-test("accepts a clean audit without requiring an unrelated patch", () => {
-  const audit = evaluateAudit(auditResult(), () => assert.fail("Unexpected patch verification"))
+test("accepts a clean audit", () => {
+  const audit = evaluateAudit(auditResult())
   assert.deepEqual(audit.blocking, [])
-  assert.deepEqual(audit.mitigated, [])
+  assert.deepEqual(audit.counts, { info: 0, low: 0, moderate: 0, high: 0, critical: 0 })
 })
 
-test("requires successful patch verification for the exact advisory and package version", () => {
-  let checks = 0
-  const audit = evaluateAudit(auditResult([patchedBraces]), () => checks++)
-  assert.equal(checks, 1)
-  assert.deepEqual(audit.mitigated, [patchedBraces])
-  assert.deepEqual(audit.blocking, [])
-  assert.throws(
-    () =>
-      evaluateAudit(auditResult([patchedBraces]), () => {
-        throw new Error("Installed patch is missing")
-      }),
-    /Installed patch is missing/,
-  )
+test("does not exempt the formerly mitigated braces advisory if it returns", () => {
+  const audit = evaluateAudit(auditResult([advisory]))
+  assert.deepEqual(audit.blocking, [advisory])
 })
 
-test("does not exempt another version, another package, or another advisory", () => {
-  for (const changed of [
-    { findings: [{ version: "3.0.2" }] },
-    { findings: [{ version: "3.0.3" }, { version: "3.0.2" }] },
-    { module_name: "another-package" },
-    { github_advisory_id: "GHSA-xxxx-yyyy-zzzz" },
-  ]) {
-    const advisory = { ...patchedBraces, ...changed }
-    const audit = evaluateAudit(auditResult([advisory]), () => assert.fail("Unexpected exemption"))
-    assert.deepEqual(audit.blocking, [advisory])
-    assert.deepEqual(audit.mitigated, [])
-  }
-})
-
-test("unrelated high and critical advisories still block alongside the patched finding", () => {
+test("blocks every high and critical advisory without package or version exceptions", () => {
   for (const severity of ["high", "critical"]) {
-    const other = { ...patchedBraces, severity, github_advisory_id: "GHSA-xxxx-yyyy-zzzz" }
-    const audit = evaluateAudit(auditResult([patchedBraces, other]), () => {})
-    assert.deepEqual(audit.blocking, [other])
-    assert.equal(audit.mitigated.length, 1)
+    for (const changed of [
+      {},
+      { findings: [{ version: "3.0.2" }] },
+      { findings: [{ version: "3.0.3" }, { version: "3.0.2" }] },
+      { module_name: "another-package" },
+      { github_advisory_id: "GHSA-xxxx-yyyy-zzzz" },
+    ]) {
+      const finding = { ...advisory, severity, ...changed }
+      assert.deepEqual(evaluateAudit(auditResult([finding])).blocking, [finding])
+    }
   }
 })
 
-test("retains the high severity threshold", () => {
-  const advisory = { ...patchedBraces, severity: "moderate" }
-  const audit = evaluateAudit(auditResult([advisory]), () => assert.fail("Unexpected exemption"))
+test("retains the high severity threshold and lower-severity counts", () => {
+  const findings = ["info", "low", "moderate"].map((severity) => ({ ...advisory, severity }))
+  const audit = evaluateAudit(auditResult(findings))
   assert.deepEqual(audit.blocking, [])
-  assert.equal(audit.counts.moderate, 1)
+  assert.deepEqual(audit.counts, { info: 1, low: 1, moderate: 1, high: 0, critical: 0 })
 })
 
-test("retains low advisories from an unfiltered audit without blocking the high severity gate", () => {
-  const advisory = {
-    github_advisory_id: "GHSA-gcqx-w48m-w2h4",
-    module_name: "deepmerge",
-    severity: "low",
-    findings: [{ version: "4.3.1", paths: ["personal-email>html-to-text>deepmerge"] }],
-  }
-  const result = auditResult([advisory])
-  assert.equal(result.status, 1)
-  const audit = evaluateAudit(result, () => assert.fail("Unexpected exemption"))
-  assert.deepEqual(audit.blocking, [])
-  assert.deepEqual(audit.mitigated, [])
-  assert.equal(audit.counts.low, 1)
-
-  const filtered = JSON.parse(result.stdout)
-  filtered.advisories = {}
-  assert.throws(() => evaluateAudit({ status: 0, stdout: JSON.stringify(filtered) }, () => {}))
+test("rejects an audit whose findings have been filtered out", () => {
+  const report = JSON.parse(auditResult([{ ...advisory, severity: "low" }]).stdout)
+  report.advisories = {}
+  assert.throws(() => evaluateAudit({ status: 0, stdout: JSON.stringify(report) }))
 })
 
 test("fails closed on process, registry, schema, and incomplete-report errors", () => {
@@ -114,34 +72,10 @@ test("fails closed on process, registry, schema, and incomplete-report errors", 
     { status: 0, stdout: "{}" },
     { status: 0, stdout: JSON.stringify(incomplete) },
     { ...auditResult(), status: 1 },
-    auditResult([{ ...patchedBraces, findings: [] }]),
+    auditResult([{ ...advisory, findings: [] }]),
+    auditResult([{ ...advisory, github_advisory_id: undefined }]),
+    auditResult([{ ...advisory, module_name: undefined }]),
   ]) {
-    assert.throws(() => evaluateAudit(result, () => {}))
+    assert.throws(() => evaluateAudit(result))
   }
-})
-
-test("requires the reviewed patch in workspace settings and every lockfile instance", () => {
-  const { workspace, lockfile } = patchInputs()
-  assert.doesNotThrow(() => assertBracesPatch(workspace, lockfile, patchHash))
-  for (const mutate of [
-    ({ workspace }) => delete workspace.patchedDependencies["braces@3.0.3"],
-    ({ lockfile }) => delete lockfile.patchedDependencies["braces@3.0.3"],
-    ({ lockfile }) => {
-      lockfile.patchedDependencies["braces@3.0.3"] = "different-patch"
-    },
-    ({ lockfile }) => {
-      lockfile.packages["braces@3.0.2"] = {}
-    },
-    ({ lockfile }) => {
-      lockfile.snapshots["braces@3.0.3"] = {}
-    },
-    ({ lockfile }) => {
-      lockfile.snapshots = {}
-    },
-  ]) {
-    const inputs = patchInputs()
-    mutate(inputs)
-    assert.throws(() => assertBracesPatch(inputs.workspace, inputs.lockfile, patchHash))
-  }
-  assert.throws(() => assertBracesPatch(workspace, lockfile, "modified-patch"))
 })
