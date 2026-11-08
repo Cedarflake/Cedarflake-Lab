@@ -26,12 +26,6 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 
 Archived tools include [Refrain Trainer](./others/game-tools/refrain-trainer/README.md), a one-off Chinese Windows trainer for Labyrinth of Refrain. See the [Others index](./others/README.md) for the full inventory.
 
-## Related repositories
-
-- [InFalsusTouch](https://github.com/Cedarflake/InFalsusTouch): an unofficial Android USB touch controller for the PC rhythm game In Falsus, with streamed gameplay, six touch keys, Field control, and multi-device co-op. [Download the preview](https://github.com/Cedarflake/InFalsusTouch/releases/tag/v0.5.0-preview.1).
-
-InFalsusTouch is maintained in its own repository and does not currently declare a reuse license.
-
 ## Commands
 
 ```bash
@@ -45,8 +39,6 @@ pnpm render:email
 ```
 
 Use `pnpm --filter <package-name> <script>` for project-specific frontend/package commands.
-
-`pnpm audit:dependencies` audits the full pnpm workspace, including development dependencies, against the npm registry at the high severity threshold. The registry still reports `GHSA-vfj7-8cjw-p6xm` for the locally patched `braces@3.0.3`. This command recognizes that one mitigation only after checking the reviewed patch hash, all locked braces instances, and the installed package's security regression. Other high/critical advisories, missing patches, and audit errors fail the check. It does not add registry-wide ignore settings. Run `pnpm test:dependency-audit` to verify this gate. Replace the local mitigation when an upstream fix is published and reviewed.
 
 Python workbench checks:
 

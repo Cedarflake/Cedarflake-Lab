@@ -11,7 +11,6 @@ on:
       - "pnpm-workspace.yaml"
       - "patches/**"
       - "scripts/auditDependencies*.mjs"
-      - "scripts/checkBracesSecurity.cjs"
   push:
     branches:
       - main
@@ -23,7 +22,6 @@ on:
       - "pnpm-workspace.yaml"
       - "patches/**"
       - "scripts/auditDependencies*.mjs"
-      - "scripts/checkBracesSecurity.cjs"
 
 permissions:
   contents: read

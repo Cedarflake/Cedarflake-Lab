@@ -79,6 +79,16 @@ EMAIL_TEMPLATE=reset_password TO_NAME=李四 MAIL_TO=foo@example.com pnpm run se
 - 模板字符串支持占位符 `{{name}}` 等，脚本会在渲染前替换它们。
 - `brandDefaults` 用于统一公司名称、logo、主色和页脚文本，修改此处可改变全局样式。
 
+验证命令（从仓库根目录运行）：
+
+```bash
+pnpm --filter personal_email check
+pnpm --filter personal_email render:all
+```
+
+`check` 包含 lint、类型检查以及 HTML 转义、纯文本和两种渲染入口的回归测试。
+
 扩展提示
+
 - 若需要更复杂的内容（如表格、多行项目），在 `TemplateRenderer.tsx` 中扩展渲染逻辑或创建新的模板组件，仍然使用 `EmailLayout` 以保持一致样式。
 

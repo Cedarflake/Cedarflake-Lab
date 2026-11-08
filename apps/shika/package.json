@@ -15,7 +15,7 @@
     "db:check": "drizzle-kit check --config=drizzle.config.ts",
     "db:migrate:local": "tsx ./scripts/migrate-local.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.remote.config.ts",
-    "check": "pnpm --workspace-root check:dependency-security && pnpm lint && pnpm typecheck && pnpm test && pnpm db:check"
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm db:check"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.7",
