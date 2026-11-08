@@ -10,7 +10,6 @@ on:
       - "pnpm-workspace.yaml"
       - "patches/**"
       - "scripts/auditDependencies*.mjs"
-      - "scripts/checkBracesSecurity.cjs"
       - ".github/workflows/project-youtube-auto-resume-extension-ci.yml"
   push:
     branches:
@@ -22,7 +21,6 @@ on:
       - "pnpm-workspace.yaml"
       - "patches/**"
       - "scripts/auditDependencies*.mjs"
-      - "scripts/checkBracesSecurity.cjs"
       - ".github/workflows/project-youtube-auto-resume-extension-ci.yml"
 
 permissions:
