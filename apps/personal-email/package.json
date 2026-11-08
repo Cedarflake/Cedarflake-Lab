@@ -6,7 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "pnpm run build:ts",
-		"check": "pnpm lint && pnpm typecheck",
+		"check": "pnpm lint && pnpm typecheck && pnpm test:render",
+		"test:render": "node --test scripts/renderSecurity.test.mjs",
 		"render:email": "pnpm run build:ts && node dist/scripts/renderEmail.js",
 		"render:all": "pnpm run build:ts && node dist/scripts/renderAll.js",
 		"email": "pnpm run build:ts && node dist/scripts/cli.js",
@@ -20,7 +21,7 @@
 	},
 	"dependencies": {
 		"@react-email/components": "1.0.10",
-		"@react-email/render": "^2.0.0",
+		"@react-email/render": "^2.2.0",
 		"dotenv": "^16.0.0",
 		"nodemailer": "^10.1.4",
 		"prompts": "^2.4.2",

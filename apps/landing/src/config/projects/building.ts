@@ -126,7 +126,7 @@ export const buildingProjectEntries = [
   {
     title: "Personal Email",
     path: "apps/personal-email",
-    updatedAt: "2026-10-24T17:14:25Z",
+    updatedAt: "2026-11-08T16:31:59Z",
     summary:
       "React Email templates and local scripts for rendering, selecting, and delivering personal mail.",
     label: "Local tool",
