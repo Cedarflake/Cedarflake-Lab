@@ -34,7 +34,7 @@ export const buildingProjectEntries = [
     repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Nami",
     externalAction: {
       kind: "live",
-      url: "https://d.i0c.cc",
+      url: "https://u.i0c.cc",
     },
     updatedAt: "2026-08-20T00:40:54+08:00",
     summary:
