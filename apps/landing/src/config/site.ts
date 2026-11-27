@@ -34,7 +34,7 @@ export const siteConfig = {
     { label: "Open bench", href: "#open-bench" },
   ],
   hero: {
-    eyebrow: "A personal monorepo · shared tooling, distinct boundaries",
+    eyebrow: "Apps, tools, and experiments by Cedarflake",
     brand: {
       src: "/Lab-nobg.png",
       alt: "Cedarflake Lab",
@@ -43,8 +43,8 @@ export const siteConfig = {
     },
     statement: "Small tools, strange interfaces, and experiments in motion.",
     description:
-      "Apps, reusable components, local utilities, and prototypes live here together—sharing an engineering layer without losing their own shape.",
-    primaryAction: { label: "Explore the index", href: "#projects" },
+      "Browse photo tools, playful interfaces, and everyday utilities. Try a demo, find something useful, or take a look at how it works.",
+    primaryAction: { label: "Explore projects", href: "#projects" },
     secondaryActionLabel: "View source",
     ruler: ["01 / Index", "Living archive"],
   },
@@ -57,8 +57,7 @@ export const siteConfig = {
         eyebrow: "Latest projects",
         titleId: "projects-title",
         title: "Fresh from the bench.",
-        description:
-          "Recent visual and product-facing work, ordered by its latest project update. Scroll sideways to keep exploring.",
+        description: "Explore the latest apps, interactive demos, and visual experiments.",
       },
     },
     building: {
@@ -70,7 +69,7 @@ export const siteConfig = {
         titleId: "blocks-title",
         title: "Reusable parts and practical tools.",
         description:
-          "Demos, packages, and local workflows that support the bigger experiments without pretending to be products.",
+          "Tools for everyday tasks, components for your own projects, and demos to try in the browser.",
       },
     },
     workbench: {
@@ -83,7 +82,7 @@ export const siteConfig = {
         description:
           "Focused Python projects for automation, media, files, games, AI, and campus networking.",
       },
-      note: "Local-first by design. These entries point to source rather than promising a hosted service.",
+      note: "Open a project to find its source, setup instructions, and usage guide.",
     },
     others: {
       id: "other-shelves",
@@ -94,7 +93,7 @@ export const siteConfig = {
         titleId: "others-title",
         title: "Useful things that resist a neat label.",
         description:
-          "The odd edges remain visible instead of being forced into an app-shaped box, including userscripts and intentionally inactive archives.",
+          "Browse userscripts, interface studies, and older experiments from the archive.",
       },
     },
   },
@@ -103,15 +102,15 @@ export const siteConfig = {
     id: "open-bench",
     titleId: "open-bench-title",
     eyebrow: "05 / Open bench",
-    title: "Different tools. One shared bench.",
+    title: "Take a closer look.",
     areas: [
       {
         label: "Apps",
-        description: "Web products and interactive experiments",
+        description: "Apps to explore and interactive demos to try",
       },
       {
         label: "Packages",
-        description: "Reusable components and shared foundations",
+        description: "Components to use in your own projects",
       },
       {
         label: "Workbench",
@@ -119,10 +118,10 @@ export const siteConfig = {
       },
       {
         label: "Others",
-        description: "Projects and artifacts that resist a single category",
+        description: "Userscripts, visual studies, and past experiments",
       },
     ],
-    actionLabel: "Explore the workspace",
+    actionLabel: "Browse on GitHub",
   },
   footer: {
     links: [
@@ -130,7 +129,7 @@ export const siteConfig = {
       { label: "Redirect", href: "https://u.i0c.cc/" },
       { label: "HLS", href: "https://hls.revaea.com/" },
     ],
-    note: "Built as a living index, not a finished catalogue.",
+    note: "A personal collection of things made, tried, and shared.",
     backToTopLabel: "Back to top ↑",
   },
 } as const

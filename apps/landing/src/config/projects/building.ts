@@ -22,7 +22,7 @@ export const buildingProjectEntries = [
     path: "apps/ame-screenshot-studio",
     updatedAt: "2026-11-27T21:51:32+08:00",
     summary:
-      "A local Windows workspace for capturing Ame windows and composing screenshot layouts and exports.",
+      "Capture Ame windows and arrange them into polished product screenshots, with editable layouts and PNG export.",
     label: "Local tool",
     lifecycle: "active",
     kind: "app",
@@ -34,7 +34,7 @@ export const buildingProjectEntries = [
     repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Ame",
     updatedAt: "2026-11-27T21:51:32+08:00",
     summary:
-      "A local-first Windows photo library for indexing and browsing large personal collections with a Rust core and Flutter Material 3 interface.",
+      "Browse large image collections, organize albums, find similar pictures, and search by what you see—all on your Windows PC.",
     label: "Desktop app",
     lifecycle: "active",
     kind: "app",
@@ -60,7 +60,7 @@ export const buildingProjectEntries = [
     },
     updatedAt: "2026-08-20T00:40:54+08:00",
     summary:
-      "A personal edge redirect playground with a database-backed control plane, provider-selectable runtimes, optional analytics, and compile-time extensions.",
+      "Create and manage redirect links, choose where they run, and explore optional traffic analytics.",
     label: "Edge playground",
     lifecycle: "active",
     kind: "app",
@@ -82,7 +82,7 @@ export const buildingProjectEntries = [
     path: "apps/youtube-auto-resume-extension",
     updatedAt: "2026-07-16T23:37:42+08:00",
     summary:
-      "A Chromium Manifest V3 playback assistant with opt-in trusted activation of visible YouTube skip controls.",
+      "Keep YouTube playing with automatic pause recovery and optional skipping of visible ads and prompts.",
     label: "Browser extension",
     lifecycle: "active",
     kind: "app",
@@ -94,8 +94,8 @@ export const buildingProjectEntries = [
     path: "apps/shika",
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "A single-owner personal status app with private operations and explicitly published public history.",
-    label: "Rebuild",
+      "Share your current status and selected updates on a personal page, with control over what becomes public.",
+    label: "Status page",
     lifecycle: "active",
     kind: "app",
     presentation: "catalog",
@@ -116,7 +116,7 @@ export const buildingProjectEntries = [
     path: "apps/focus-orb-demo",
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "An interactive bench for tuning the WebGL orb as a focus button or ambient background.",
+      "Play with a glowing orb's colors and motion, and try it as an interactive button or animated background.",
     label: "Demo",
     lifecycle: "active",
     kind: "app",
@@ -138,7 +138,7 @@ export const buildingProjectEntries = [
     path: "packages/focus-orb",
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "The reusable React WebGL component behind the playground, packaged for app-level composition.",
+      "Add an animated WebGL orb to a React project as an interactive button or ambient background.",
     label: "Package",
     lifecycle: "active",
     kind: "package",
@@ -149,8 +149,7 @@ export const buildingProjectEntries = [
     title: "Personal Email",
     path: "apps/personal-email",
     updatedAt: "2026-11-08T16:31:59Z",
-    summary:
-      "React Email templates and local scripts for rendering, selecting, and delivering personal mail.",
+    summary: "Preview, personalize, and send email with React Email templates and local tools.",
     label: "Local tool",
     lifecycle: "active",
     kind: "app",

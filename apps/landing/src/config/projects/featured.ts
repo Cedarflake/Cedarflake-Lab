@@ -9,8 +9,7 @@ export const featuredProjectEntries = [
       url: "https://3kf1.test.i0c.cc/",
     },
     updatedAt: "2026-10-24T17:14:25Z",
-    summary:
-      "A motion-led recreation of the animated Copilot Tasks preview, rebuilt in React for close study.",
+    summary: "Explore the animated Copilot Tasks preview in an interactive interface study.",
     kind: "app",
     presentation: "featured",
     section: "featured",
@@ -59,7 +58,7 @@ export const featuredProjectEntries = [
     },
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "A kinetic scene-swap study that turns a rhythm-game-inspired opening into a reusable transition.",
+      "Watch a rhythm-game-inspired opening unfold through colorful animated scene transitions.",
     kind: "app",
     presentation: "featured",
     section: "featured",

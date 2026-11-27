@@ -6,7 +6,7 @@ export const otherProjectEntries = [
     path: "others/game-tools/refrain-trainer",
     updatedAt: "2026-10-18T17:32:14+08:00",
     summary:
-      "An archived, one-off Chinese Windows trainer for Labyrinth of Refrain, with one-hit kills, guaranteed Witch's Crest drops, and optional Legendary equipment.",
+      "A Chinese-language Windows trainer for Labyrinth of Refrain, with one-hit kills, Witch's Crest drops, and Legendary equipment options.",
     label: "Game trainer · Preview",
     lifecycle: "archived",
     kind: "other",
@@ -18,7 +18,7 @@ export const otherProjectEntries = [
     path: "others/interface-studies/google-ai-mode-aurora",
     updatedAt: "2026-07-12T22:02:53+08:00",
     summary:
-      "A static forensic study and dependency-free reproduction of Google Search's cursor-following Aurora edge glow.",
+      "Explore how Google Search's Aurora edge glow follows the cursor, with a standalone visual recreation.",
     label: "Interface study",
     lifecycle: "active",
     kind: "other",
@@ -34,7 +34,7 @@ export const otherProjectEntries = [
     },
     updatedAt: "2026-07-15T22:14:41+08:00",
     summary:
-      "The archived userscript baseline for the browser-extension migration, retained with its installable artifact and validation history.",
+      "An earlier userscript for resuming paused YouTube playback. The browser extension continues the project.",
     label: "Userscript",
     lifecycle: "archived",
     kind: "other",
@@ -61,8 +61,7 @@ export const otherProjectEntries = [
     title: "GitHub Star Cycle",
     path: "others/github-actions/star-cycle",
     updatedAt: "2026-07-11T01:01:23+08:00",
-    summary:
-      "A retired Star and Unstar workflow experiment preserved as an intentionally inactive archive.",
+    summary: "An archived experiment with scheduled GitHub Star and Unstar actions.",
     label: "GitHub action",
     lifecycle: "archived",
     kind: "other",
