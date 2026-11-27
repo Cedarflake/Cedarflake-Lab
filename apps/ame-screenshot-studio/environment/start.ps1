@@ -1,8 +1,18 @@
-
 $ErrorActionPreference = 'Stop'
 $studioRoot = Split-Path -Parent $PSScriptRoot
 $sessionFile = Join-Path $studioRoot 'environment\session.json'
 if (Test-Path -LiteralPath $sessionFile) { throw 'A Studio session record exists; inspect it before starting another.' }
+foreach ($inputFile in @('runtime\app\cedarflake_ame.exe', 'capture\out\ame-capture.exe')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $studioRoot $inputFile) -PathType Leaf)) {
+        throw "Required Studio input is missing: $inputFile"
+    }
+}
+if (-not (Test-Path -LiteralPath (Join-Path $studioRoot 'library\images') -PathType Container)) {
+    throw 'Prepared images are missing: library\images'
+}
+foreach ($outputDirectory in @('environment\state', 'captures')) {
+    New-Item -ItemType Directory -Path (Join-Path $studioRoot $outputDirectory) -Force | Out-Null
+}
 $entries = @(
     @{Host=(Join-Path $studioRoot 'runtime\app');Guest='C:\AmeApp';ReadOnly='true'},
     @{Host=(Join-Path $studioRoot 'library\images');Guest='C:\示例图库';ReadOnly='true'},

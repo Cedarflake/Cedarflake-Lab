@@ -7,7 +7,7 @@
 在仓库的 apps/ame-screenshot-studio 目录中执行：
 
 ~~~powershell
-uv run --offline --script tools/prepare_library.py --collection 视觉收藏-v2 --seed library
+uv run --script tools/prepare_library.py --collection 视觉收藏-v2 --seed library
 ~~~
 
 旧 library/manifest.json 只提供候选 Met object ID 与来源引用。每个候选重新请求当前官方对象记录，确认该对象的 isPublicDomain=true 后重新下载 primaryImage；没有读取旧图片或以旧哈希代替官方字节。sources.json 格式的旧候选清单也可以作为 --seed 目录。
@@ -15,10 +15,10 @@ uv run --offline --script tools/prepare_library.py --collection 视觉收藏-v2 
 首轮结束并检查 status.json、issues.json 后，再执行：
 
 ~~~powershell
-uv run --offline --script tools/prepare_library.py --collection 视觉收藏-v2 --seed library --expand
+uv run --script tools/prepare_library.py --collection 视觉收藏-v2 --seed library --expand
 ~~~
 
---offline 只约束 uv 获取 Python 依赖。工具本身会访问明确准入的 Met 官方 HTTPS API 和图片端点。
+首次运行时，uv 会安装脚本声明的 Python 依赖；缓存齐备后可添加 --offline。该参数只约束依赖获取，资料准备仍会访问明确准入的 Met 官方 HTTPS API 和图片端点。
 
 两条命令按顺序运行。OS 文件锁禁止同一版本同时准备，进程结束后锁自动释放；prepare.lock 文件可以保留，不需要删除。默认单流下载，请求起始间隔至少 0.5 秒，429/503 的 Retry-After 完整生效。403/401 将确切 URL 写入 denied-urls.json 并立即停止本轮；重启后同一 URL 在发请求前就会被拒绝，不换身份、不跟随重定向或绕过保护。
 
@@ -42,7 +42,7 @@ collections/视觉收藏-v2/images/
 每页成功的官方搜索结果和请求收据都会立即保存到 discovery/<主题>-<offset>.json。后续某页被拒不会丢失先前页；只用已有页恢复：
 
 ~~~powershell
-uv run --offline --script tools/prepare_library.py --collection 视觉收藏-v2 --cached-discovery --limit 150
+uv run --script tools/prepare_library.py --collection 视觉收藏-v2 --cached-discovery --limit 150
 ~~~
 
 --cached-discovery 不请求任何搜索页，会读取并去重已有页中的候选，跳过已经提交的记录。它仍逐项请求官方对象记录、核验授权并下载官方图片，不能把候选 ID 当作已经通过授权的素材。--limit 150 指本版本累计最多 150 张（包括现有图片），便于先检查恢复效果；后续按明确目标调整上限。不要与 --expand 同用。
@@ -73,7 +73,7 @@ manifest.json 是已提交记录的导出索引；准备期间应参考 status.j
 默认版本内文件预算 35 GiB、累计 HTTP 响应体预算 40 GiB，可显式更改：
 
 ~~~powershell
-uv run --offline --script tools/prepare_library.py --collection 视觉收藏-v2 --seed library --max-disk-gib 35 --max-network-gib 40
+uv run --script tools/prepare_library.py --collection 视觉收藏-v2 --seed library --max-disk-gib 35 --max-network-gib 40
 ~~~
 
 磁盘预算包含版本内图片、记录、证据及临时副本；原子替换需要新旧文件短暂同时存在。它按实际文件字节计数，不包含文件系统分配簇、目录和 NTFS 元数据。每次写入前检查容量与至少 16 MiB 空闲余量。
@@ -97,9 +97,9 @@ New-Item -ItemType File 'collections/视觉收藏-v2/stop'
 ## 离线验证
 
 ~~~powershell
-uv run --offline --script tools/test_prepare_library.py
+uv run --script tools/test_prepare_library.py
 ~~~
 
-20 个小夹具覆盖截断 JPEG、日期和像素保留、逐项准入、旧 seed 仅提名、完整逐项流程、缺失/改动检测、中断提交恢复、未提交图片不发布、磁盘与网络预算、预算跨重启、403/重定向拒绝、完整 Retry-After、停止前不发请求、真实进程终止后的 OS 锁释放，以及不发搜索请求的缓存恢复、页收据一致性、逐页持久保存、403 跨重启不重试、旧拒绝状态保存和逐项拒绝后立即停止。
+离线小夹具覆盖截断 JPEG、日期和像素保留、逐项准入、旧 seed 仅提名、完整逐项流程、缺失/改动检测、中断提交恢复、未提交图片不发布、磁盘与网络预算、预算跨重启、403/重定向拒绝、完整 Retry-After、停止前不发请求、真实进程终止后的 OS 锁释放，以及不发搜索请求的缓存恢复、页收据一致性、逐页持久保存、403 跨重启不重试、旧拒绝状态保存和逐项拒绝后立即停止。
 
 夹具只在 tools 内创建并清理临时目录，不访问真实网络，不触碰现有图片集合。
