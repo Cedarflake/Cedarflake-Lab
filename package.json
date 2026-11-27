@@ -28,7 +28,8 @@
     "test:repository-contract": "tsx --test scripts/repository-contract/*.test.ts",
     "typecheck:repository-contract": "tsc -p tsconfig.repository-contract.json --noEmit",
     "audit:dependencies": "node scripts/auditDependencies.mjs",
-    "test:dependency-audit": "node --test scripts/auditDependencies.test.mjs"
+    "test:dependency-audit": "node --test scripts/auditDependencies.test.mjs",
+    "dev:ame-screenshot-studio": "pnpm --filter ame-screenshot-studio dev"
   },
   "devDependencies": {
     "@types/node": "22.10.5",

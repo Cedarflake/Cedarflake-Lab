@@ -18,9 +18,21 @@ export const buildingProjectEntries = [
     section: "building",
   },
   {
+    title: "Ame Screenshot Studio",
+    path: "apps/ame-screenshot-studio",
+    updatedAt: "2026-11-27T21:51:32+08:00",
+    summary:
+      "A local Windows workspace for capturing Ame windows and composing screenshot layouts and exports.",
+    label: "Local tool",
+    lifecycle: "active",
+    kind: "app",
+    presentation: "catalog",
+    section: "building",
+  },
+  {
     title: "Cedarflake Ame",
     repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Ame",
-    updatedAt: "2026-08-11T00:22:26+08:00",
+    updatedAt: "2026-11-27T21:51:32+08:00",
     summary:
       "A local-first Windows photo library for indexing and browsing large personal collections with a Rust core and Flutter Material 3 interface.",
     label: "Desktop app",
@@ -28,6 +40,16 @@ export const buildingProjectEntries = [
     kind: "app",
     presentation: "catalog",
     section: "building",
+    showcase: {
+      label: "Local photo library",
+      tags: ["Windows", "Flutter", "Rust"],
+      cover: {
+        src: "/covers/ame.png",
+        alt: "Ame gallery showing artwork thumbnails, folders, search, and an alphabetical scroll rail",
+        width: 1584,
+        height: 891,
+      },
+    },
   },
   {
     title: "Cedarflake Nami",

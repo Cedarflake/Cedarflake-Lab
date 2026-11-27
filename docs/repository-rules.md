@@ -319,6 +319,7 @@ Current workflow ownership:
 | `repo-repository-contract-ci.yml`              | Repository structure, metadata, and synchronization contract        |
 | `group-apps-packages-ci.yml`                   | Baseline dependency audit, check, and build for apps and packages   |
 | `group-workbench-python-ci.yml`                | Workbench Ruff, registered tests, and dependency audits             |
+| `project-ame-screenshot-studio-ci.yml`       | Windows native capture geometry/identity and offline media preparation checks |
 | `project-liminal-drift-ci.yml`                 | Liminal Drift project and browser validation                        |
 | `project-refrain-trainer-ci.yml`               | Manual-only reproduction of the archived Windows trainer build, native checks, and ZIP |
 | `project-shika-ci.yml`                         | Shika static, command, migration, schema, and production validation |
