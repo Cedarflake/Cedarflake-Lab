@@ -120,7 +120,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && url.pathname === "/api/capture") {
       const request = JSON.parse((await body(req, 4096)).toString("utf8"))
-      return json(res, 201, await capture.capture(request.hwnd))
+      return json(res, 201, await capture.capture(request.source))
     }
     if (req.method === "GET" && url.pathname === "/api/library") {
       try {

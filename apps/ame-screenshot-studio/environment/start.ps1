@@ -15,7 +15,7 @@ foreach ($outputDirectory in @('environment\state', 'captures')) {
 }
 $entries = @(
     @{Host=(Join-Path $studioRoot 'runtime\app');Guest='C:\AmeApp';ReadOnly='true'},
-    @{Host=(Join-Path $studioRoot 'library\images');Guest='C:\示例图库';ReadOnly='true'},
+    @{Host=(Join-Path $studioRoot 'library\images');Guest='C:\Image Library';ReadOnly='true'},
     @{Host=(Join-Path $studioRoot 'environment');Guest='C:\StudioControl';ReadOnly='true'},
     @{Host=(Join-Path $studioRoot 'environment\state');Guest='C:\StudioState';ReadOnly='false'},
     @{Host=(Join-Path $studioRoot 'captures');Guest='C:\StudioCaptures';ReadOnly='false'},
@@ -29,6 +29,7 @@ $config = "<Configuration><MemoryInMB>6144</MemoryInMB><VGpu>Enable</VGpu><Netwo
 $id=[guid]::NewGuid().ToString()
 wsb start --id $id --config $config --raw
 if ($LASTEXITCODE -ne 0) { throw 'Screenshot sandbox did not start' }
-@{id=$id;created=[DateTimeOffset]::UtcNow.ToString('o');purpose='ame-screenshot-studio'} | ConvertTo-Json | Set-Content -LiteralPath $sessionFile -Encoding UTF8
+$sessionJson = @{id=$id;created=[DateTimeOffset]::UtcNow.ToString('o');purpose='ame-screenshot-studio'} | ConvertTo-Json
+[System.IO.File]::WriteAllText($sessionFile, $sessionJson, [System.Text.UTF8Encoding]::new($false))
 wsb connect --id $id --raw
 if ($LASTEXITCODE -ne 0) { throw 'Screenshot sandbox did not connect' }

@@ -16,4 +16,7 @@ foreach ($folder in @('Art Collection', 'Creative Archive', 'Photo Archive')) {
     }
 }
 $app = Start-Process -FilePath 'C:\AmeApp\cedarflake_ame.exe' -WorkingDirectory 'C:\AmeApp' -WindowStyle Hidden -PassThru
-@{pid=$app.Id; storage=$root; started=[DateTimeOffset]::UtcNow.ToString('o')} | ConvertTo-Json | Set-Content -LiteralPath 'C:\StudioState\guest-session.json' -Encoding UTF8
+$sessionJson = @{pid=$app.Id; storage=$root; started=[DateTimeOffset]::UtcNow.ToString('o')} | ConvertTo-Json
+[System.IO.File]::WriteAllText(
+    'C:\StudioState\guest-session.json', $sessionJson, [System.Text.UTF8Encoding]::new($false)
+)

@@ -231,7 +231,10 @@ const server = http.createServer(async (request, response) => {
     response.writeHead(404)
     response.end()
   } catch (error) {
-    response.writeHead(400)
+    response.writeHead(400, {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Content-Type-Options": "nosniff",
+    })
     response.end(error.message)
     fail(error)
   }

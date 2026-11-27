@@ -3,41 +3,41 @@ import { readFile } from "node:fs/promises"
 import { spawn } from "node:child_process"
 import { randomUUID } from "node:crypto"
 
-export function createCaptureService(root, dataRoot = root) {
+function run(file, args, timeout = 20000) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] })
+    let out = "",
+      err = ""
+    const timer = setTimeout(() => {
+      child.kill()
+      reject(new Error("采集超时，请确认 Ame 窗口未最小化"))
+    }, timeout)
+    child.stdout.on("data", (chunk) => {
+      out += chunk
+      if (out.length > 1024 * 1024) child.kill()
+    })
+    child.stderr.on("data", (chunk) => {
+      err += chunk
+      if (err.length > 65536) child.kill()
+    })
+    child.on("error", (error) => {
+      clearTimeout(timer)
+      reject(error)
+    })
+    child.on("close", (code) => {
+      clearTimeout(timer)
+      if (code === 0) resolve(out)
+      else reject(new Error(err.trim() || "窗口采集失败"))
+    })
+  })
+}
+
+export function createCaptureService(root, dataRoot = root, execute = run) {
   const helper = path.join(root, "capture", "out", "ame-capture.exe")
   const wsb = process.env.LOCALAPPDATA
     ? path.join(process.env.LOCALAPPDATA, "Microsoft", "WindowsApps", "wsb.exe")
     : "wsb.exe"
   let busy = false
-
-  function run(file, args, timeout = 20000) {
-    return new Promise((resolve, reject) => {
-      const child = spawn(file, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] })
-      let out = "",
-        err = ""
-      const timer = setTimeout(() => {
-        child.kill()
-        reject(new Error("采集超时，请确认 Ame 窗口未最小化"))
-      }, timeout)
-      child.stdout.on("data", (chunk) => {
-        out += chunk
-        if (out.length > 1024 * 1024) child.kill()
-      })
-      child.stderr.on("data", (chunk) => {
-        err += chunk
-        if (err.length > 65536) child.kill()
-      })
-      child.on("error", (error) => {
-        clearTimeout(timer)
-        reject(error)
-      })
-      child.on("close", (code) => {
-        clearTimeout(timer)
-        if (code === 0) resolve(out)
-        else reject(new Error(err.trim() || "窗口采集失败"))
-      })
-    })
-  }
 
   async function session() {
     try {
@@ -54,7 +54,7 @@ export function createCaptureService(root, dataRoot = root) {
   }
 
   async function localWindows() {
-    return JSON.parse(await run(helper, ["enumerate"])).filter(
+    return JSON.parse(await execute(helper, ["enumerate"])).filter(
       (item) => item.process.toLowerCase() === "cedarflake_ame.exe",
     )
   }
@@ -62,8 +62,14 @@ export function createCaptureService(root, dataRoot = root) {
   return {
     async windows() {
       const windows = await localWindows()
-      if (await session())
-        windows.unshift({ id: "sandbox", title: "隔离图库中的 Ame", process: "cedarflake_ame.exe" })
+      const current = await session()
+      if (current)
+        windows.unshift({
+          id: "sandbox",
+          sessionId: current.id,
+          title: "隔离图库中的 Ame",
+          process: "cedarflake_ame.exe",
+        })
       return windows
     },
     async capture(source) {
@@ -71,12 +77,14 @@ export function createCaptureService(root, dataRoot = root) {
       busy = true
       try {
         const id = "ame-" + randomUUID() + ".png"
-        if (source === "sandbox") {
+        if (!source || typeof source !== "object") throw new Error("请选择 Ame 窗口")
+        if (source.id === "sandbox") {
           const current = await session()
           if (!current) throw new Error("请先启动隔离图库")
+          if (source.sessionId !== current.id) throw new Error("隔离图库已更换，请重新选择窗口")
           const command = `powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File C:\\StudioControl\\capture.ps1 -OutputName ${id}`
           const result = JSON.parse(
-            await run(
+            await execute(
               wsb,
               [
                 "exec",
@@ -95,13 +103,21 @@ export function createCaptureService(root, dataRoot = root) {
             throw new Error("隔离窗口采集失败，请确认 Ame 已打开且没有最小化")
           await readFile(path.join(dataRoot, "captures", id))
         } else {
-          const window = (await localWindows()).find((item) => item.id === source)
-          if (!window) throw new Error("请选择 Ame 窗口")
-          await run(helper, [
+          if (
+            typeof source.id !== "string" ||
+            !/^0x[0-9a-f]{1,16}$/i.test(source.id) ||
+            !Number.isInteger(source.pid) ||
+            source.pid <= 0 ||
+            source.pid > 0xffffffff ||
+            typeof source.started !== "string" ||
+            !/^[1-9][0-9]{0,19}$/.test(source.started)
+          )
+            throw new Error("窗口信息不完整，请重新选择")
+          await execute(helper, [
             "capture-ame",
-            source,
-            String(window.pid),
-            window.started,
+            source.id,
+            String(source.pid),
+            source.started,
             path.join(dataRoot, "captures", id),
           ])
         }

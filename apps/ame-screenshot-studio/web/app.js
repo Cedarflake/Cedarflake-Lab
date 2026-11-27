@@ -5,6 +5,7 @@ const canvas = $("canvas"),
   loaded = new Map()
 let project,
   assets = [],
+  captureSources = [],
   saveTimer,
   toastTimer,
   dragStart,
@@ -325,8 +326,10 @@ $("open-capture").onclick = async () => {
   $("capture-error").textContent = ""
   $("capture-now").disabled = true
   $("window-list").replaceChildren()
+  captureSources = []
   try {
     const windows = await api("/api/windows")
+    captureSources = windows
     for (const item of windows) {
       const option = document.createElement("option")
       option.value = item.id
@@ -349,7 +352,9 @@ $("capture-now").onclick = async () => {
     const result = await api("/api/capture", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hwnd: $("window-list").value }),
+      body: JSON.stringify({
+        source: captureSources.find((item) => item.id === $("window-list").value),
+      }),
     })
     await refreshAssets()
     addAsset(result.id)
