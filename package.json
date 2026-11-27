@@ -16,6 +16,7 @@
     "typecheck": "pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present typecheck",
     "format": "pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present format",
     "format:check": "pnpm -r --filter \"./apps/**\" --filter \"./packages/**\" --filter \"./others/userscripts/**\" --if-present format:check",
+    "dev:ame-screenshot-studio": "pnpm --filter ame-screenshot-studio dev",
     "dev:copilot-task": "pnpm --filter tasks-waitlist-preview dev",
     "dev:focus-orb": "pnpm --filter @cedarflake/focus-orb-demo dev",
     "dev:landing": "pnpm --filter @cedarflake/landing dev",

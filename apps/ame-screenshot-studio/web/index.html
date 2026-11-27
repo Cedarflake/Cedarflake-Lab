@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ame Screenshot Studio</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Ame Screenshot Studio"
+        ><span class="brand-mark">A</span><span>Ame <b>Studio</b></span></a
+      ><span class="project-name">商店展示</span><span class="local-chip"><i></i> 本地工作区</span
+      ><span class="spacer"></span><span id="save-state" role="status">项目已就绪</span
+      ><button id="save-project" class="quiet">保存项目</button
+      ><button id="export" class="primary" disabled>导出 PNG <span>↗</span></button>
+    </header>
+    <div class="workspace">
+      <aside class="scenes-panel">
+        <div class="section-head">
+          <h2>展示场景</h2>
+          <span>06</span>
+        </div>
+        <nav id="scene-list" aria-label="展示场景"></nav>
+        <div class="asset-section">
+          <div class="section-head">
+            <h2>原始截图</h2>
+            <button id="refresh-assets" class="icon-button" title="刷新截图" aria-label="刷新截图">
+              ↻
+            </button>
+          </div>
+          <div class="asset-actions">
+            <button id="open-capture">采集窗口</button
+            ><label class="file-button"
+              >导入 PNG<input id="import-image" type="file" accept="image/png" multiple hidden
+            /></label>
+          </div>
+          <div id="asset-list"></div>
+          <p class="hint">点击截图，添加到当前画面。<br />所有素材保存在本机。</p>
+        </div>
+        <div class="library-status">
+          <span class="status-dot"></span><span id="library-status">素材库尚未准备</span>
+        </div>
+      </aside>
+      <main>
+        <div class="canvas-toolbar">
+          <div>
+            <span id="scene-label">大图库浏览</span><small id="scene-number">01 / 06</small>
+          </div>
+          <div class="canvas-meta">
+            <span>1920 × 1080</span><button id="fit" class="quiet">适合窗口</button
+            ><button id="actual" class="quiet">100%</button>
+          </div>
+        </div>
+        <div id="canvas-viewport">
+          <canvas
+            id="canvas"
+            width="1920"
+            height="1080"
+            tabindex="0"
+            aria-label="商店截图画布，可拖动调整图片位置"
+          ></canvas>
+        </div>
+        <footer class="canvas-footer">
+          <span id="image-info">添加一张真实 Ame 截图，开始排版</span><span>PNG · sRGB · 16:9</span>
+        </footer>
+      </main>
+      <aside class="properties">
+        <h2>画面</h2>
+        <div class="segmented" id="layouts" aria-label="排版模板">
+          <button data-layout="single" title="单窗口">单窗口</button
+          ><button data-layout="pair" title="双窗口">双窗口</button
+          ><button data-layout="detail" title="主图与细节">主图＋细节</button>
+        </div>
+        <label class="field">标题<textarea id="title" rows="2" maxlength="180"></textarea></label
+        ><label class="field"
+          >副标题<textarea id="subtitle" rows="2" maxlength="180"></textarea></label
+        ><label class="switch-row"
+          >显示标题<input type="checkbox" id="showTitle" role="switch"
+        /></label>
+        <div class="two-fields">
+          <label class="field"
+            >标题字号<input type="number" id="titleSize" min="32" max="100" /></label
+          ><label class="field"
+            >副标题字号<input type="number" id="subtitleSize" min="18" max="44"
+          /></label>
+        </div>
+        <label class="field"
+          >文字对齐<select id="alignment">
+            <option value="center">居中</option>
+            <option value="left">靠左</option>
+          </select></label
+        >
+        <h3>背景</h3>
+        <div class="swatches" id="themes">
+          <button data-theme="mist" title="晨雾" aria-label="晨雾"></button
+          ><button data-theme="mint" title="薄荷" aria-label="薄荷"></button
+          ><button data-theme="pearl" title="珍珠" aria-label="珍珠"></button
+          ><button data-theme="dusk" title="暮色" aria-label="暮色"></button>
+        </div>
+        <h3>布局</h3>
+        <label class="range-field"
+          >图片上沿<output id="top-value"></output
+          ><input type="range" id="top" min="120" max="400" /></label
+        ><label class="range-field"
+          >两侧留白<output id="padding-value"></output
+          ><input type="range" id="padding" min="24" max="260" /></label
+        ><label class="range-field"
+          >窗口间距<output id="gap-value"></output
+          ><input type="range" id="gap" min="8" max="80" /></label
+        ><label class="range-field"
+          >阴影<output id="shadow-value"></output
+          ><input type="range" id="shadow" min="0" max="64" /></label
+        ><label class="range-field"
+          >窗口圆角<output id="cornerRadius-value"></output
+          ><input type="range" id="cornerRadius" min="0" max="48" /></label
+        ><label class="range-field"
+          >图片缩放<output id="scale-value"></output
+          ><input type="range" id="scale" min="0.5" max="1.4" step="0.01"
+        /></label>
+        <button id="reset-position" class="wide quiet">重置图片位置</button>
+        <div id="assigned-images"></div>
+        <p id="quality-warning" class="quality-note" role="status"></p>
+        <div class="project-actions">
+          <button id="download-project" class="quiet">导出项目</button
+          ><label class="file-button quiet"
+            >打开项目<input id="load-project" type="file" accept=".json,application/json" hidden
+          /></label>
+        </div>
+      </aside>
+    </div>
+    <dialog id="capture-dialog">
+      <form method="dialog">
+        <button class="close icon-button" aria-label="关闭">×</button>
+        <h2>采集真实窗口</h2>
+        <p>选择 Ame 窗口，保留原始像素。窗口应保持展开。</p>
+        <select id="window-list" aria-label="选择窗口"></select>
+        <p id="capture-error" class="error" role="alert"></p>
+        <div class="dialog-actions">
+          <button value="cancel" class="quiet">取消</button
+          ><button id="capture-now" type="button" class="primary">采集</button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

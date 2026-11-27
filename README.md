@@ -12,6 +12,7 @@ Personal monorepo for apps, packages, local Python projects, and assorted experi
 
 | Path                                 | Project                                                                        | Live                                          |
 | ------------------------------------ | ------------------------------------------------------------------------------ | --------------------------------------------- |
+| `apps/ame-screenshot-studio`        | Local Windows workspace for capturing Ame and composing screenshot exports.   | —                                             |
 | `apps/copilot-task`                  | Vite/React AI Agent preview site.                                              | [3kf1.test.i0c.cc](https://3kf1.test.i0c.cc/) |
 | `apps/focus-orb-demo`                | Demo app for the Focus Orb package.                                            | —                                             |
 | `apps/landing`                       | Landing page for the Cedarflake Lab project index.                             | [test.i0c.cc](https://test.i0c.cc/)           |
