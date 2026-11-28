@@ -1,16 +1,15 @@
-import { ArrowDown, ArrowUpRight, GitFork } from "lucide-react"
 import type { DragEvent } from "react"
 
+import { BauhausPoster } from "./components/BauhausPoster"
 import { CatalogCarousel } from "./components/CatalogCarousel"
 import { FeaturedCarousel } from "./components/FeaturedCarousel"
 import { SectionHeading } from "./components/SectionHeading"
+import { SiteHeader } from "./components/SiteHeader"
 import { WorkbenchGroup } from "./components/WorkbenchGroup"
 import { siteConfig } from "./config/site"
 import { useEntranceReveal } from "./hooks/useEntranceReveal"
-import { useImageLoadState } from "./hooks/useImageLoadState"
 import {
   buildingProjects,
-  labStats,
   otherProjects,
   showcaseProjects,
   workbenchGroups,
@@ -23,8 +22,6 @@ function preventLinkDrag(event: DragEvent<HTMLElement>) {
 }
 
 export function App() {
-  const heroBrand = siteConfig.hero.brand
-  const heroBrandLoadState = useImageLoadState(heroBrand.src)
   const siteShellRef = useEntranceReveal()
 
   return (
@@ -33,87 +30,15 @@ export function App() {
         Skip to content
       </a>
 
-      <header className="site-header" data-reveal>
-        <a className="mini-brand" href="#top" aria-label={siteConfig.header.homeLabel}>
-          <span>{siteConfig.header.brand}</span>
-          <span>{siteConfig.header.edition}</span>
-        </a>
-        <nav aria-label="Primary navigation">
-          {siteConfig.navigation.map((item) => (
-            <a key={item.href} href={item.href}>
-              {item.label}
-            </a>
-          ))}
-        </nav>
-        <a className="github-link" href={siteConfig.repositoryUrl} rel="noreferrer" target="_blank">
-          <GitFork aria-hidden="true" />
-          <span>{siteConfig.header.sourceLabel}</span>
-        </a>
-      </header>
+      <SiteHeader />
 
       <main id="main-content" tabIndex={-1}>
-        <section className="hero" id="top" aria-labelledby="hero-title">
-          <div className="hero__wash hero__wash--one" aria-hidden="true" />
-          <div className="hero__wash hero__wash--two" aria-hidden="true" />
-          <p className="hero__eyebrow" data-reveal>
-            {siteConfig.hero.eyebrow}
-          </p>
-          <h1 className="hero__title" id="hero-title">
-            <span className="hero__brand-text sr-only">{heroBrand.alt}</span>
-            <span
-              className="hero__brand-visual"
-              style={{
-                aspectRatio: `${heroBrand.width} / ${heroBrand.height}`,
-                backgroundImage:
-                  heroBrandLoadState === "ready" ? `url("${heroBrand.src}")` : undefined,
-              }}
-              data-load-state={heroBrandLoadState}
-              aria-hidden="true"
-            >
-              {heroBrandLoadState === "error" ? (
-                <span className="hero__brand-fallback">{heroBrand.alt}</span>
-              ) : null}
-            </span>
-          </h1>
-          <div className="hero__content" data-reveal>
-            <p className="hero__statement">{siteConfig.hero.statement}</p>
-            <div className="hero__intro">
-              <p>{siteConfig.hero.description}</p>
-              <div className="hero__actions">
-                <a className="button button--primary" href={siteConfig.hero.primaryAction.href}>
-                  {siteConfig.hero.primaryAction.label}
-                  <ArrowDown aria-hidden="true" />
-                </a>
-                <a
-                  className="button button--ghost"
-                  href={siteConfig.repositoryUrl}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {siteConfig.hero.secondaryActionLabel}
-                  <ArrowUpRight aria-hidden="true" />
-                </a>
-              </div>
-            </div>
-          </div>
-          <dl className="hero__stats" data-reveal>
-            {labStats.map((stat) => (
-              <div key={stat.label}>
-                <dt>{stat.label}</dt>
-                <dd>{stat.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="lab-rule" data-reveal aria-hidden="true">
-            {siteConfig.hero.ruler.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-        </section>
+        <BauhausPoster />
 
         <section
           className="page-section"
           id={siteConfig.sections.featured.id}
+          tabIndex={-1}
           aria-labelledby={siteConfig.sections.featured.heading.titleId}
           data-reveal
         >
@@ -142,12 +67,12 @@ export function App() {
         <section
           className="page-section page-section--workbench"
           id={siteConfig.sections.workbench.id}
+          tabIndex={-1}
           aria-labelledby={siteConfig.sections.workbench.heading.titleId}
           data-reveal
         >
           <div className="workbench-intro">
             <SectionHeading {...siteConfig.sections.workbench.heading} />
-            <p className="workbench-intro__note">{siteConfig.sections.workbench.note}</p>
           </div>
           <div className="workbench-groups">
             {workbenchGroups.map((group) => (
@@ -173,6 +98,7 @@ export function App() {
         <section
           className="open-bench"
           id={siteConfig.openBench.id}
+          tabIndex={-1}
           aria-labelledby={siteConfig.openBench.titleId}
           data-reveal
         >
@@ -190,7 +116,6 @@ export function App() {
           </ul>
           <a href={siteConfig.repositoryUrl} rel="noreferrer" target="_blank">
             {siteConfig.openBench.actionLabel}
-            <ArrowUpRight aria-hidden="true" />
           </a>
         </section>
       </main>

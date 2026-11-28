@@ -13,7 +13,7 @@
   flex-direction: column;
   min-height: 360px;
   padding: clamp(24px, 3vw, 38px);
-  background: rgba(255, 255, 255, 0.42);
+  background: transparent;
   transition: background 180ms ease;
 }
 
@@ -40,8 +40,8 @@
   min-width: 0;
   max-width: 100%;
   margin-top: 18px;
-  color: #625965;
-  font-size: 14px;
+  color: var(--color-muted-strong);
+  font-size: 1rem;
   line-height: 1.65;
   overflow-wrap: anywhere;
 }
@@ -60,7 +60,7 @@
 
 .catalog-card__archive {
   padding: 5px 9px;
-  border-radius: 999px;
+  border-radius: 0;
   corner-shape: var(--corner-shape-smooth);
   background: var(--color-coral-deep);
   color: var(--color-white);

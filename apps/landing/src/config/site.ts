@@ -27,6 +27,8 @@ export const siteConfig = {
     edition: `Lab / ${currentYear}`,
     homeLabel: "Cedarflake Lab home",
     sourceLabel: "GitHub",
+    menuLabel: "Menu",
+    closeMenuLabel: "Close",
   },
   navigation: [
     { label: "Projects", href: "#projects" },
@@ -47,6 +49,13 @@ export const siteConfig = {
     primaryAction: { label: "Explore projects", href: "#projects" },
     secondaryActionLabel: "View source",
     ruler: ["01 / Index", "Living archive"],
+    poster: {
+      wordmark: "cedarflake",
+      manifesto: "form. function.",
+      invitation: "room to play.",
+      sideNote: "a study in possibility",
+      collectionLabel: "The collection",
+    },
   },
   sections: {
     featured: {
@@ -82,7 +91,6 @@ export const siteConfig = {
         description:
           "Focused Python projects for automation, media, files, games, AI, and campus networking.",
       },
-      note: "Open a project to find its source, setup instructions, and usage guide.",
     },
     others: {
       id: "other-shelves",
@@ -130,6 +138,6 @@ export const siteConfig = {
       { label: "HLS", href: "https://hls.revaea.com/" },
     ],
     note: "A personal collection of things made, tried, and shared.",
-    backToTopLabel: "Back to top ↑",
+    backToTopLabel: "Back to top",
   },
 } as const

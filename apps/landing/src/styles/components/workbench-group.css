@@ -19,7 +19,7 @@
 }
 
 .workbench-group__header h3 {
-  font-size: 13px;
+  font-size: 0.875rem;
   font-weight: 700;
 }
 
@@ -29,7 +29,7 @@
 
 .workbench-list a {
   display: grid;
-  grid-template-columns: minmax(170px, 0.8fr) minmax(220px, 1.2fr) auto;
+  grid-template-columns: minmax(120px, 0.8fr) minmax(160px, 1.2fr) auto;
   gap: 24px;
   align-items: center;
   min-height: 88px;
@@ -46,8 +46,8 @@
 }
 
 .workbench-list p {
-  color: #706773;
-  font-size: 13px;
+  color: var(--color-muted);
+  font-size: 1rem;
   line-height: 1.55;
 }
 

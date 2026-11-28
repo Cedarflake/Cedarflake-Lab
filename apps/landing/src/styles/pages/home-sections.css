@@ -1,3 +1,7 @@
+.hero + .page-section {
+  padding-top: calc(var(--section-space) * 1.75);
+}
+
 .page-section--catalog {
   background: var(--color-surface-catalog);
 }
@@ -5,8 +9,8 @@
 .page-section--workbench {
   display: grid;
   grid-template-columns: minmax(300px, 0.75fr) minmax(0, 1.25fr);
-  gap: clamp(56px, 9vw, 132px);
-  background: var(--color-white);
+  gap: clamp(40px, 6vw, 88px);
+  background: var(--color-paper);
 }
 
 .workbench-intro {
@@ -36,16 +40,6 @@
 
 .workbench-intro .section-heading h2 {
   font-size: clamp(42px, 5vw, 68px);
-}
-
-.workbench-intro__note {
-  max-width: 420px;
-  margin-top: 36px;
-  padding-top: 18px;
-  border-top: 1px solid var(--border-soft);
-  color: #786f7a;
-  font-size: 12px;
-  line-height: 1.65;
 }
 
 .workbench-groups {

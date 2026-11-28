@@ -10,10 +10,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    linear-gradient(rgba(37, 29, 42, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 29, 42, 0.035) 1px, transparent 1px), var(--color-white);
-  background-size: 72px 72px;
+  background: var(--color-paper);
   color: var(--color-ink);
 }
 

@@ -118,8 +118,17 @@ const imageTags = [...html.matchAll(/<img\b[^>]*>/g)].map((match) => match[0])
 const projectImageTags = imageTags.filter((tag) => /\ssrc="\/covers\//.test(tag))
 const anchorMatches = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)]
 const buttonMatches = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
+const carouselViewportIds = new Set(
+  [...html.matchAll(/<div\b([^>]*)>/g)]
+    .filter((match) =>
+      (readHtmlAttribute(match[1] ?? "", "class") ?? "")
+        .split(/\s+/)
+        .includes("carousel__viewport"),
+    )
+    .map((match) => readHtmlAttribute(match[1] ?? "", "id")),
+)
 const carouselButtonMatches = buttonMatches.filter((match) =>
-  /\saria-controls="[^"]+"/.test(match[1] ?? ""),
+  carouselViewportIds.has(readHtmlAttribute(match[1] ?? "", "aria-controls")),
 )
 const externalLinkTags = [...html.matchAll(/<a\b[^>]*\starget="_blank"[^>]*>/g)].map(
   (match) => match[0],

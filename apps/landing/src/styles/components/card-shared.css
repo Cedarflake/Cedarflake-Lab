@@ -11,9 +11,9 @@
 .catalog-card__topline {
   flex-wrap: wrap;
   row-gap: 8px;
-  color: #746a75;
+  color: var(--color-muted);
   font-family: var(--font-label);
-  font-size: 10px;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -78,14 +78,14 @@
   position: relative;
   z-index: 2;
   display: inline-grid;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   place-items: center;
-  border: 0;
-  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
   background: transparent;
-  color: var(--color-coral-deep);
+  color: var(--color-ink);
   line-height: 0;
   transition:
     background 160ms ease,
@@ -95,7 +95,7 @@
 
 .project-action:hover,
 .project-action:focus-visible {
-  background: rgba(183, 46, 67, 0.08);
+  background: var(--color-yellow);
   color: var(--color-ink);
 }
 

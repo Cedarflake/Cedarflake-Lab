@@ -6,17 +6,17 @@ code,
 .eyebrow {
   grid-column: 1 / -1;
   color: var(--color-coral-deep);
-  font-size: 10px;
+  font-size: 0.8125rem;
   font-weight: 750;
   letter-spacing: 0.1em;
-  line-height: 1;
+  line-height: 1.4;
   text-transform: uppercase;
 }
 
 .source-path {
   min-width: 0;
-  color: #776e78;
-  font-size: 10px;
+  color: var(--color-muted);
+  font-size: 0.75rem;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
