@@ -2,6 +2,8 @@
 
 Read [`docs/repository-rules.md`](./docs/repository-rules.md) before changing any tracked file. Frontend changes must also follow its “Frontend Engineering Defaults” section when the target project has no conflicting local rule.
 
+Before changing `apps/landing`, read and follow its [Landing Copy Guidelines](./apps/landing/docs/copy-guidelines.md). This includes layout, navigation, project-card, and metadata changes that can affect how visitors understand the content or its destinations.
+
 ## Quality Bar
 
 - Work at an owner-level engineering standard: identify the root cause, affected owners, regression risk, and validation evidence before declaring a task complete.

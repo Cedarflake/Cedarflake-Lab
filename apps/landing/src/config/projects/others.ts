@@ -18,7 +18,7 @@ export const otherProjectEntries = [
     path: "others/interface-studies/google-ai-mode-aurora",
     updatedAt: "2026-07-12T22:02:53+08:00",
     summary:
-      "Explore how Google Search's Aurora edge glow follows the cursor, with a standalone visual recreation.",
+      "A standalone interface study recreating the cursor-responsive Aurora edge glow from Google Search.",
     label: "Interface study",
     lifecycle: "active",
     kind: "other",

@@ -9,7 +9,8 @@ export const featuredProjectEntries = [
       url: "https://3kf1.test.i0c.cc/",
     },
     updatedAt: "2026-10-24T17:14:25Z",
-    summary: "Explore the animated Copilot Tasks preview in an interactive interface study.",
+    summary:
+      "A study of the Copilot Tasks preview interface, recreating its layout and animated transitions.",
     kind: "app",
     presentation: "featured",
     section: "featured",
@@ -58,7 +59,7 @@ export const featuredProjectEntries = [
     },
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "Watch a rhythm-game-inspired opening unfold through colorful animated scene transitions.",
+      "A rhythm-game-inspired opening sequence built as an animation and scene-transition study.",
     kind: "app",
     presentation: "featured",
     section: "featured",

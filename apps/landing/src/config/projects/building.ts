@@ -22,8 +22,8 @@ export const buildingProjectEntries = [
     path: "apps/ame-screenshot-studio",
     updatedAt: "2026-11-27T21:51:32+08:00",
     summary:
-      "Capture Ame windows and arrange them into polished product screenshots, with editable layouts and PNG export.",
-    label: "Local tool",
+      "A local screenshot editor for Ame product images, with window capture, editable layouts, and PNG export.",
+    label: "Screenshot editor",
     lifecycle: "active",
     kind: "app",
     presentation: "catalog",
@@ -34,7 +34,7 @@ export const buildingProjectEntries = [
     repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Ame",
     updatedAt: "2026-11-27T21:51:32+08:00",
     summary:
-      "Browse large image collections, organize albums, find similar pictures, and search by what you see—all on your Windows PC.",
+      "A Windows image library for browsing large collections, organizing albums, and finding visually similar images.",
     label: "Desktop app",
     lifecycle: "active",
     kind: "app",
@@ -60,14 +60,15 @@ export const buildingProjectEntries = [
     },
     updatedAt: "2026-08-20T00:40:54+08:00",
     summary:
-      "Create and manage redirect links, choose where they run, and explore optional traffic analytics.",
-    label: "Edge playground",
+      "A self-hosted redirect project exploring routing rules, edge runtimes, and traffic analytics.",
+    label: "Personal redirect system",
     lifecycle: "active",
     kind: "app",
     presentation: "catalog",
     section: "building",
     showcase: {
-      label: "Redirect control plane",
+      label: "Personal redirect system",
+      note: "Live link opens the administrator sign-in",
       tags: ["Next.js", "Multi-provider", "Plugins"],
       cover: {
         src: "/covers/nami.png",
@@ -82,7 +83,7 @@ export const buildingProjectEntries = [
     path: "apps/youtube-auto-resume-extension",
     updatedAt: "2026-07-16T23:37:42+08:00",
     summary:
-      "Keep YouTube playing with automatic pause recovery and optional skipping of visible ads and prompts.",
+      "A browser extension that resumes paused YouTube playback, with optional skipping of visible ads and prompts.",
     label: "Browser extension",
     lifecycle: "active",
     kind: "app",
@@ -94,14 +95,15 @@ export const buildingProjectEntries = [
     path: "apps/shika",
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "Share your current status and selected updates on a personal page, with control over what becomes public.",
+      "A personal status-page project with a private owner console and a public view of published updates.",
     label: "Status page",
     lifecycle: "active",
     kind: "app",
     presentation: "catalog",
     section: "building",
     showcase: {
-      label: "Personal status app",
+      label: "Personal status project",
+      note: "In development",
       tags: ["Next.js", "Turso", "Privacy-first"],
       cover: {
         src: "/covers/shika.png",
@@ -116,7 +118,7 @@ export const buildingProjectEntries = [
     path: "apps/focus-orb-demo",
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "Play with a glowing orb's colors and motion, and try it as an interactive button or animated background.",
+      "A configuration playground for the Focus Orb component, with controls for color, motion, and interaction.",
     label: "Demo",
     lifecycle: "active",
     kind: "app",
@@ -138,7 +140,7 @@ export const buildingProjectEntries = [
     path: "packages/focus-orb",
     updatedAt: "2026-10-24T17:14:25Z",
     summary:
-      "Add an animated WebGL orb to a React project as an interactive button or ambient background.",
+      "A React component for rendering animated WebGL orbs as buttons or ambient backgrounds.",
     label: "Package",
     lifecycle: "active",
     kind: "package",
@@ -149,8 +151,9 @@ export const buildingProjectEntries = [
     title: "Personal Email",
     path: "apps/personal-email",
     updatedAt: "2026-11-08T16:31:59Z",
-    summary: "Preview, personalize, and send email with React Email templates and local tools.",
-    label: "Local tool",
+    summary:
+      "A React Email starter with HTML rendering and SMTP sending scripts for custom email templates.",
+    label: "Email template starter",
     lifecycle: "active",
     kind: "app",
     presentation: "catalog",

@@ -7,7 +7,7 @@ export const seoConfig = {
   repositoryUrl: "https://github.com/Cedarflake/Cedarflake-Lab",
   title: "Cedarflake Lab — Apps, Developer Tools, and Experiments",
   description:
-    "Discover apps, useful tools, and creative experiments by Cedarflake. Try interactive demos and browse the source on GitHub.",
+    "A personal collection of software projects by Cedarflake: applications, reusable components, interface studies, and visual experiments.",
   themeColor: "#fffafa",
   robots: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
   socialImage: {

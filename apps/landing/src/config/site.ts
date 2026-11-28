@@ -33,7 +33,7 @@ export const siteConfig = {
   navigation: [
     { label: "Projects", href: "#projects" },
     { label: "Workbench", href: "#workbench" },
-    { label: "Open bench", href: "#open-bench" },
+    { label: "Repository", href: "#open-bench" },
   ],
   hero: {
     eyebrow: "Apps, tools, and experiments by Cedarflake",
@@ -45,7 +45,7 @@ export const siteConfig = {
     },
     statement: "Small tools, strange interfaces, and experiments in motion.",
     description:
-      "Browse photo tools, playful interfaces, and everyday utilities. Try a demo, find something useful, or take a look at how it works.",
+      "A personal collection of software, from image tools and reusable components to interface and motion studies.",
     primaryAction: { label: "Explore projects", href: "#projects" },
     secondaryActionLabel: "View source",
     ruler: ["01 / Index", "Living archive"],
@@ -63,22 +63,22 @@ export const siteConfig = {
       carouselHint: "Swipe, scroll, or use arrow keys",
       heading: {
         index: "01",
-        eyebrow: "Latest projects",
+        eyebrow: "Selected projects",
         titleId: "projects-title",
-        title: "Fresh from the bench.",
-        description: "Explore the latest apps, interactive demos, and visual experiments.",
+        title: "Projects in focus.",
+        description: "A selection of applications, interface studies, and interactive experiments.",
       },
     },
     building: {
       id: "building-blocks",
-      carouselHint: "More building blocks along the shelf",
+      carouselHint: "More tools and components",
       heading: {
         index: "02",
-        eyebrow: "Building blocks",
+        eyebrow: "Tools & components",
         titleId: "blocks-title",
-        title: "Reusable parts and practical tools.",
+        title: "Small projects. Specific uses.",
         description:
-          "Tools for everyday tasks, components for your own projects, and demos to try in the browser.",
+          "Projects for desktop workflows, browser tasks, web development, and game input.",
       },
     },
     workbench: {
@@ -87,21 +87,21 @@ export const siteConfig = {
         index: "03",
         eyebrow: "Local workbench",
         titleId: "workbench-title",
-        title: "Utilities kept close to the machine.",
+        title: "Scripts and desktop utilities.",
         description:
-          "Focused Python projects for automation, media, files, games, AI, and campus networking.",
+          "Locally run Python projects for media, files, automation, AI services, games, and networking.",
       },
     },
     others: {
       id: "other-shelves",
-      carouselHint: "More oddities along the shelf",
+      carouselHint: "More studies and archived projects",
       heading: {
         index: "04",
-        eyebrow: "Other shelves",
+        eyebrow: "Studies & archive",
         titleId: "others-title",
-        title: "Useful things that resist a neat label.",
+        title: "Experiments kept on record.",
         description:
-          "Browse userscripts, interface studies, and older experiments from the archive.",
+          "Interface recreations, userscripts, and game experiments. Archived projects are marked.",
       },
     },
   },
@@ -109,27 +109,27 @@ export const siteConfig = {
   openBench: {
     id: "open-bench",
     titleId: "open-bench-title",
-    eyebrow: "05 / Open bench",
-    title: "Take a closer look.",
+    eyebrow: "05 / Repository",
+    title: "Inside the Lab repository.",
     areas: [
       {
         label: "Apps",
-        description: "Apps to explore and interactive demos to try",
+        description: "Applications, demos, and development projects",
       },
       {
         label: "Packages",
-        description: "Components to use in your own projects",
+        description: "Reusable frontend components",
       },
       {
         label: "Workbench",
-        description: "Python utilities and local automation",
+        description: "Local Python utilities and experiments",
       },
       {
         label: "Others",
-        description: "Userscripts, visual studies, and past experiments",
+        description: "Userscripts, interface studies, and archived experiments",
       },
     ],
-    actionLabel: "Browse on GitHub",
+    actionLabel: "View repository on GitHub",
   },
   footer: {
     links: [
